@@ -1,23 +1,44 @@
-# Python
-.venv/
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-dist/
+*.py[codz]
+*$py.class
+
+# Distribution / packaging
 build/
-.mypy_cache/
-.ruff_cache/
+dist/
+*.egg-info/
+*.egg
+
+# UV / virtual environments
+.venv
+.pixi
+__pypackages__/
+
+# Environment & secrets
+.env
+.envrc
 
 # Database
 *.db
+*.db-journal
 
-# Environment
-.env
+# Test / coverage
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
 
 # Node
 node_modules/
-dist/
+frontend/dist/
+
+# OS
 .DS_Store
 
 # IDE
