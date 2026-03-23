@@ -1,19 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
   background-color: #020617; /* slate-950 */
-  color: #f1f5f9;            /* slate-100 */
-  font-family: system-ui, -apple-system, sans-serif;
+  color: #f1f5f9; /* slate-100 */
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

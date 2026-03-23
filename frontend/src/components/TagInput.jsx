@@ -1,28 +1,33 @@
-import { useState } from 'react'
+import { useState } from "react";
 
-export default function TagInput({ tags, onChange, placeholder = 'Add tag…', maxTags = 10 }) {
-  const [input, setInput] = useState('')
+export default function TagInput({
+  tags,
+  onChange,
+  placeholder = "Add tag…",
+  maxTags = 10,
+}) {
+  const [input, setInput] = useState("");
 
   function addTag(raw) {
-    const value = raw.trim().slice(0, 50)
-    if (!value) return
-    if (tags.length >= maxTags) return
-    if (tags.some((t) => t.toLowerCase() === value.toLowerCase())) return
-    onChange([...tags, value])
+    const value = raw.trim().slice(0, 50);
+    if (!value) return;
+    if (tags.length >= maxTags) return;
+    if (tags.some((t) => t.toLowerCase() === value.toLowerCase())) return;
+    onChange([...tags, value]);
   }
 
   function handleKey(e) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
-      addTag(input)
-      setInput('')
-    } else if (e.key === 'Backspace' && input === '' && tags.length > 0) {
-      onChange(tags.slice(0, -1))
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(input);
+      setInput("");
+    } else if (e.key === "Backspace" && input === "" && tags.length > 0) {
+      onChange(tags.slice(0, -1));
     }
   }
 
   function removeTag(index) {
-    onChange(tags.filter((_, i) => i !== index))
+    onChange(tags.filter((_, i) => i !== index));
   }
 
   return (
@@ -48,10 +53,15 @@ export default function TagInput({ tags, onChange, placeholder = 'Add tag…', m
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKey}
-        onBlur={() => { if (input) { addTag(input); setInput('') } }}
-        placeholder={tags.length === 0 ? placeholder : ''}
+        onBlur={() => {
+          if (input) {
+            addTag(input);
+            setInput("");
+          }
+        }}
+        placeholder={tags.length === 0 ? placeholder : ""}
         className="flex-1 min-w-[120px] bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
       />
     </div>
-  )
+  );
 }

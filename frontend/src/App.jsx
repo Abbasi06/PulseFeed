@@ -1,10 +1,10 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { AuthProvider, useAuth } from './context/AuthContext'
-import DashboardLayout from './components/DashboardLayout'
-import Dashboard from './pages/Dashboard'
-import Onboarding from './pages/Onboarding'
-import Settings from './pages/Settings'
+import { AnimatePresence, motion } from "framer-motion";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import DashboardLayout from "./components/DashboardLayout";
+import Dashboard from "./pages/Dashboard";
+import Onboarding from "./pages/Onboarding";
+import Settings from "./pages/Settings";
 
 // ---------------------------------------------------------------------------
 // Page transition variants
@@ -12,15 +12,19 @@ import Settings from './pages/Settings'
 
 const fade = {
   initial: { opacity: 0 },
-  animate: { opacity: 1, transition: { duration: 0.35, ease: 'easeOut' } },
+  animate: { opacity: 1, transition: { duration: 0.35, ease: "easeOut" } },
   exit: { opacity: 0, transition: { duration: 0.2 } },
-}
+};
 
 const slideFromRight = {
   initial: { opacity: 0, x: 48 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+  animate: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+  },
   exit: { opacity: 0, x: -24, transition: { duration: 0.22 } },
-}
+};
 
 function Page({ children, variant = fade }) {
   return (
@@ -29,11 +33,11 @@ function Page({ children, variant = fade }) {
       initial="initial"
       animate="animate"
       exit="exit"
-      style={{ minHeight: '100vh' }}
+      style={{ minHeight: "100vh" }}
     >
       {children}
     </motion.div>
-  )
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -54,7 +58,7 @@ function Pulse() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -62,15 +66,17 @@ function Pulse() {
 // ---------------------------------------------------------------------------
 
 function RootRedirect() {
-  const { isAuthenticated, checking } = useAuth()
-  if (checking) return <Pulse />
-  return <Navigate to={isAuthenticated ? '/dashboard' : '/onboarding'} replace />
+  const { isAuthenticated, checking } = useAuth();
+  if (checking) return <Pulse />;
+  return (
+    <Navigate to={isAuthenticated ? "/dashboard" : "/onboarding"} replace />
+  );
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, checking } = useAuth()
-  if (checking) return <Pulse />
-  return isAuthenticated ? children : <Navigate to="/" replace />
+  const { isAuthenticated, checking } = useAuth();
+  if (checking) return <Pulse />;
+  return isAuthenticated ? children : <Navigate to="/" replace />;
 }
 
 // ---------------------------------------------------------------------------
@@ -78,7 +84,7 @@ function ProtectedRoute({ children }) {
 // ---------------------------------------------------------------------------
 
 function AppRoutes() {
-  const location = useLocation()
+  const location = useLocation();
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -119,7 +125,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
-  )
+  );
 }
 
 export default function App() {
@@ -127,5 +133,5 @@ export default function App() {
     <AuthProvider>
       <AppRoutes />
     </AuthProvider>
-  )
+  );
 }

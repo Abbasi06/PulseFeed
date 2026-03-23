@@ -100,7 +100,7 @@ async def _gemini(client: genai.Client, contents: str) -> str:
             model=MODEL,
             contents=contents,
             config=_JSON_CONFIG,
-        ).text,
+        ).text or "",
     )
 
 

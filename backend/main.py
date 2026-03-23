@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # Load .env from project root regardless of working directory
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-from database import Base, engine
-from routes import events, feed, users
+from database import Base, engine  # noqa: E402
+from routes import events, feed, users  # noqa: E402
 
 
 def _run_migrations() -> None:
@@ -42,7 +42,15 @@ app = FastAPI(title="PulseBoard API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:5176",
+        "http://localhost:5177",
+        "http://localhost:5178",
+        "http://localhost:5179",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

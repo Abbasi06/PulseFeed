@@ -5,12 +5,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # PulseBoard
 
 ## What this is
-A personalized AI-powered knowledge feed. Users enter their occupation, interests, and hobbies. The app fetches the latest news, articles, research, and upcoming events related to their profile and shows it in a clean dashboard. Refreshes every 6 hours per user.
+A personalized AI-powered knowledge feed. Users enter their occupation, interests, and hobbies. The app fetches the latest news, articles, research, and upcoming events related to their profile and shows it in a clean dashboard. Feed is cached and refreshed on-demand with a 6-hour TTL.
 
 ## Tech stack
-- Backend: Python 3.10+, FastAPI, SQLAlchemy, SQLite, APScheduler
-- Frontend: React, Vite, TailwindCSS v4, React Router (Node 18+)
-- AI: Google Gemini API via `google-genai` SDK (model: `gemini-2.0-flash`) with DuckDuckGo search
+- Backend: Python 3.13, FastAPI, SQLAlchemy, SQLite, JWT auth (httpOnly cookies)
+- Frontend: React 19, Vite, TailwindCSS v4, React Router v7, Framer Motion
+- AI: Google Gemini API via `google-genai` SDK (model: `gemini-2.5-flash-lite`) with DuckDuckGo search (`ddgs`)
 - Package manager: `uv` for Python, `npm` for Node
 
 ## Environment setup
@@ -35,43 +35,49 @@ cd frontend && npx prettier --write src/
 
 ### Test
 ```
-cd backend && uv run pytest tests/ -v                           # all backend tests
-cd backend && uv run pytest tests/test_routes.py::test_name -v  # single test
-cd frontend && npm run test
+cd backend && uv run pytest tests/ -v                                        # all backend tests
+cd backend && uv run pytest tests/test_users.py::test_create_user_success -v # single test
+cd frontend && npm run test       # run once
+cd frontend && npm run test:watch # watch mode
 ```
 
 ## Architecture
 
 ### Data flow
-1. User submits profile (name, occupation, interests, hobbies) via `POST /users`
-2. APScheduler triggers feed refresh every 6 hours per user
-3. `research_agent.py` calls Gemini with DuckDuckGo search → returns news items
-4. `events_agent.py` calls Gemini with DuckDuckGo search → returns events
-5. Results are validated, capped (20 news / 10 events), and stored in SQLite
-6. Frontend polls `GET /feed/{user_id}` and `GET /events/{user_id}` to render the dashboard
+1. User submits profile (name, occupation, interests, hobbies) via `POST /users` → JWT cookie set
+2. `GET /feed/{user_id}` and `GET /events/{user_id}` check cache: if `fetched_at` is older than 6 hours (or missing), agents are triggered automatically
+3. `research_agent.py` builds programmatic DuckDuckGo queries (no LLM for query generation), sends top results to Gemini for summarization/extraction → returns both news items and events
+4. Results are validated, capped (20 news / 10 events), old items deleted, new ones stored in SQLite
+5. Frontend fetches `GET /feed/{user_id}` and `GET /events/{user_id}` to render the dashboard; force refresh via `POST /feed/{user_id}/refresh`
 
 ### Backend modules
-- `main.py` — FastAPI app, CORS config, router registration
-- `database.py` — SQLAlchemy engine + session factory; uses `pulseboard.db` (in-memory SQLite for tests)
-- `models.py` — ORM models: `User`, `NewsItem`, `Event`
-- `routes/users.py` — CRUD for user profiles; all validation via Pydantic
-- `routes/feed.py` — returns cached news items; triggers agent if cache is stale
+- `main.py` — FastAPI app, CORS config (`http://localhost:5173`), router registration, lifespan startup (table creation + raw SQL column migrations)
+- `database.py` — SQLAlchemy engine + session factory (`pulseboard.db`); switch to in-memory SQLite for tests
+- `models.py` — ORM models: `User`, `FeedItem`, `Event` (User has cascade-delete relationships to both)
+- `schemas.py` — Pydantic models for request/response; `UserCreate` validators handle whitespace stripping and tag deduplication
+- `auth.py` — JWT creation/validation; tokens stored as httpOnly cookies (30-day expiry, `secure=False` in dev — must change for production); `SECRET_KEY` defaults to `"dev-secret-change-before-production"`
+- `routes/users.py` — CRUD for user profiles + login/logout; `POST /users` creates user and sets cookie; `GET /users/me` validates cookie
+- `routes/feed.py` — returns cached feed items; auto-triggers `generate_feed()` if stale; `PATCH /feed/items/{id}/like` toggles like
 - `routes/events.py` — same pattern as feed but for events
-- `agents/research_agent.py` — Gemini call + DuckDuckGo → news items with required fields
-- `agents/events_agent.py` — Gemini call + DuckDuckGo → events with required fields
-- `scheduler.py` — APScheduler job that calls both agents for each user
+- `agents/research_agent.py` — **single file handles both feed and events**; `generate_feed()` and `generate_events()` are the two entry points; DuckDuckGo searches run in parallel via `asyncio.gather()`; Gemini calls wrapped in thread-pool executor to avoid blocking; enforces `response_mime_type="application/json"`
 
-### Frontend pages
-- `Onboarding.jsx` — profile creation form (first-time users)
-- `Dashboard.jsx` — main feed: `NewsCard` + `EventCard` grids, refresh indicator
-- `Settings.jsx` — edit existing profile
+### Frontend structure
+- `context/AuthContext.jsx` — on mount calls `GET /users/me` to validate httpOnly cookie; provides `user`, `isAuthenticated`, `login()`, `logout()`; all fetches use `credentials: 'include'`
+- `pages/Onboarding.jsx` — profile creation form
+- `pages/Dashboard.jsx` — three tabs (Feed, Events, Saved); like toggle; refresh triggers both feed and events in parallel
+- `pages/Settings.jsx` — pre-populated edit form; success banner on save
+- `components/DashboardLayout.jsx` — sidebar (desktop) + top bar (mobile) with nav; wraps protected routes via `<Outlet />`
+- `components/TagInput.jsx` — reusable tag input used for interests and hobbies in both Onboarding and Settings
+- `components/NewsCard.jsx` / `EventCard.jsx` — topic/type color badges; image fallback to `picsum.photos` seeded by title hash
+- `components/BrainLoader.jsx` — animated brain SVG shown during feed/event generation
+- `components/SkeletonCard.jsx` — pulse placeholder during initial load
 
-### Key config file
+### Key config
 `frontend/src/config.js` exports `API_URL = "http://localhost:8000"`. All `fetch` calls import from here — no hardcoded URLs elsewhere.
 
 ## Validation rules
 
-### Backend (Pydantic)
+### Backend (Pydantic — `schemas.py`)
 - `name`: required, non-empty, max 100 chars
 - `occupation`: required, non-empty, max 150 chars
 - `interests`: required, 1–10 items, each max 50 chars, no duplicates
@@ -92,14 +98,22 @@ cd frontend && npm run test
 - Discard items where both `title` and `summary` are empty
 - Discard events missing `name` or `date`
 - Log a warning (not an error) when discarding or defaulting; cap at 20 news / 10 events per refresh
+- If no DuckDuckGo results found, feed returns a single placeholder item; events returns empty array
+
+### Tests
+- `backend/tests/conftest.py` — `db` fixture (in-memory SQLite with `StaticPool`) + `client` fixture (FastAPI `TestClient` with `get_db` overridden); `StaticPool` is required so all connections share the same in-memory DB
+- `backend/tests/test_auth.py` — JWT token creation/decoding/validation
+- `backend/tests/test_users.py` — user CRUD, auth cookie, validation rules
+- `backend/tests/test_feed.py` / `test_events.py` — cache TTL logic, forced refresh, like toggle, 403/404 paths; `generate_feed` / `generate_events` are mocked with `AsyncMock` — no real API calls
+- `backend/tests/test_agents.py` — pure unit tests for `_validate_feed_items`, `_validate_events`, `_build_*_queries`, `search_web`; all Gemini/DuckDuckGo calls mocked
+- **404 vs 403 note:** feed/events/user-update routes check `user_id != current_user_id` (→ 403) *before* the DB lookup (→ 404). Tests that assert 404 must forge a JWT for the non-existent `user_id` via `create_access_token(99999)`.
+- Frontend tests live in `src/components/__tests__/`; vitest + `@testing-library/react`; `<img alt="">` has ARIA role `"presentation"`, not `"img"` — use `screen.getByRole('presentation')` for image assertions
 
 ## Code conventions
 - Python: snake_case, type hints on **all** parameters and return types, no function > 40 lines, no bare `except`
 - React: functional components only, camelCase, no `console.log` in committed code
 - All Python commands run via `uv run` — never activate the venv manually
 - Tests: in-memory SQLite for backend tests; mock the Gemini client — no real API calls in tests
-- `pyproject.toml` dev dependencies must include: `ruff`, `mypy`, `pytest`, `pytest-asyncio`, `httpx`
-- `package.json` devDependencies must include: `@testing-library/react`, `@testing-library/jest-dom`, `vitest`
 
 ## Pre-commit checklist
 Fix all failures before marking any feature complete:
