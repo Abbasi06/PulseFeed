@@ -17,6 +17,7 @@ import os
 import sys
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 # Allow running directly: uv run backend/agents/research_agent.py
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,7 +29,7 @@ from google.genai import types
 from sqlalchemy.orm import Session
 
 from database import engine
-from models import Base, User
+from models import Base, FeedItem, User
 
 load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
@@ -38,6 +39,14 @@ MODEL = "gemini-2.5-flash-lite"
 TODAY = date.today().isoformat()
 MAX_FEED = 20
 MAX_EVENTS = 10
+
+# Maps preferred_formats values → extra search keywords appended to queries
+_FORMAT_SUFFIXES: dict[str, str] = {
+    "Research Papers": "research paper arxiv.org",
+    "Technical Articles": "article tutorial medium.com dev.to",
+    "Books & Guides": "guide book tutorial oreilly",
+    "Engineering Blogs": "engineering blog",
+}
 
 _FEED_DEFAULTS: dict[str, str] = {
     "title": "Untitled",
@@ -104,6 +113,46 @@ async def _gemini(client: genai.Client, contents: str) -> str:
     )
 
 
+def _parse_json_object(text: str, context: str) -> dict[str, object]:
+    """Parse a JSON object from Gemini output, stripping any markdown fences."""
+    text = text.strip()
+    if text.startswith("```"):
+        parts = text.split("```")
+        inner = parts[1] if len(parts) > 1 else ""
+        if inner.startswith("json"):
+            inner = inner[4:]
+        text = inner.strip()
+    try:
+        result = json.loads(text)
+        if isinstance(result, dict):
+            return result  # type: ignore[return-value]
+        logger.warning("Gemini returned non-dict JSON for %s", context)
+        return {}
+    except json.JSONDecodeError as exc:
+        logger.warning("Gemini returned invalid JSON for %s: %s", context, exc)
+        return {}
+
+
+def _parse_json_list(text: str, context: str) -> list[dict[str, object]]:
+    """Parse a JSON array from Gemini output, stripping any markdown fences."""
+    text = text.strip()
+    if text.startswith("```"):
+        parts = text.split("```")
+        inner = parts[1] if len(parts) > 1 else ""
+        if inner.startswith("json"):
+            inner = inner[4:]
+        text = inner.strip()
+    try:
+        result = json.loads(text)
+        if isinstance(result, list):
+            return result  # type: ignore[return-value]
+        logger.warning("Gemini returned non-list JSON for %s", context)
+        return []
+    except json.JSONDecodeError as exc:
+        logger.warning("Gemini returned invalid JSON for %s: %s", context, exc)
+        return []
+
+
 # ---------------------------------------------------------------------------
 # Validation helpers
 # ---------------------------------------------------------------------------
@@ -157,6 +206,36 @@ def _validate_events(
     return out[:MAX_EVENTS]
 
 
+def _validate_brief(raw: dict[str, object], user_id: int) -> dict[str, Any]:
+    """Sanitise and normalise a raw brief dict returned by Gemini."""
+
+    def _to_str_list(val: object, limit: int) -> list[str]:
+        if isinstance(val, list):
+            return [str(x).strip() for x in val if str(x).strip()][:limit]
+        return []
+
+    raw_top_reads = raw.get("top_reads") or []
+    top_reads: list[dict[str, str]] = []
+    if isinstance(raw_top_reads, list):
+        for item in raw_top_reads[:3]:
+            if isinstance(item, dict):
+                top_reads.append(
+                    {
+                        "title": str(item.get("title") or "Untitled"),
+                        "url": str(item.get("url") or "#"),
+                        "source": str(item.get("source") or "Unknown"),
+                    }
+                )
+
+    return {
+        "user_id": user_id,
+        "headline": str(raw.get("headline") or "").strip()[:120],
+        "signals": _to_str_list(raw.get("signals"), 5),
+        "top_reads": top_reads,
+        "watch": _to_str_list(raw.get("watch"), 4),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Feed pipeline
 # ---------------------------------------------------------------------------
@@ -165,26 +244,59 @@ def _validate_events(
 def _build_profile(user: User) -> str:
     parts = [
         f"Occupation: {user.occupation}",
-        f"Interests: {', '.join(user.interests)}",
+        f"Selected Areas of Focus: {', '.join(user.selected_chips)}",
     ]
-    if user.hobbies:
-        parts.append(f"Hobbies: {', '.join(user.hobbies)}")
+    field = getattr(user, "field", "") or ""
+    sub_fields: list[str] = getattr(user, "sub_fields", None) or []
+    preferred_formats: list[str] = getattr(user, "preferred_formats", None) or []
+    if field:
+        parts.append(f"Primary Field: {field}")
+    if sub_fields:
+        parts.append(f"Detailed Focus Areas: {', '.join(sub_fields)}")
+    if preferred_formats:
+        parts.append(f"Preferred Content Formats: {', '.join(preferred_formats)}")
     return "\n".join(parts)
 
 
 def _build_feed_queries(user: User) -> list[str]:
-    """Build search queries from user profile without using an LLM call."""
-    queries = [f"{user.occupation} latest news {TODAY[:4]}"]
-    for interest in user.interests[:2]:
-        queries.append(f"{interest} news research {TODAY[:4]}")
-    return queries
+    """Build 'Scout' grounded dorking search queries without using an LLM call."""
+    queries: list[str] = []
+
+    # Prefer detailed sub_fields over selected_chips for topic queries
+    sub_fields: list[str] = getattr(user, "sub_fields", None) or []
+    preferred_formats: list[str] = getattr(user, "preferred_formats", None) or []
+    focus_items = sub_fields if sub_fields else user.selected_chips
+
+    # Base occupation query
+    queries.append(
+        f'"{user.occupation}" (news OR breakthrough) {TODAY[:4]}'
+        f" site:news.ycombinator.com OR site:arxiv.org OR site:techcrunch.com"
+    )
+
+    # Per-topic queries
+    for item in focus_items:
+        suffix = ""
+        for fmt in preferred_formats:
+            suffix = _FORMAT_SUFFIXES.get(fmt, "")
+            if suffix:
+                break
+        base = f'"{item}" (latest OR research OR update) {TODAY[:4]}'
+        queries.append(f"{base} {suffix}".strip() if suffix else base)
+
+    return queries[:7]
 
 
 def _build_event_queries(user: User) -> list[str]:
-    """Build event search queries from user profile without using an LLM call."""
-    queries = [f"{user.occupation} conference {TODAY[:4]}"]
-    for interest in user.interests[:2]:
-        queries.append(f"{interest} meetup conference {TODAY[:4]}")
+    """Build event search queries using grounded Scout dorking."""
+    sub_fields: list[str] = getattr(user, "sub_fields", None) or []
+    focus_items = (sub_fields if sub_fields else user.selected_chips)[:3]
+
+    queries = [f'"{user.occupation}" (conference OR summit OR meetup) {TODAY[:4]} -webinar']
+    for item in focus_items:
+        queries.append(
+            f'"{item}" (event OR workshop OR hackathon) {TODAY[:4]}'
+            f" site:lu.ma OR site:eventbrite.com OR site:meetup.com"
+        )
     return queries
 
 
@@ -231,7 +343,7 @@ async def generate_feed(
         f"title, summary, source, url, topic, published_date. "
         f"Return between 5 and {MAX_FEED} items.",
     )
-    raw_items: list[dict[str, object]] = json.loads(text)
+    raw_items = _parse_json_list(text, context=f"feed user={user_id}")
     return _validate_feed_items(raw_items, user_id)
 
 
@@ -274,8 +386,53 @@ async def generate_events(
         f"name, date, location, type, url, reason. "
         f"Return between 3 and {MAX_EVENTS} items.",
     )
-    raw_events: list[dict[str, object]] = json.loads(text)
+    raw_events = _parse_json_list(text, context=f"events user={user_id}")
     return _validate_events(raw_events, user_id)
+
+
+# ---------------------------------------------------------------------------
+# Brief pipeline
+# ---------------------------------------------------------------------------
+
+
+async def generate_brief(user_id: int, db: Session) -> dict[str, Any]:
+    """Generate a one-page insight brief from the user's cached feed items."""
+    user = db.get(User, user_id)
+    if user is None:
+        raise ValueError(f"User {user_id} not found")
+
+    items = (
+        db.query(FeedItem)
+        .filter(FeedItem.user_id == user_id)
+        .order_by(FeedItem.fetched_at.desc())  # type: ignore[attr-defined]
+        .limit(MAX_FEED)
+        .all()
+    )
+    if not items:
+        raise ValueError(f"No feed items for user {user_id} — generate feed first")
+
+    client = _get_client()
+    profile = _build_profile(user)
+
+    feed_summary = "\n".join(
+        f"- [{item.topic}] {item.title}: {item.summary[:200]}" for item in items
+    )
+
+    text = await _gemini(
+        client,
+        f"You are writing a daily insight brief for:\n{profile}\n\n"
+        f"Today is {TODAY}. Based on these feed items:\n{feed_summary}\n\n"
+        f"Return a JSON object with exactly these keys:\n"
+        f"- headline: one punchy sentence capturing today's dominant theme (max 120 chars)\n"
+        f"- signals: array of 3-5 short strings, each a key trend or takeaway\n"
+        f"- top_reads: array of up to 3 objects with keys title, url, source — "
+        f"the highest-value items from the list above\n"
+        f"- watch: array of 2-4 short strings — emerging topics or names worth tracking\n"
+        f"Return only the JSON object.",
+    )
+
+    raw = _parse_json_object(text, context=f"brief user={user_id}")
+    return _validate_brief(raw, user_id)
 
 
 # ---------------------------------------------------------------------------
@@ -295,8 +452,7 @@ async def _main() -> None:
             user = User(
                 name="Test User",
                 occupation="Software Engineer",
-                interests=["AI", "Python", "open source software"],
-                hobbies=["reading", "hiking"],
+                selected_chips=["AI", "Python", "open source software"],
             )
             db.add(user)
             db.commit()

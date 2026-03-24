@@ -1,8 +1,79 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Atom,
+  BarChart2,
+  BookOpen,
+  Bot,
+  Brain,
+  Check,
+  Cloud,
+  Code2,
+  FileText,
+  HelpCircle,
+  Link,
+  Newspaper,
+  Palette,
+  Rss,
+  Shield,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import TagInput from "../components/TagInput";
 import { API_URL } from "../config";
+
+const FIELDS = [
+  { id: "AI & Machine Learning", label: "AI & Machine Learning", icon: Brain },
+  { id: "Software Engineering", label: "Software Engineering", icon: Code2 },
+  { id: "Cybersecurity", label: "Cybersecurity", icon: Shield },
+  { id: "Data Science", label: "Data Science", icon: BarChart2 },
+  { id: "Cloud & DevOps", label: "Cloud & DevOps", icon: Cloud },
+  { id: "Blockchain & Web3", label: "Blockchain & Web3", icon: Link },
+  { id: "Product & Design", label: "Product & Design", icon: Palette },
+  { id: "Quantum Computing", label: "Quantum Computing", icon: Atom },
+  { id: "Robotics & Embedded", label: "Robotics & Embedded", icon: Bot },
+  { id: "Other", label: "Other", icon: HelpCircle },
+];
+
+const SUB_FIELD_PLACEHOLDER = {
+  "AI & Machine Learning":
+    "e.g. LLMs, Computer Vision, Reinforcement Learning…",
+  "Software Engineering": "e.g. Backend, Frontend, Mobile, APIs…",
+  Cybersecurity: "e.g. Zero Trust, Penetration Testing, OSINT…",
+  "Data Science": "e.g. NLP, Time Series, Data Visualisation…",
+  "Cloud & DevOps": "e.g. Kubernetes, Terraform, CI/CD…",
+  "Blockchain & Web3": "e.g. DeFi, Smart Contracts, Layer 2…",
+  "Product & Design": "e.g. UX Research, Design Systems, Prototyping…",
+  "Quantum Computing": "e.g. Quantum Algorithms, Error Correction, Qubits…",
+  "Robotics & Embedded": "e.g. ROS, Microcontrollers, Sensor Fusion…",
+  Other: "e.g. specific topics you're interested in…",
+};
+
+const FORMAT_CARDS = [
+  {
+    id: "Research Papers",
+    label: "Research Papers",
+    description: "ArXiv · DeepMind · OpenAI",
+    icon: FileText,
+  },
+  {
+    id: "Technical Articles",
+    label: "Technical Articles",
+    description: "Medium · Dev.to · Hashnode",
+    icon: Newspaper,
+  },
+  {
+    id: "Books & Guides",
+    label: "Books & Guides",
+    description: "O'Reilly · Manning · Roadmap.sh",
+    icon: BookOpen,
+  },
+  {
+    id: "Engineering Blogs",
+    label: "Engineering Blogs",
+    description: "Netflix · Uber · Meta Infra",
+    icon: Rss,
+  },
+];
 
 const MAX_NAME = 100;
 const MAX_OCC = 150;
@@ -14,8 +85,9 @@ export default function Settings() {
 
   const [name, setName] = useState("");
   const [occupation, setOccupation] = useState("");
-  const [interests, setInterests] = useState([]);
-  const [hobbies, setHobbies] = useState([]);
+  const [field, setField] = useState("");
+  const [subFields, setSubFields] = useState([]);
+  const [preferredFormats, setPreferredFormats] = useState([]);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,8 +101,9 @@ export default function Settings() {
       .then((u) => {
         setName(u.name ?? "");
         setOccupation(u.occupation ?? "");
-        setInterests(u.interests ?? []);
-        setHobbies(u.hobbies ?? []);
+        setField(u.field ?? "");
+        setSubFields(u.sub_fields ?? []);
+        setPreferredFormats(u.preferred_formats ?? []);
       })
       .catch(() => setApiError("Could not load your profile."))
       .finally(() => setFetching(false));
@@ -40,7 +113,8 @@ export default function Settings() {
     const e = {};
     if (!name.trim()) e.name = "Name is required";
     if (!occupation.trim()) e.occupation = "Occupation is required";
-    if (interests.length === 0) e.interests = "Add at least one interest";
+    if (!field) e.field = "Select your primary field";
+    if (subFields.length === 0) e.subFields = "Add at least one area of focus";
     return e;
   }
 
@@ -63,8 +137,9 @@ export default function Settings() {
         body: JSON.stringify({
           name: name.trim(),
           occupation: occupation.trim(),
-          interests,
-          hobbies,
+          field,
+          sub_fields: subFields,
+          preferred_formats: preferredFormats,
         }),
       });
       if (!res.ok) {
@@ -170,7 +245,7 @@ export default function Settings() {
         <div>
           <div className="flex justify-between mb-1.5">
             <label className="text-sm font-medium text-slate-200">
-              Occupation
+              Job Title / Role
             </label>
             <span
               className={`text-xs ${occupation.length > MAX_OCC * 0.9 ? "text-amber-400" : "text-slate-500"}`}
@@ -193,32 +268,113 @@ export default function Settings() {
           )}
         </div>
 
-        {/* Interests */}
+        {/* Primary Field */}
         <div>
           <label className="block text-sm font-medium text-slate-200 mb-1.5">
-            Interests
+            Primary Field
           </label>
-          <TagInput
-            tags={interests}
-            onChange={setInterests}
-            placeholder="Add interest…"
-          />
-          {errors.interests && (
-            <p className="mt-1.5 text-xs text-red-400">{errors.interests}</p>
+          <div className="flex flex-wrap gap-2">
+            {FIELDS.map((f) => {
+              const Icon = f.icon;
+              const selected = field === f.id;
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => {
+                    setField(f.id);
+                    setErrors((prev) => ({ ...prev, field: undefined }));
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                    selected
+                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30"
+                      : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-500 hover:text-slate-300"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+          {errors.field && (
+            <p className="mt-2 text-xs text-red-400">{errors.field}</p>
           )}
         </div>
 
-        {/* Hobbies */}
+        {/* Sub-fields */}
         <div>
           <label className="block text-sm font-medium text-slate-200 mb-1.5">
-            Hobbies{" "}
-            <span className="text-slate-500 font-normal">(optional)</span>
+            Areas of Focus
           </label>
           <TagInput
-            tags={hobbies}
-            onChange={setHobbies}
-            placeholder="Add hobby…"
+            tags={subFields}
+            onChange={setSubFields}
+            placeholder={
+              SUB_FIELD_PLACEHOLDER[field] ??
+              "e.g. specific topics… press Enter"
+            }
           />
+          {errors.subFields && (
+            <p className="mt-1.5 text-xs text-red-400">{errors.subFields}</p>
+          )}
+        </div>
+
+        {/* Media Formats */}
+        <div>
+          <label className="block text-sm font-medium text-slate-200 mb-1">
+            Preferred Formats{" "}
+            <span className="text-slate-500 font-normal">(optional)</span>
+          </label>
+          <p className="text-xs text-slate-500 mb-3">
+            Your feed will prioritise content from these sources.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {FORMAT_CARDS.map((card) => {
+              const Icon = card.icon;
+              const selected = preferredFormats.includes(card.id);
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={() =>
+                    setPreferredFormats((prev) =>
+                      prev.includes(card.id)
+                        ? prev.filter((f) => f !== card.id)
+                        : [...prev, card.id],
+                    )
+                  }
+                  className={`relative flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                    selected
+                      ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-500/5"
+                      : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
+                  }`}
+                >
+                  {selected && (
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <Check
+                        className="w-2.5 h-2.5 text-white"
+                        strokeWidth={3}
+                      />
+                    </div>
+                  )}
+                  <Icon
+                    className={`w-5 h-5 shrink-0 ${selected ? "text-emerald-400" : "text-slate-400"}`}
+                  />
+                  <div>
+                    <p
+                      className={`text-xs font-semibold ${selected ? "text-emerald-300" : "text-slate-300"}`}
+                    >
+                      {card.label}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      {card.description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

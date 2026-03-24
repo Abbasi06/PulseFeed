@@ -21,6 +21,21 @@ def _run_migrations() -> None:
         "ALTER TABLE feed_items ADD COLUMN liked INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE events ADD COLUMN image_url TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE events ADD COLUMN liked INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN preferred_formats TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN field TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN sub_fields TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN preferred_sources TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN followed_creators TEXT NOT NULL DEFAULT '[]'",
+        (
+            "CREATE TABLE IF NOT EXISTS feed_briefs ("
+            "id INTEGER PRIMARY KEY, "
+            "user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE, "
+            "headline TEXT NOT NULL DEFAULT '', "
+            "signals TEXT NOT NULL DEFAULT '[]', "
+            "top_reads TEXT NOT NULL DEFAULT '[]', "
+            "watch TEXT NOT NULL DEFAULT '[]', "
+            "generated_at DATETIME NOT NULL)"
+        ),
     ]
     with engine.connect() as conn:
         for sql in migrations:

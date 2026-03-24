@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
@@ -28,7 +28,7 @@ def _mock_items(user_id: int) -> list[dict]:
 
 
 def _insert_feed_item(db: Session, user_id: int, hours_old: float = 0) -> FeedItem:
-    fetched_at = datetime.utcnow() - timedelta(hours=hours_old)
+    fetched_at = datetime.now(timezone.utc) - timedelta(hours=hours_old)
     item = FeedItem(
         user_id=user_id,
         title="Cached Article",

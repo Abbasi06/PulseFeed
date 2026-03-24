@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 
 from auth import get_current_user_id
 from database import get_db
-from models import FeedItem, User
-from schemas import FeedRead
+from models import FeedBrief, FeedItem, User
+from schemas import BriefRead, FeedRead
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +74,30 @@ async def refresh_feed(
     return await _refresh_feed(user_id, db)
 
 
+@router.get("/{user_id}/brief", response_model=BriefRead)
+async def get_brief(
+    user_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> FeedBrief:
+    if user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if db.get(User, user_id) is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    has_feed = db.query(FeedItem).filter(FeedItem.user_id == user_id).first()
+    if not has_feed:
+        raise HTTPException(
+            status_code=404, detail="No feed items — generate feed first"
+        )
+
+    brief = db.query(FeedBrief).filter(FeedBrief.user_id == user_id).first()
+    if brief and not _is_stale(brief.generated_at):
+        return brief
+
+    return await _refresh_brief(user_id, db)
+
+
 @router.patch("/items/{item_id}/like", response_model=FeedRead)
 def toggle_like(
     item_id: int,
@@ -101,6 +125,8 @@ async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
         raise HTTPException(status_code=502, detail="Feed generation failed") from exc
 
     db.query(FeedItem).filter(FeedItem.user_id == user_id).delete()
+    # Invalidate brief — it's derived from the feed
+    db.query(FeedBrief).filter(FeedBrief.user_id == user_id).delete()
     _save_items(items, db)
 
     return (
@@ -109,3 +135,26 @@ async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
         .order_by(FeedItem.fetched_at.desc())
         .all()
     )
+
+
+async def _refresh_brief(user_id: int, db: Session) -> FeedBrief:
+    from agents.research_agent import generate_brief
+
+    try:
+        data = await generate_brief(user_id, db)
+    except Exception as exc:
+        logger.error("generate_brief failed for user %d: %s", user_id, exc, exc_info=True)
+        raise HTTPException(status_code=502, detail="Brief generation failed") from exc
+
+    db.query(FeedBrief).filter(FeedBrief.user_id == user_id).delete()
+    brief = FeedBrief(
+        user_id=user_id,
+        headline=str(data.get("headline") or ""),
+        signals=data.get("signals") or [],
+        top_reads=data.get("top_reads") or [],
+        watch=data.get("watch") or [],
+    )
+    db.add(brief)
+    db.commit()
+    db.refresh(brief)
+    return brief

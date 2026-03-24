@@ -144,8 +144,17 @@ def test_validate_events_sets_user_id() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _user(occupation: str, interests: list[str]) -> User:
-    return cast(User, SimpleNamespace(occupation=occupation, interests=interests, hobbies=[]))
+def _user(
+    occupation: str = "Engineer",
+    selected_chips: list[str] | None = None,
+) -> User:
+    return cast(
+        User,
+        SimpleNamespace(
+            occupation=occupation,
+            selected_chips=selected_chips or [],
+        ),
+    )
 
 
 def test_build_feed_queries_includes_occupation() -> None:
@@ -153,17 +162,11 @@ def test_build_feed_queries_includes_occupation() -> None:
     assert any("Data Scientist" in q for q in queries)
 
 
-def test_build_feed_queries_includes_interests() -> None:
+def test_build_feed_queries_includes_chips() -> None:
     queries = _build_feed_queries(_user("Engineer", ["AI", "Python", "Rust"]))
     texts = " ".join(queries)
     assert "AI" in texts
     assert "Python" in texts
-
-
-def test_build_feed_queries_only_uses_first_two_interests() -> None:
-    queries = _build_feed_queries(_user("Engineer", ["AI", "Python", "Rust"]))
-    texts = " ".join(queries)
-    assert "Rust" not in texts
 
 
 def test_build_feed_queries_returns_list_of_strings() -> None:
@@ -178,21 +181,21 @@ def test_build_feed_queries_returns_list_of_strings() -> None:
 
 
 def test_build_event_queries_includes_occupation() -> None:
-    queries = _build_event_queries(_user("ML Engineer", ["AI"]))
-    assert any("ML Engineer" in q for q in queries)
+    queries = _build_event_queries(_user("Engineer", ["LLMs"]))
+    assert any("Engineer" in q for q in queries)
 
 
-def test_build_event_queries_includes_interests() -> None:
-    queries = _build_event_queries(_user("Engineer", ["AI", "Python"]))
+def test_build_event_queries_includes_chips() -> None:
+    queries = _build_event_queries(_user("Software Engineer", ["AI", "Python"]))
     texts = " ".join(queries)
     assert "AI" in texts
     assert "Python" in texts
 
 
-def test_build_event_queries_only_uses_first_two_interests() -> None:
-    queries = _build_event_queries(_user("Engineer", ["AI", "Python", "Rust"]))
+def test_build_event_queries_only_uses_first_three_chips() -> None:
+    queries = _build_event_queries(_user("Engineer", ["AI", "Python", "Rust", "Go"]))
     texts = " ".join(queries)
-    assert "Rust" not in texts
+    assert "Go" not in texts
 
 
 # ---------------------------------------------------------------------------

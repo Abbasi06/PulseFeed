@@ -1,3 +1,15 @@
+import { motion } from "framer-motion";
+
+const cardVariants = {
+  hidden: { opacity: 0, filter: "blur(8px)", y: 12 },
+  visible: {
+    opacity: 1,
+    filter: "blur(0px)",
+    y: 0,
+    transition: { duration: 0.45, ease: [0.21, 0.47, 0.32, 0.98] },
+  },
+};
+
 const TYPE_COLORS = {
   Conference: "bg-blue-500/80 text-white",
   Meetup: "bg-green-500/80 text-white",
@@ -34,7 +46,10 @@ export default function EventCard({
   const imgSrc = image_url || `https://picsum.photos/seed/${seed}/800/420`;
 
   return (
-    <article className="group bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col hover:border-slate-500 hover:shadow-xl hover:shadow-black/40 transition-all duration-200">
+    <motion.article
+      variants={cardVariants}
+      className="group bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col hover:border-slate-500 hover:shadow-xl hover:shadow-black/40 transition-colors duration-200"
+    >
       {/* Image */}
       <div className="relative aspect-[16/9] overflow-hidden bg-slate-800 shrink-0">
         <img
@@ -142,6 +157,6 @@ export default function EventCard({
           </div>
         )}
       </div>
-    </article>
+    </motion.article>
   );
 }

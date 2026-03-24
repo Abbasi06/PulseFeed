@@ -1,7 +1,18 @@
+@import url('https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800,900&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/style.css');
 @import "tailwindcss";
 
+
 @theme {
+  --color-true-black: #010101;
+  --color-deep-navy: #1B1F3A;
+  --color-steel-blue: #4C6E94;
+  --color-mint-glow: #D1E8E2;
+  --color-aurora-pink: #B7397A;
+  --color-off-white: #F7F9F8;
   --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
+  --font-switzer: "Switzer", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -13,9 +24,10 @@
 
 body {
   margin: 0;
-  background-color: #020617; /* slate-950 */
-  color: #f1f5f9; /* slate-100 */
+  background-color: #010101; /* True Black */
+  color: #F7F9F8; /* Off-White */
   font-family:
+    "Geist",
     system-ui,
     -apple-system,
     sans-serif;
@@ -24,4 +36,43 @@ body {
 
 #root {
   min-height: 100svh;
+}
+
+@layer utilities {
+  .liquid-glass {
+    backdrop-filter: blur(15px);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1.4px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #B7397A, #4C6E94);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #B7397A, #4C6E94);
+    filter: blur(12px);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+  }
+
+  .btn-primary:hover::after {
+    opacity: 0.55;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }

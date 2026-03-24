@@ -16,15 +16,13 @@ from main import app
 USER_A: dict = {
     "name": "Alice",
     "occupation": "Software Engineer",
-    "interests": ["AI", "Python"],
-    "hobbies": ["Reading"],
+    "selected_chips": ["AI", "Python"],
 }
 
 USER_B: dict = {
     "name": "Bob",
     "occupation": "Data Scientist",
-    "interests": ["ML", "Statistics"],
-    "hobbies": [],
+    "selected_chips": ["ML", "Statistics"],
 }
 
 
