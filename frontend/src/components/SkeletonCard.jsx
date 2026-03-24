@@ -1,18 +1,44 @@
 export default function SkeletonCard() {
   return (
-    <div className="bg-slate-900 border border-slate-700/50 rounded-2xl overflow-hidden animate-pulse">
-      <div className="aspect-[16/9] bg-slate-800" />
+    <div className="bg-slate-900 border border-slate-700/50 rounded-2xl overflow-hidden">
+      {/* Image area */}
+      <div className="aspect-[16/9] bg-slate-800 relative overflow-hidden">
+        <div className="absolute inset-0 shimmer" />
+      </div>
+
+      {/* Content */}
       <div className="p-4 flex flex-col gap-3">
-        <div className="h-4 w-3/4 bg-slate-700 rounded" />
-        <div className="h-4 w-full bg-slate-700 rounded" />
+        {/* Title lines */}
         <div className="space-y-2">
-          <div className="h-3 w-full bg-slate-700/70 rounded" />
-          <div className="h-3 w-5/6 bg-slate-700/70 rounded" />
-          <div className="h-3 w-4/6 bg-slate-700/70 rounded" />
+          <div className="h-3.5 w-4/5 bg-slate-800 rounded-md relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
+          <div className="h-3.5 w-3/5 bg-slate-800 rounded-md relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
         </div>
+
+        {/* Summary lines */}
+        <div className="space-y-2 pt-1">
+          <div className="h-2.5 w-full bg-slate-800/80 rounded relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
+          <div className="h-2.5 w-11/12 bg-slate-800/80 rounded relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
+          <div className="h-2.5 w-4/6 bg-slate-800/80 rounded relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
+        </div>
+
+        {/* Footer */}
         <div className="flex justify-between pt-1">
-          <div className="h-3 w-20 bg-slate-700/50 rounded" />
-          <div className="h-3 w-16 bg-slate-700/50 rounded" />
+          <div className="h-2.5 w-16 bg-slate-800/60 rounded relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
+          <div className="h-2.5 w-14 bg-slate-800/60 rounded relative overflow-hidden">
+            <div className="absolute inset-0 shimmer" />
+          </div>
         </div>
       </div>
     </div>

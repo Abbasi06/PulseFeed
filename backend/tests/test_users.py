@@ -25,9 +25,9 @@ def test_create_user_success(client: TestClient) -> None:
     body = resp.json()
     assert body["name"] == "Alice"
     assert body["occupation"] == "Software Engineer"
-    assert body["interests"] == ["AI", "Python"]
-    assert body["hobbies"] == ["Reading"]
+    assert body["selected_chips"] == ["AI", "Python"]
     assert "id" in body
+
 
 
 def test_create_user_sets_auth_cookie(client: TestClient) -> None:
@@ -47,17 +47,12 @@ def test_create_user_empty_occupation_422(client: TestClient) -> None:
     assert client.post("/users", json={**USER_A, "occupation": ""}).status_code == 422
 
 
-def test_create_user_no_interests_422(client: TestClient) -> None:
-    assert client.post("/users", json={**USER_A, "interests": []}).status_code == 422
+def test_create_user_no_selected_chips_422(client: TestClient) -> None:
+    assert client.post("/users", json={**USER_A, "selected_chips": []}).status_code == 422
 
 
-def test_create_user_too_many_interests_422(client: TestClient) -> None:
-    payload = {**USER_A, "interests": [str(i) for i in range(11)]}
-    assert client.post("/users", json=payload).status_code == 422
-
-
-def test_create_user_too_many_hobbies_422(client: TestClient) -> None:
-    payload = {**USER_A, "hobbies": [str(i) for i in range(11)]}
+def test_create_user_too_many_selected_chips_422(client: TestClient) -> None:
+    payload = {**USER_A, "selected_chips": [str(i) for i in range(11)]}
     assert client.post("/users", json=payload).status_code == 422
 
 
@@ -68,28 +63,22 @@ def test_create_user_strips_whitespace(client: TestClient) -> None:
     assert body["occupation"] == "Engineer"
 
 
-def test_create_user_deduplicates_interests(client: TestClient) -> None:
-    payload = {**USER_A, "interests": ["AI", "AI", "Python"]}
+def test_create_user_deduplicates_selected_chips(client: TestClient) -> None:
+    payload = {**USER_A, "selected_chips": ["AI", "AI", "Python"]}
     body = client.post("/users", json=payload).json()
-    assert body["interests"] == ["AI", "Python"]
+    assert body["selected_chips"] == ["AI", "Python"]
 
 
-def test_create_user_deduplicates_interests_case_insensitive(client: TestClient) -> None:
-    payload = {**USER_A, "interests": ["AI", "ai", "Ai"]}
+def test_create_user_deduplicates_selected_chips_case_insensitive(client: TestClient) -> None:
+    payload = {**USER_A, "selected_chips": ["AI", "ai", "Ai"]}
     body = client.post("/users", json=payload).json()
-    assert body["interests"] == ["AI"]
-
-
-def test_create_user_deduplicates_hobbies(client: TestClient) -> None:
-    payload = {**USER_A, "hobbies": ["Reading", "reading", "READING"]}
-    body = client.post("/users", json=payload).json()
-    assert body["hobbies"] == ["Reading"]
+    assert body["selected_chips"] == ["AI"]
 
 
 def test_create_user_trims_tag_whitespace(client: TestClient) -> None:
-    payload = {**USER_A, "interests": ["  AI  ", "  Python  "]}
+    payload = {**USER_A, "selected_chips": ["  AI  ", "  Python  "]}
     body = client.post("/users", json=payload).json()
-    assert body["interests"] == ["AI", "Python"]
+    assert body["selected_chips"] == ["AI", "Python"]
 
 
 # ---------------------------------------------------------------------------

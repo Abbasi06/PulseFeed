@@ -1,10 +1,15 @@
+import logging
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import sqlalchemy.exc
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+logger = logging.getLogger(__name__)
 
 # Load .env from project root regardless of working directory
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -21,20 +26,39 @@ def _run_migrations() -> None:
         "ALTER TABLE feed_items ADD COLUMN liked INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE events ADD COLUMN image_url TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE events ADD COLUMN liked INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE users ADD COLUMN preferred_formats TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN field TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN sub_fields TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN preferred_sources TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN followed_creators TEXT NOT NULL DEFAULT '[]'",
+        (
+            "CREATE TABLE IF NOT EXISTS feed_briefs ("
+            "id INTEGER PRIMARY KEY, "
+            "user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE, "
+            "headline TEXT NOT NULL DEFAULT '', "
+            "signals TEXT NOT NULL DEFAULT '[]', "
+            "top_reads TEXT NOT NULL DEFAULT '[]', "
+            "watch TEXT NOT NULL DEFAULT '[]', "
+            "generated_at DATETIME NOT NULL)"
+        ),
     ]
     with engine.connect() as conn:
         for sql in migrations:
             try:
                 conn.execute(__import__("sqlalchemy").text(sql))
                 conn.commit()
-            except Exception:
-                pass  # column already exists
+            except sqlalchemy.exc.OperationalError:
+                pass  # column / table already exists
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Base.metadata.create_all(bind=engine)
     _run_migrations()
+    if not os.environ.get("GEMINI_API_KEY"):
+        logger.warning(
+            "GEMINI_API_KEY is not set — feed generation will fail on first request"
+        )
     yield
 
 

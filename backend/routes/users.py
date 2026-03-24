@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from auth import COOKIE_OPTS, create_access_token, get_current_user_id
 from database import get_db
 from models import User
-from schemas import UserCreate, UserRead
+from schemas import UserCreate, UserRead, UserUpdate
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -16,8 +16,9 @@ def create_user(
     user = User(
         name=payload.name,
         occupation=payload.occupation,
-        interests=payload.interests,
-        hobbies=payload.hobbies,
+        selected_chips=payload.selected_chips,
+        field=payload.field,
+        sub_fields=payload.sub_fields,
     )
     db.add(user)
     db.commit()
@@ -54,7 +55,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)) -> User:
 @router.put("/{user_id}", response_model=UserRead)
 def update_user(
     user_id: int,
-    payload: UserCreate,
+    payload: UserUpdate,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> User:
@@ -65,8 +66,11 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     user.name = payload.name
     user.occupation = payload.occupation
-    user.interests = payload.interests
-    user.hobbies = payload.hobbies
+    if payload.selected_chips is not None:
+        user.selected_chips = payload.selected_chips
+    user.field = payload.field
+    user.sub_fields = payload.sub_fields
+    user.preferred_formats = payload.preferred_formats
     db.commit()
     db.refresh(user)
     return user
