@@ -1,10 +1,15 @@
+import logging
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import sqlalchemy.exc
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+logger = logging.getLogger(__name__)
 
 # Load .env from project root regardless of working directory
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -42,14 +47,18 @@ def _run_migrations() -> None:
             try:
                 conn.execute(__import__("sqlalchemy").text(sql))
                 conn.commit()
-            except Exception:
-                pass  # column already exists
+            except sqlalchemy.exc.OperationalError:
+                pass  # column / table already exists
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Base.metadata.create_all(bind=engine)
     _run_migrations()
+    if not os.environ.get("GEMINI_API_KEY"):
+        logger.warning(
+            "GEMINI_API_KEY is not set — feed generation will fail on first request"
+        )
     yield
 
 

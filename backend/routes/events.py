@@ -1,7 +1,9 @@
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from auth import get_current_user_id
@@ -14,11 +16,36 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/events", tags=["events"])
 
 CACHE_TTL_HOURS = 6
+REFRESH_COOLDOWN_SECONDS = 60
+
+_last_refresh: dict[int, float] = {}
 
 
 def _is_stale(fetched_at: datetime) -> bool:
     age = datetime.now(timezone.utc) - fetched_at.replace(tzinfo=timezone.utc)
     return age > timedelta(hours=CACHE_TTL_HOURS)
+
+
+def _is_cache_warm(user_id: int, db: Session) -> bool:
+    """Return True if the newest event is within the cache TTL."""
+    latest_at = (
+        db.query(func.max(Event.fetched_at))
+        .filter(Event.user_id == user_id)
+        .scalar()
+    )
+    return latest_at is not None and not _is_stale(latest_at)
+
+
+def _check_cooldown(user_id: int) -> None:
+    last = _last_refresh.get(user_id, 0.0)
+    elapsed = time.monotonic() - last
+    if elapsed < REFRESH_COOLDOWN_SECONDS:
+        remaining = int(REFRESH_COOLDOWN_SECONDS - elapsed)
+        raise HTTPException(
+            status_code=429,
+            detail=f"Refresh too soon — wait {remaining}s before trying again",
+            headers={"Retry-After": str(remaining)},
+        )
 
 
 def _save_events(evs: list[dict], db: Session) -> None:
@@ -49,14 +76,13 @@ async def get_events(
     if db.get(User, user_id) is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    evs = (
-        db.query(Event)
-        .filter(Event.user_id == user_id)
-        .order_by(Event.fetched_at.desc())
-        .all()
-    )
-    if evs and not _is_stale(evs[0].fetched_at):
-        return evs
+    if _is_cache_warm(user_id, db):
+        return (
+            db.query(Event)
+            .filter(Event.user_id == user_id)
+            .order_by(Event.fetched_at.desc())
+            .all()
+        )
 
     return await _refresh_events(user_id, db)
 
@@ -71,7 +97,10 @@ async def refresh_events(
         raise HTTPException(status_code=403, detail="Forbidden")
     if db.get(User, user_id) is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return await _refresh_events(user_id, db)
+    _check_cooldown(user_id)
+    result = await _refresh_events(user_id, db)
+    _last_refresh[user_id] = time.monotonic()
+    return result
 
 
 @router.patch("/items/{item_id}/like", response_model=EventRead)
@@ -103,9 +132,11 @@ async def _refresh_events(user_id: int, db: Session) -> list[Event]:
     db.query(Event).filter(Event.user_id == user_id).delete()
     _save_events(evs, db)
 
-    return (
+    new_events = (
         db.query(Event)
         .filter(Event.user_id == user_id)
         .order_by(Event.fetched_at.desc())
         .all()
     )
+    logger.info("Events refreshed for user %d: %d items stored", user_id, len(new_events))
+    return new_events

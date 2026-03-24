@@ -64,7 +64,7 @@ cd frontend && npm run test:watch # watch mode
 ### Frontend structure
 - `context/AuthContext.jsx` — on mount calls `GET /users/me` to validate httpOnly cookie; provides `user`, `isAuthenticated`, `login()`, `logout()`; all fetches use `credentials: 'include'`
 - `pages/Onboarding.jsx` — profile creation form
-- `pages/Dashboard.jsx` — three tabs (Feed, Events, Saved); like toggle; refresh triggers both feed and events in parallel
+- `pages/Dashboard.jsx` — two tabs (Feed, Saved); floating hover panels on left (Today's Brief) and right (Events); like toggle; refresh triggers both feed and events in parallel
 - `pages/Settings.jsx` — pre-populated edit form; success banner on save
 - `components/DashboardLayout.jsx` — sidebar (desktop) + top bar (mobile) with nav; wraps protected routes via `<Outlet />`
 - `components/TagInput.jsx` — reusable tag input used for interests and hobbies in both Onboarding and Settings
@@ -108,6 +108,39 @@ cd frontend && npm run test:watch # watch mode
 - `backend/tests/test_agents.py` — pure unit tests for `_validate_feed_items`, `_validate_events`, `_build_*_queries`, `search_web`; all Gemini/DuckDuckGo calls mocked
 - **404 vs 403 note:** feed/events/user-update routes check `user_id != current_user_id` (→ 403) *before* the DB lookup (→ 404). Tests that assert 404 must forge a JWT for the non-existent `user_id` via `create_access_token(99999)`.
 - Frontend tests live in `src/components/__tests__/`; vitest + `@testing-library/react`; `<img alt="">` has ARIA role `"presentation"`, not `"img"` — use `screen.getByRole('presentation')` for image assertions
+
+## Claude Code configuration (`.claude/`)
+
+### Agents
+Specialized subagents available via the Agent tool:
+- `frontend-developer` — React/Vite/TailwindCSS component work
+- `ui-ux-designer` — UI/UX design decisions and layout
+- `backend-architect` — FastAPI, SQLAlchemy, API design
+- `code-reviewer` — code quality and review
+- `debugger` — root-cause analysis and bug fixing
+- `context-manager` — managing large context and summarisation
+- `mcp-expert` — MCP server configuration
+
+### Skills
+Invocable via the Skill tool (`/skill-name`):
+- `ui-ux-pro-max` — advanced UI/UX with design data (colors, typography, icons, React patterns)
+- `ui-design-system` — design token generation (`scripts/design_token_generator.py`)
+- `frontend-design` — frontend design guidance
+- `senior-backend` — backend best practices; includes API load tester, scaffolder, and DB migration tool scripts
+
+### Hooks (`.claude/settings.json`)
+All hooks run on `PostToolUse`:
+- **simple-notifications** (`*`) — desktop notification on every tool completion (macOS/Linux)
+- **smart-commit** (`Edit`) — auto-stages and commits edited files with size-classified message
+- **smart-commit** (`Write`) — auto-commits newly written files with `Add new file: …`
+- **security-scanner** (`Edit|Write`) — runs semgrep, bandit (`.py` only), gitleaks, and a regex secrets check after every file change
+
+### Permissions (`.claude/settings.json`)
+- **Allow:** `npm run lint`, `npm run test:*`, `npm run build`, `npm start`
+- **Deny:** read or write to any `.env` / `.env.*` file
+
+### Status line
+`python3 .claude/scripts/context-monitor.py` — displays context usage bar, percentage, token count, session duration, and cost; turns red with `⚠ COMPACT SOON` at 85% context usage.
 
 ## Code conventions
 - Python: snake_case, type hints on **all** parameters and return types, no function > 40 lines, no bare `except`

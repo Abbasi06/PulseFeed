@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import sys
+import time
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -113,17 +114,22 @@ async def _gemini(client: genai.Client, contents: str) -> str:
     )
 
 
+def _strip_fence(text: str) -> str:
+    """Strip markdown code fences (``` or ```json) from Gemini output."""
+    text = text.strip()
+    if not text.startswith("```"):
+        return text
+    parts = text.split("```")
+    inner = parts[1] if len(parts) > 1 else ""
+    if inner.startswith("json"):
+        inner = inner[4:]
+    return inner.strip()
+
+
 def _parse_json_object(text: str, context: str) -> dict[str, object]:
     """Parse a JSON object from Gemini output, stripping any markdown fences."""
-    text = text.strip()
-    if text.startswith("```"):
-        parts = text.split("```")
-        inner = parts[1] if len(parts) > 1 else ""
-        if inner.startswith("json"):
-            inner = inner[4:]
-        text = inner.strip()
     try:
-        result = json.loads(text)
+        result = json.loads(_strip_fence(text))
         if isinstance(result, dict):
             return result  # type: ignore[return-value]
         logger.warning("Gemini returned non-dict JSON for %s", context)
@@ -135,15 +141,8 @@ def _parse_json_object(text: str, context: str) -> dict[str, object]:
 
 def _parse_json_list(text: str, context: str) -> list[dict[str, object]]:
     """Parse a JSON array from Gemini output, stripping any markdown fences."""
-    text = text.strip()
-    if text.startswith("```"):
-        parts = text.split("```")
-        inner = parts[1] if len(parts) > 1 else ""
-        if inner.startswith("json"):
-            inner = inner[4:]
-        text = inner.strip()
     try:
-        result = json.loads(text)
+        result = json.loads(_strip_fence(text))
         if isinstance(result, list):
             return result  # type: ignore[return-value]
         logger.warning("Gemini returned non-list JSON for %s", context)
@@ -304,6 +303,7 @@ async def generate_feed(
     user_id: int, db: Session
 ) -> list[dict[str, object]]:
     """Search the web and use Gemini to summarize news for *user_id*."""
+    t0 = time.monotonic()
     user = db.get(User, user_id)
     if user is None:
         raise ValueError(f"User {user_id} not found")
@@ -344,7 +344,11 @@ async def generate_feed(
         f"Return between 5 and {MAX_FEED} items.",
     )
     raw_items = _parse_json_list(text, context=f"feed user={user_id}")
-    return _validate_feed_items(raw_items, user_id)
+    validated = _validate_feed_items(raw_items, user_id)
+    logger.info(
+        "generate_feed user=%d: %d items in %.2fs", user_id, len(validated), time.monotonic() - t0
+    )
+    return validated
 
 
 # ---------------------------------------------------------------------------
@@ -356,6 +360,7 @@ async def generate_events(
     user_id: int, db: Session
 ) -> list[dict[str, object]]:
     """Search the web and use Gemini to extract upcoming events for *user_id*."""
+    t0 = time.monotonic()
     user = db.get(User, user_id)
     if user is None:
         raise ValueError(f"User {user_id} not found")
@@ -387,7 +392,11 @@ async def generate_events(
         f"Return between 3 and {MAX_EVENTS} items.",
     )
     raw_events = _parse_json_list(text, context=f"events user={user_id}")
-    return _validate_events(raw_events, user_id)
+    validated = _validate_events(raw_events, user_id)
+    logger.info(
+        "generate_events user=%d: %d items in %.2fs", user_id, len(validated), time.monotonic() - t0
+    )
+    return validated
 
 
 # ---------------------------------------------------------------------------
