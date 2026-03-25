@@ -196,9 +196,9 @@ export default function Settings() {
         )}
 
         {saved && (
-          <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-lg px-4 py-3">
             <svg
-              className="w-4 h-4 text-green-400"
+              className="w-4 h-4 text-violet-400"
               fill="none"
               stroke="currentColor"
               strokeWidth={2.5}
@@ -210,7 +210,7 @@ export default function Settings() {
                 d="M5 13l4 4L19 7"
               />
             </svg>
-            <p className="text-sm text-green-300">
+            <p className="text-sm text-violet-300">
               Profile saved successfully.
             </p>
           </div>
@@ -287,7 +287,7 @@ export default function Settings() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
                     selected
-                      ? "border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/30"
+                      ? "border-violet-500 bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/30"
                       : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-500 hover:text-slate-300"
                   }`}
                 >
@@ -346,12 +346,12 @@ export default function Settings() {
                   }
                   className={`relative flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
                     selected
-                      ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-500/5"
+                      ? "border-violet-500 ring-2 ring-violet-500/20 bg-violet-500/5"
                       : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
                   }`}
                 >
                   {selected && (
-                    <div className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                    <div className="absolute top-2 right-2 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center">
                       <Check
                         className="w-2.5 h-2.5 text-white"
                         strokeWidth={3}
@@ -359,11 +359,11 @@ export default function Settings() {
                     </div>
                   )}
                   <Icon
-                    className={`w-5 h-5 shrink-0 ${selected ? "text-emerald-400" : "text-slate-400"}`}
+                    className={`w-5 h-5 shrink-0 ${selected ? "text-violet-400" : "text-slate-400"}`}
                   />
                   <div>
                     <p
-                      className={`text-xs font-semibold ${selected ? "text-emerald-300" : "text-slate-300"}`}
+                      className={`text-xs font-semibold ${selected ? "text-violet-300" : "text-slate-300"}`}
                     >
                       {card.label}
                     </p>

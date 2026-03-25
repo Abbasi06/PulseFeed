@@ -1,31 +1,13 @@
+import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
-
-const feedNavItem = {
-  to: "/dashboard",
-  label: "Feed",
-  icon: (
-    <svg
-      className="w-5 h-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-      />
-    </svg>
-  ),
-};
 
 function getInitials(name) {
   return (name || "")
     .trim()
     .split(/\s+/)
-    .map((w) => w[0]?.toUpperCase() || "")
+    .map(w => w[0]?.toUpperCase() || "")
     .slice(0, 2)
     .join("");
 }
@@ -34,116 +16,19 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const initials = getInitials(user?.name);
+  const [open, setOpen] = useState(false);
 
   async function handleLogout() {
+    setOpen(false);
     await logout();
     navigate("/");
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
-      {/* ── Desktop Sidebar ── */}
-      <aside className="hidden md:flex flex-col w-60 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-800/80 shrink-0">
-
-        {/* Nav — top */}
-        <nav className="flex-1 px-3 py-4">
-          <NavLink
-            to={feedNavItem.to}
-            end
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-violet-500/15 text-violet-300 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.2)]"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/70"
-              }`
-            }
-          >
-            {feedNavItem.icon}
-            {feedNavItem.label}
-          </NavLink>
-        </nav>
-
-        {/* Bottom section — brand + settings + logout */}
-        <div className="px-3 pb-5 pt-3 border-t border-slate-800 space-y-1">
-
-          {/* User avatar + PulseBoard brand */}
-          <div className="flex items-center gap-3 px-3 py-3 mb-1">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 select-none"
-              style={{
-                background: "linear-gradient(135deg, #B7397A, #4C6E94)",
-                boxShadow: "0 0 14px rgba(183,57,122,0.4)",
-              }}
-            >
-              {initials || "?"}
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold text-white leading-tight">
-                Pulse<span className="text-violet-400">Board</span>
-              </p>
-              <p className="text-[10px] text-slate-500 leading-tight truncate">
-                Your AI knowledge feed
-              </p>
-            </div>
-          </div>
-
-          {/* Settings */}
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? "bg-violet-500/15 text-violet-300 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.2)]"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/70"
-              }`
-            }
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            Settings
-          </NavLink>
-
-          {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            Sign out
-          </button>
-        </div>
-      </aside>
+    <div className="h-screen flex flex-col bg-slate-950">
 
       {/* ── Mobile top bar ── */}
-      <div className="md:hidden fixed top-0 inset-x-0 z-10 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 inset-x-0 z-30 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
@@ -156,53 +41,103 @@ export default function DashboardLayout() {
           </span>
         </div>
         <nav className="flex gap-1">
-          <NavLink
-            to="/dashboard"
-            end
+          <NavLink to="/settings"
             className={({ isActive }) =>
-              `p-2 rounded-lg transition-colors ${
-                isActive ? "text-violet-400" : "text-slate-400 hover:text-slate-200"
-              }`
+              `p-2 rounded-lg transition-colors ${isActive ? "text-violet-400" : "text-slate-400 hover:text-slate-200"}`
             }
-            title="Feed"
           >
-            {feedNavItem.icon}
-          </NavLink>
-          <NavLink
-            to="/settings"
-            className={({ isActive }) =>
-              `p-2 rounded-lg transition-colors ${
-                isActive ? "text-violet-400" : "text-slate-400 hover:text-slate-200"
-              }`
-            }
-            title="Settings"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </NavLink>
+          <button onClick={handleLogout} className="p-2 rounded-lg text-slate-400 hover:text-rose-400 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
         </nav>
       </div>
 
       {/* ── Main content ── */}
-      <main className="flex-1 md:pt-0 pt-14 overflow-auto">
+      <main className="flex-1 min-h-0 pt-14 overflow-hidden flex flex-col">
         <Outlet />
       </main>
+
+      {/* ── Floating brand — desktop only ── */}
+      <div
+        className="hidden md:block fixed top-5 left-5 z-50"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        {/* Brand pill */}
+        <motion.div
+          whileHover={{ scale: 1.04 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer border border-slate-700/60 shadow-lg shadow-black/40 select-none bg-slate-900"
+        >
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+            style={{ background: "linear-gradient(135deg, #B7397A, #4C6E94)", boxShadow: "0 0 10px rgba(183,57,122,0.4)" }}
+          >
+            {initials || "AI"}
+          </div>
+          <div className="leading-tight">
+            <p className="text-xs font-bold text-white">
+              Pulse<span className="text-violet-400">Board</span>
+            </p>
+            <p className="text-[9px] text-slate-500">AI knowledge feed</p>
+          </div>
+          <motion.svg
+            animate={{ rotate: open ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="w-3 h-3 text-slate-600 shrink-0 ml-0.5"
+            fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </motion.svg>
+        </motion.div>
+
+        {/* Popup menu — drops downward */}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 440, damping: 30 }}
+              className="absolute top-full left-0 mt-2 w-44 rounded-xl overflow-hidden shadow-2xl shadow-black/60 border border-slate-700/60"
+              style={{ background: "#13141F" }}
+            >
+              <NavLink
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                    isActive ? "text-violet-300 bg-violet-500/10" : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`
+                }
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Settings
+              </NavLink>
+              <div className="h-px mx-3 bg-slate-700/50" />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm font-medium text-slate-300 hover:text-rose-300 hover:bg-rose-500/8 transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign out
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

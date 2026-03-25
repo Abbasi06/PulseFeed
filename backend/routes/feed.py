@@ -147,6 +147,57 @@ def toggle_like(
     return item
 
 
+@router.patch("/items/{item_id}/dislike", response_model=FeedRead)
+def toggle_dislike(
+    item_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> FeedItem:
+    item = db.get(FeedItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Feed item not found")
+    if item.user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    item.disliked = not item.disliked
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.patch("/items/{item_id}/save", response_model=FeedRead)
+def toggle_save(
+    item_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> FeedItem:
+    item = db.get(FeedItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Feed item not found")
+    if item.user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    item.saved = not item.saved
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.post("/items/{item_id}/click", response_model=FeedRead)
+def record_click(
+    item_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+) -> FeedItem:
+    item = db.get(FeedItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Feed item not found")
+    if item.user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    item.read_count += 1
+    db.commit()
+    db.refresh(item)
+    return item
+
+
 async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
     from agents.research_agent import generate_feed
 

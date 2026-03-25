@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Zap,
-  BookMarked,
-  Eye,
-  ExternalLink,
-  Calendar,
-  MapPin,
-  RefreshCw,
+  Zap, BookMarked, Eye, ExternalLink,
+  Calendar, MapPin, RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import BrainLoader from "../components/BrainLoader";
@@ -15,12 +10,11 @@ import NewsCard from "../components/NewsCard";
 import SkeletonCard from "../components/SkeletonCard";
 import { API_URL } from "../config";
 
-const TABS = ["Feed", "Saved"];
+const TABS = ["Feed", "Events", "Saved"];
 
 // ---------------------------------------------------------------------------
-// Toast notification
+// Toast
 // ---------------------------------------------------------------------------
-
 function Toast({ message, type = "error", onDismiss }) {
   useEffect(() => {
     const t = setTimeout(onDismiss, 3500);
@@ -35,8 +29,8 @@ function Toast({ message, type = "error", onDismiss }) {
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-2xl text-sm font-medium backdrop-blur-md border whitespace-nowrap ${
         type === "error"
-          ? "bg-red-950/90 text-red-200 border-red-500/30 shadow-red-900/40"
-          : "bg-emerald-950/90 text-emerald-200 border-emerald-500/30 shadow-emerald-900/40"
+          ? "bg-red-950/90 text-red-200 border-red-500/30"
+          : "bg-emerald-950/90 text-emerald-200 border-emerald-500/30"
       }`}
     >
       {type === "error" ? (
@@ -54,171 +48,151 @@ function Toast({ message, type = "error", onDismiss }) {
 }
 
 // ---------------------------------------------------------------------------
-// Brief panel content
+// Brief tab — glowing pill that expands into a 3-column summary panel
 // ---------------------------------------------------------------------------
+function BriefTab({ brief, loading }) {
+  const [open, setOpen] = useState(false);
 
-function BriefContent({ brief, loading }) {
-  if (loading) {
-    return (
-      <div className="space-y-3 animate-pulse">
-        <div className="h-3 w-3/4 bg-slate-800 rounded" />
-        <div className="h-3 w-full bg-slate-800 rounded" />
-        <div className="h-3 w-2/3 bg-slate-800 rounded" />
-        <div className="mt-5 h-3 w-1/2 bg-slate-800 rounded" />
-        <div className="h-3 w-full bg-slate-800 rounded" />
-        <div className="h-3 w-3/4 bg-slate-800 rounded" />
-      </div>
-    );
-  }
-  if (!brief) {
-    return (
-      <p className="text-xs text-slate-500 leading-relaxed">
-        Your brief will appear here after your first feed load.
-      </p>
-    );
-  }
+  // Show the pill even while loading (disabled state)
+  const disabled = loading && !brief;
+
   return (
-    <div className="space-y-5">
-      <p className="text-sm font-medium text-slate-200 leading-snug">
-        {brief.headline}
-      </p>
+    <div className="mb-5">
 
-      {brief.signals?.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Zap className="w-3 h-3 text-amber-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-              Key Signals
-            </span>
-          </div>
-          <ul className="space-y-1.5">
-            {brief.signals.map((s, i) => (
-              <li key={i} className="flex items-start gap-1.5">
-                <span className="text-amber-500/60 mt-1 text-[8px] shrink-0">●</span>
-                <span className="text-xs text-slate-300 leading-relaxed">{s}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {brief.top_reads?.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <BookMarked className="w-3 h-3 text-emerald-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
-              Worth Your Time
-            </span>
-          </div>
-          <ul className="space-y-2.5">
-            {brief.top_reads.map((r, i) => (
-              <li key={i}>
-                <a
-                  href={r.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex items-start gap-1.5 hover:text-emerald-300 transition-colors"
-                >
-                  <ExternalLink className="w-3 h-3 text-emerald-500/60 shrink-0 mt-0.5 group-hover:text-emerald-400" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-slate-300 group-hover:text-emerald-300 leading-snug line-clamp-2">
-                      {r.title}
-                    </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{r.source}</p>
-                  </div>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {brief.watch?.length > 0 && (
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Eye className="w-3 h-3 text-sky-400" />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-400">
-              Watch This Space
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {brief.watch.map((w, i) => (
-              <span
-                key={i}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-500/10 border border-sky-500/20 text-sky-300"
+      {/* Glowing pill trigger */}
+      <div className="relative inline-flex items-center mb-0">
+        {/* Blur glow layer */}
+        <div className="absolute inset-0 rounded-full blur-md opacity-50 gemini-glow" />
+        {/* Gradient border wrapper */}
+        <div className="relative p-[1.5px] rounded-full gemini-glow">
+          <button
+            onClick={() => !disabled && setOpen(o => !o)}
+            disabled={disabled}
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950 text-sm font-medium text-white disabled:opacity-50 transition-opacity select-none"
+          >
+            <Zap className="w-3.5 h-3.5 text-violet-300 shrink-0" />
+            <span>Today's Brief</span>
+            {loading && !brief && (
+              <span className="text-[10px] text-slate-500">loading…</span>
+            )}
+            {!disabled && (
+              <motion.svg
+                animate={{ rotate: open ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-3 h-3 text-slate-400 shrink-0"
+                fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
               >
-                {w}
-              </span>
-            ))}
-          </div>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </motion.svg>
+            )}
+          </button>
         </div>
-      )}
+      </div>
+
+      {/* Expandable panel */}
+      <AnimatePresence initial={false}>
+        {open && brief && (
+          <motion.div
+            key="brief-panel"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 32 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 rounded-xl border border-slate-700/60 overflow-hidden grid grid-cols-1 md:grid-cols-3 bg-slate-900">
+
+              {/* Col 1 — Overview */}
+              <div className="px-5 py-4 md:border-r border-b md:border-b-0 border-slate-800">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-2">Overview</p>
+                <p className="text-[12px] text-slate-200 leading-relaxed">{brief.headline}</p>
+                {(brief.watch ?? []).length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-3">
+                    {brief.watch.slice(0, 4).map((w, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-sky-500/10 border border-sky-500/20 text-sky-400">{w}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Col 2 — Key Signals */}
+              <div className="px-5 py-4 md:border-r border-b md:border-b-0 border-slate-800">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-amber-500/70 mb-2">Key Signals</p>
+                <ul className="space-y-2.5">
+                  {(brief.signals ?? []).slice(0, 4).map((s, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 shrink-0 mt-1.5" />
+                      <span className="text-[12px] text-slate-400 leading-snug">{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Col 3 — Worth Reading */}
+              <div className="px-5 py-4">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-500/70 mb-2">Worth Reading</p>
+                <ul className="space-y-3">
+                  {(brief.top_reads ?? []).slice(0, 3).map((r, i) => (
+                    <li key={i}>
+                      <a href={r.url} target="_blank" rel="noopener noreferrer"
+                        className="group flex items-start gap-2">
+                        <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
+                        <div className="min-w-0">
+                          <p className="text-[12px] text-slate-400 group-hover:text-emerald-300 transition-colors line-clamp-2 leading-snug">{r.title}</p>
+                          {r.source && <p className="text-[10px] text-slate-600 mt-0.5">{r.source}</p>}
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Compact event card for the right panel
+// Event card for the Events tab (fuller version)
 // ---------------------------------------------------------------------------
-
 const TYPE_COLORS = {
   Conference: "bg-blue-500/80",
-  Meetup: "bg-green-500/80",
-  Workshop: "bg-amber-500/80",
-  Webinar: "bg-cyan-500/80",
-  Summit: "bg-rose-500/80",
+  Meetup:     "bg-green-500/80",
+  Workshop:   "bg-amber-500/80",
+  Webinar:    "bg-cyan-500/80",
+  Summit:     "bg-rose-500/80",
 };
 
-function CompactEventCard({ name, date, location, type, url, reason }) {
+function EventCard({ name, date, location, type, url, reason }) {
   const safeUrl = url && url !== "#" ? url : null;
   const typeCls = TYPE_COLORS[type] ?? "bg-slate-500/80";
-
   return (
-    <div className="rounded-xl bg-slate-800/60 border border-slate-700/50 p-3 space-y-2 hover:border-slate-600 hover:bg-slate-800/80 transition-all duration-200">
+    <div className="rounded-2xl bg-slate-900 border border-slate-700/60 p-4 space-y-3 hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-950/30 transition-all duration-200 hover:-translate-y-0.5 flex flex-col">
       {type && (
-        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold text-white ${typeCls}`}>
-          {type}
-        </span>
+        <span className={`inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-white ${typeCls}`}>{type}</span>
       )}
       {safeUrl ? (
-        <a
-          href={safeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-xs font-semibold text-slate-200 hover:text-violet-300 transition-colors leading-snug line-clamp-2"
-        >
+        <a href={safeUrl} target="_blank" rel="noopener noreferrer"
+          className="text-sm font-bold text-slate-100 leading-snug hover:text-violet-300 transition-colors">
           {name}
         </a>
       ) : (
-        <p className="text-xs font-semibold text-slate-200 leading-snug line-clamp-2">{name}</p>
+        <p className="text-sm font-bold text-slate-100 leading-snug">{name}</p>
       )}
-      <div className="flex flex-col gap-1 text-[10px] text-slate-500">
-        {date && (
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3 shrink-0" />{date}
-          </span>
-        )}
-        {location && (
-          <span className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 shrink-0" />
-            <span className="truncate">{location}</span>
-          </span>
-        )}
+      <div className="flex flex-col gap-1.5 text-xs text-slate-500">
+        {date && <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 shrink-0" />{date}</span>}
+        {location && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 shrink-0" />{location}</span>}
       </div>
       {reason && (
-        <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2 border-t border-slate-700/40 pt-1.5">
-          {reason}
-        </p>
+        <p className="text-xs text-slate-500 leading-relaxed flex-1">{reason}</p>
       )}
       {safeUrl && (
-        <a
-          href={safeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-[10px] font-medium text-violet-400 hover:text-violet-300 transition-colors pt-0.5"
-        >
-          <ExternalLink className="w-3 h-3" />
-          View event
+        <a href={safeUrl} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors mt-auto pt-1">
+          <ExternalLink className="w-3.5 h-3.5" />View event
         </a>
       )}
     </div>
@@ -226,92 +200,8 @@ function CompactEventCard({ name, date, location, type, url, reason }) {
 }
 
 // ---------------------------------------------------------------------------
-// Floating hover panel (Brief on left, Events on right)
+// Dashboard
 // ---------------------------------------------------------------------------
-
-function FloatPanel({ side, open, onOpenChange, collapsedIcon, collapsedLabel, accentColor, children }) {
-  const isLeft = side === "left";
-  const borderClass = isLeft
-    ? "border-r border-t border-b border-l-0 rounded-r-2xl"
-    : "border-l border-t border-b border-r-0 rounded-l-2xl";
-  const positionClass = isLeft ? "left-0" : "right-0";
-
-  return (
-    <div
-      className={`absolute ${positionClass} top-1/2 z-20 pointer-events-none hidden md:block`}
-      style={{ transform: "translateY(-50%)" }}
-    >
-      <motion.div
-        onHoverStart={() => onOpenChange(true)}
-        onHoverEnd={() => onOpenChange(false)}
-        animate={{
-          width: open ? (isLeft ? 300 : 320) : 44,
-          boxShadow: open
-            ? `0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(183,57,122,0.1)`
-            : "0 4px 20px rgba(0,0,0,0.3)",
-        }}
-        transition={{ type: "spring", stiffness: 380, damping: 36 }}
-        className={`pointer-events-auto bg-slate-900/95 backdrop-blur-xl border border-slate-700/60 ${borderClass} overflow-hidden`}
-        style={{ minWidth: 44 }}
-      >
-        {/* Collapsed pill */}
-        <motion.div
-          animate={{ opacity: open ? 0 : 1, height: open ? 0 : "auto" }}
-          transition={{ duration: 0.15 }}
-          className="flex flex-col items-center justify-center gap-2 py-5 px-2 overflow-hidden cursor-pointer"
-        >
-          <span style={{ color: accentColor }}>{collapsedIcon}</span>
-          <span
-            className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase"
-            style={{
-              writingMode: "vertical-rl",
-              transform: isLeft ? "rotate(180deg)" : "none",
-            }}
-          >
-            {collapsedLabel}
-          </span>
-        </motion.div>
-
-        {/* Expanded content */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              key="expanded"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18, delay: 0.08 }}
-              className="overflow-y-auto scrollbar-hide p-4 pt-5"
-              style={{
-                width: isLeft ? 300 : 320,
-                maxHeight: "48vh",
-              }}
-            >
-              {/* Panel header */}
-              <div className="flex items-center gap-2 mb-4">
-                <span style={{ color: accentColor }} className="shrink-0">
-                  {collapsedIcon}
-                </span>
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-widest"
-                  style={{ color: accentColor }}
-                >
-                  {collapsedLabel}
-                </span>
-              </div>
-              {children}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main Dashboard
-// ---------------------------------------------------------------------------
-
 export default function Dashboard() {
   const { user } = useAuth();
   const userId = user?.id;
@@ -324,99 +214,99 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [briefOpen, setBriefOpen] = useState(false);
-  const [eventsOpen, setEventsOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const loadData = useCallback(
-    async (force = false) => {
-      if (!userId) return;
-      force ? setRefreshing(true) : setLoading(true);
-      setError("");
-      try {
-        const method = force ? "POST" : "GET";
-        const [feedRes, eventsRes] = await Promise.all([
-          fetch(`${API_URL}/feed/${userId}${force ? "/refresh" : ""}`, {
-            method,
-            credentials: "include",
-          }),
-          fetch(`${API_URL}/events/${userId}${force ? "/refresh" : ""}`, {
-            method,
-            credentials: "include",
-          }),
-        ]);
-
-        // Cooldown response from backend
-        if (feedRes.status === 429) {
-          const retry = feedRes.headers.get("Retry-After") || "60";
-          setToast({ message: `Feed is fresh — wait ${retry}s before refreshing again`, type: "error" });
-          return;
-        }
-
-        if (!feedRes.ok || !eventsRes.ok) throw new Error("Failed to load data");
-        const [feedData, eventsData] = await Promise.all([
-          feedRes.json(),
-          eventsRes.json(),
-        ]);
-        setFeed(feedData);
-        setEvents(eventsData);
-
-        if (feedData.length > 0) {
-          setBriefLoading(true);
-          fetch(`${API_URL}/feed/${userId}/brief`, { credentials: "include" })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((b) => setBrief(b))
-            .catch(() => setBrief(null))
-            .finally(() => setBriefLoading(false));
-        } else {
-          setBrief(null);
-        }
-      } catch (err) {
-        setError(err.message || "Could not load your feed. Please try again.");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
-      }
-    },
-    [userId],
-  );
-
-  useEffect(() => {
-    loadData(false);
-  }, [loadData]);
-
-  // Optimistic like toggle with rollback on failure
-  const toggleFeedLike = useCallback(async (id) => {
-    setFeed((prev) =>
-      prev.map((item) => item.id === id ? { ...item, liked: !item.liked } : item)
-    );
+  const loadData = useCallback(async (force = false) => {
+    if (!userId) return;
+    force ? setRefreshing(true) : setLoading(true);
+    setError("");
     try {
-      const res = await fetch(`${API_URL}/feed/items/${id}/like`, {
-        method: "PATCH",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Request failed");
-      const updated = await res.json();
-      setFeed((prev) => prev.map((item) => item.id === id ? updated : item));
-    } catch {
-      // Rollback
-      setFeed((prev) =>
-        prev.map((item) => item.id === id ? { ...item, liked: !item.liked } : item)
-      );
-      setToast({ message: "Couldn't save — please try again", type: "error" });
+      const method = force ? "POST" : "GET";
+      const [feedRes, eventsRes] = await Promise.all([
+        fetch(`${API_URL}/feed/${userId}${force ? "/refresh" : ""}`, { method, credentials: "include" }),
+        fetch(`${API_URL}/events/${userId}${force ? "/refresh" : ""}`, { method, credentials: "include" }),
+      ]);
+      if (feedRes.status === 429) {
+        const retry = feedRes.headers.get("Retry-After") || "60";
+        setToast({ message: `Feed is fresh — wait ${retry}s before refreshing again`, type: "error" });
+        return;
+      }
+      if (!feedRes.ok || !eventsRes.ok) throw new Error("Failed to load data");
+      const [feedData, eventsData] = await Promise.all([feedRes.json(), eventsRes.json()]);
+      setFeed(feedData);
+      setEvents(eventsData);
+      if (feedData.length > 0) {
+        setBriefLoading(true);
+        fetch(`${API_URL}/feed/${userId}/brief`, { credentials: "include" })
+          .then(r => r.ok ? r.json() : null)
+          .then(setBrief).catch(() => setBrief(null))
+          .finally(() => setBriefLoading(false));
+      } else {
+        setBrief(null);
+      }
+    } catch (err) {
+      setError(err.message || "Could not load your feed. Please try again.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  }, [userId]);
+
+  useEffect(() => { loadData(false); }, [loadData]);
+
+  const toggleFeedLike = useCallback((id) => {
+    setFeed(p => p.map(item => item.id === id ? { ...item, liked: !item.liked } : item));
+    fetch(`${API_URL}/feed/items/${id}/like`, { method: "PATCH", credentials: "include" })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(u => setFeed(p => p.map(item => item.id === id ? u : item)))
+      .catch(() => {
+        setFeed(p => p.map(item => item.id === id ? { ...item, liked: !item.liked } : item));
+        setToast({ message: "Couldn't update — please try again", type: "error" });
+      });
   }, []);
 
-  const savedFeed = feed.filter((item) => item.liked);
+  const toggleFeedDislike = useCallback((id) => {
+    setFeed(p => p.map(item => item.id === id ? { ...item, disliked: !item.disliked } : item));
+    fetch(`${API_URL}/feed/items/${id}/dislike`, { method: "PATCH", credentials: "include" })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(u => setFeed(p => p.map(item => item.id === id ? u : item)))
+      .catch(() => setFeed(p => p.map(item => item.id === id ? { ...item, disliked: !item.disliked } : item)));
+  }, []);
+
+  const toggleFeedSave = useCallback((id) => {
+    // Optimistic update
+    setFeed(p => p.map(item => item.id === id ? { ...item, saved: !item.saved } : item));
+    fetch(`${API_URL}/feed/items/${id}/save`, { method: "PATCH", credentials: "include" })
+      .then(r => {
+        if (!r.ok) return r.text().then(t => Promise.reject(new Error(`${r.status}: ${t}`)));
+        return r.json();
+      })
+      .then(updated => {
+        // Sync with server truth
+        setFeed(p => p.map(item => item.id === id ? updated : item));
+      })
+      .catch(err => {
+        console.error("[save failed]", err.message);
+        // Rollback
+        setFeed(p => p.map(item => item.id === id ? { ...item, saved: !item.saved } : item));
+        setToast({ message: "Save failed — is the backend running?", type: "error" });
+      });
+  }, []);
+
+  const recordClick = useCallback((id) => {
+    setFeed(p => p.map(item => item.id === id ? { ...item, read_count: (item.read_count || 0) + 1 } : item));
+    fetch(`${API_URL}/feed/items/${id}/click`, { method: "POST", credentials: "include" }).catch(() => {});
+  }, []);
+
+  const savedFeed = feed.filter(item => item.saved);
+  const totalViews = feed.reduce((s, item) => s + (item.read_count || 0), 0);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-full">
 
-      {/* ── Body ── */}
-      <div className="relative flex-1 overflow-hidden">
-
-        {/* Center scroll area — no scrollbar widget */}
-        <div className="h-full overflow-y-auto scrollbar-hide">
+      {/* ── Scrollable body ── */}
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div className="absolute inset-0 overflow-y-auto scrollbar-hide">
           <div className="max-w-5xl mx-auto px-6 sm:px-10 py-6">
 
             {/* Error banner */}
@@ -429,163 +319,153 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Tabs */}
-            <div className="flex gap-1 bg-slate-900/80 border border-slate-800 p-1 rounded-xl w-fit mb-6 backdrop-blur-sm">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative px-5 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    activeTab === tab
-                      ? "text-white"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  {activeTab === tab && (
-                    <motion.div
-                      layoutId="tab-pill"
-                      className="absolute inset-0 bg-violet-600 rounded-lg shadow"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-2">
-                    {tab}
-                    {!loading && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
-                        activeTab === tab
-                          ? "bg-violet-500/40 text-violet-100"
-                          : "bg-slate-800 text-slate-500"
-                      }`}>
-                        {tab === "Feed" ? feed.length : savedFeed.length}
-                      </span>
+            {/* Tabs + reads stat */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex gap-1 bg-slate-900/80 border border-slate-800 p-1 rounded-xl backdrop-blur-sm">
+                {TABS.map(tab => (
+                  <button key={tab} onClick={() => setActiveTab(tab)}
+                    className={`relative px-5 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      activeTab === tab ? "text-white" : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    {activeTab === tab && (
+                      <motion.div layoutId="tab-pill"
+                        className="absolute inset-0 bg-violet-600 rounded-lg"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
                     )}
-                  </span>
-                </button>
-              ))}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {tab}
+                      {!loading && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
+                          activeTab === tab ? "bg-violet-500/40 text-violet-100" : "bg-slate-800 text-slate-500"
+                        }`}>
+                          {tab === "Feed" ? feed.length : tab === "Events" ? events.length : savedFeed.length}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {!loading && totalViews > 0 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-500 text-xs">
+                  <Eye className="w-3.5 h-3.5" />
+                  {totalViews} reads
+                </div>
+              )}
             </div>
 
-            {/* Tab content with AnimatePresence */}
+            {/* Tab content */}
             <AnimatePresence mode="wait">
+
+              {/* ── Feed tab ── */}
               {activeTab === "Feed" && (
-                <motion.div
-                  key="feed"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.18 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                <motion.div key="feed"
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}
                 >
-                  {loading ? (
-                    Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)
-                  ) : feed.length === 0 ? (
-                    <EmptyState message="No news items yet. Hit the refresh icon to generate your feed." />
-                  ) : (
-                    feed.map((item) => (
-                      <NewsCard
-                        key={item.id}
-                        {...item}
-                        onLike={() => toggleFeedLike(item.id)}
-                      />
-                    ))
+                  {/* Brief tab above cards — visible once feed is loaded */}
+                  {!loading && (brief || briefLoading) && (
+                    <BriefTab brief={brief} loading={briefLoading} />
                   )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {loading
+                      ? Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)
+                      : feed.length === 0
+                        ? <EmptyState message="No news items yet. Hit the refresh icon to generate your feed." />
+                        : feed.map(item => (
+                            <NewsCard key={item.id} {...item}
+                              onLike={() => toggleFeedLike(item.id)}
+                              onDislike={() => toggleFeedDislike(item.id)}
+                              onSave={() => toggleFeedSave(item.id)}
+                              onReadClick={() => recordClick(item.id)}
+                            />
+                          ))
+                    }
+                  </div>
                 </motion.div>
               )}
 
-              {activeTab === "Saved" && (
-                <motion.div
-                  key="saved"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.18 }}
+              {/* ── Events tab ── */}
+              {activeTab === "Events" && (
+                <motion.div key="events"
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}
                 >
-                  {loading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {Array.from({ length: 3 }, (_, i) => <SkeletonCard key={i} />)}
-                    </div>
-                  ) : savedFeed.length === 0 ? (
-                    <EmptyState message="Nothing saved yet. Tap the heart on any article to save it here." />
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {savedFeed.map((item) => (
-                        <NewsCard
-                          key={item.id}
-                          {...item}
-                          onLike={() => toggleFeedLike(item.id)}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  {loading
+                    ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {Array.from({ length: 6 }, (_, i) => (
+                          <div key={i} className="rounded-2xl bg-slate-900 border border-slate-700/60 p-4 space-y-3 animate-pulse">
+                            <div className="h-5 w-20 rounded-full bg-slate-800" />
+                            <div className="space-y-2">
+                              <div className="h-3.5 bg-slate-800 rounded w-full" />
+                              <div className="h-3.5 bg-slate-800 rounded w-3/4" />
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="h-3 bg-slate-800 rounded w-2/3" />
+                              <div className="h-3 bg-slate-800 rounded w-1/2" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    : events.length === 0
+                      ? <EmptyState message="No events found yet. Hit refresh to discover upcoming conferences and meetups." />
+                      : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {events.map(ev => <EventCard key={ev.id} {...ev} />)}
+                        </div>
+                  }
                 </motion.div>
               )}
+
+              {/* ── Saved tab ── */}
+              {activeTab === "Saved" && (
+                <motion.div key="saved"
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18 }}
+                >
+                  {loading
+                    ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {Array.from({ length: 3 }, (_, i) => <SkeletonCard key={i} />)}
+                      </div>
+                    : savedFeed.length === 0
+                      ? <EmptyState message="Nothing saved yet. Tap the bookmark icon on any article to save it here." />
+                      : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {savedFeed.map(item => (
+                            <NewsCard key={item.id} {...item}
+                              onLike={() => toggleFeedLike(item.id)}
+                              onDislike={() => toggleFeedDislike(item.id)}
+                              onSave={() => toggleFeedSave(item.id)}
+                              onReadClick={() => recordClick(item.id)}
+                            />
+                          ))}
+                        </div>
+                  }
+                </motion.div>
+              )}
+
             </AnimatePresence>
           </div>
         </div>
 
-        {/* Refresh overlay with BrainLoader */}
+        {/* Refresh overlay */}
         <AnimatePresence>
           {refreshing && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 z-10 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center"
             >
               <BrainLoader message="Refreshing your feed…" />
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* ── Left: Today's Brief floating panel ── */}
-        <FloatPanel
-          side="left"
-          open={briefOpen}
-          onOpenChange={setBriefOpen}
-          collapsedIcon={<Zap className="w-4 h-4" />}
-          collapsedLabel="Today's Brief"
-          accentColor="#7c3aed"
-        >
-          <BriefContent brief={brief} loading={briefLoading} />
-        </FloatPanel>
-
-        {/* ── Right: Events floating panel ── */}
-        <FloatPanel
-          side="right"
-          open={eventsOpen}
-          onOpenChange={setEventsOpen}
-          collapsedIcon={<Calendar className="w-4 h-4" />}
-          collapsedLabel="Events"
-          accentColor="#B7397A"
-        >
-          {loading ? (
-            <div className="space-y-3 animate-pulse">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 bg-slate-800 rounded-xl" />
-              ))}
-            </div>
-          ) : events.length === 0 ? (
-            <p className="text-xs text-slate-500 leading-relaxed">
-              No events found yet. Hit refresh to search for upcoming
-              conferences, meetups, and workshops in your field.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {events.map((ev) => (
-                <CompactEventCard key={ev.id} {...ev} />
-              ))}
-            </div>
-          )}
-        </FloatPanel>
       </div>
 
-      {/* ── Footer ── */}
+      {/* ── Footer — pinned at absolute bottom ── */}
       <div className="shrink-0 border-t border-slate-800 bg-slate-900/80 backdrop-blur-sm">
-        <div className="flex items-center justify-center gap-4 px-6 py-2.5">
+        <div className="flex items-center gap-4 px-6 py-2.5">
           <div className="flex-1 h-px bg-slate-800" />
-          <p className="text-xs text-slate-500 shrink-0">
-            Personalised by AI · refreshes every 6 hours
-          </p>
+          <p className="text-xs text-slate-500 shrink-0">Personalised by AI · refreshes every 6 hours</p>
           <div className="flex-1 h-px bg-slate-800" />
           <button
             onClick={() => loadData(true)}
@@ -598,16 +478,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Toast */}
       <AnimatePresence>
-        {toast && (
-          <Toast
-            key="toast"
-            message={toast.message}
-            type={toast.type}
-            onDismiss={() => setToast(null)}
-          />
-        )}
+        {toast && <Toast key="toast" message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
       </AnimatePresence>
     </div>
   );

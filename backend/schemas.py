@@ -109,6 +109,9 @@ class FeedRead(BaseModel):
     image_url: str
     published_date: str
     liked: bool
+    disliked: bool
+    saved: bool
+    read_count: int
     fetched_at: datetime
 
 

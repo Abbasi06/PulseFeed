@@ -11,11 +11,11 @@ const cardVariants = {
 };
 
 const TYPE_COLORS = {
-  Conference: "bg-blue-500/80 text-white",
-  Meetup: "bg-green-500/80 text-white",
-  Workshop: "bg-amber-500/80 text-white",
-  Webinar: "bg-cyan-500/80 text-white",
-  Summit: "bg-rose-500/80 text-white",
+  Conference: "bg-violet-500/80 text-white",
+  Meetup: "bg-blue-500/80 text-white",
+  Workshop: "bg-fuchsia-600/80 text-white",
+  Webinar: "bg-violet-400/60 text-white",
+  Summit: "bg-fuchsia-700/80 text-white",
 };
 
 function typeClass(type) {
@@ -76,7 +76,7 @@ export default function EventCard({
           aria-label={liked ? "Unlike" : "Like"}
         >
           <svg
-            className={`w-4 h-4 transition-colors ${liked ? "text-rose-500" : "text-white"}`}
+            className={`w-4 h-4 transition-colors ${liked ? "text-fuchsia-500" : "text-white"}`}
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={2}

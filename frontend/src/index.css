@@ -43,17 +43,29 @@ body {
   100% { transform: translateX(100%); }
 }
 
+@keyframes gemini-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 @layer utilities {
   .shimmer {
     background: linear-gradient(
       90deg,
       transparent 0%,
       rgba(255, 255, 255, 0.04) 40%,
-      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.07) 50%,
       rgba(255, 255, 255, 0.04) 60%,
       transparent 100%
     );
     animation: shimmer 1.8s infinite;
+  }
+
+  .gemini-glow {
+    background: linear-gradient(-45deg, #7c3aed, #3b82f6, #06b6d4, #a855f7, #ec4899, #7c3aed);
+    background-size: 300% 300%;
+    animation: gemini-shift 4s ease infinite;
   }
 
   .scrollbar-hide {

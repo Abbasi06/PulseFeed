@@ -92,7 +92,7 @@ function Pulse() {
         {[0, 1, 2].map((i) => (
           <motion.div
             key={i}
-            className="w-2 h-2 rounded-full bg-emerald-500"
+            className="w-2 h-2 rounded-full bg-violet-500"
             animate={{ scale: [1, 1.6, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ repeat: Infinity, duration: 0.9, delay: i * 0.18 }}
           />

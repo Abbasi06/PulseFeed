@@ -47,6 +47,9 @@ class FeedItem(Base):
     image_url: Mapped[str] = mapped_column(String, nullable=False, default="")
     published_date: Mapped[str] = mapped_column(String, nullable=False, default="")
     liked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    disliked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    saved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    read_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     fetched_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, default=lambda: datetime.now(timezone.utc)
     )

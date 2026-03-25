@@ -213,7 +213,7 @@ export default function InterestPicker({ field, subFields, onFieldChange, onSubF
               </label>
               <span
                 className={`text-xs font-medium tabular-nums ${
-                  ready ? "text-emerald-400" : "text-slate-500"
+                  ready ? "text-violet-400" : "text-slate-500"
                 }`}
               >
                 {selected} / {MIN_SUBFIELDS} minimum
@@ -261,7 +261,7 @@ export default function InterestPicker({ field, subFields, onFieldChange, onSubF
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-3 text-xs text-emerald-400 font-medium"
+                className="mt-3 text-xs text-violet-400 font-medium"
               >
                 ✓ Great picks — you can select up to 10 total
               </motion.p>

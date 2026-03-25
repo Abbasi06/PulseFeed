@@ -35,7 +35,7 @@ export const ROLES = [
     shortLabel: "AI",
     backendField: "AI & Machine Learning",
     description: "Models · Pipelines · Agents",
-    color: "emerald",
+    color: "fuchsia",
     subFields: [
       "LLM Orchestration",
       "Computer Vision",
@@ -77,13 +77,13 @@ export const ROLE_COLORS = {
     chipCheck: "bg-violet-500",
     progress: "bg-violet-500",
   },
-  emerald: {
-    card: "border-emerald-500 ring-2 ring-emerald-500/25 bg-emerald-500/5",
-    cardIcon: "text-emerald-400",
-    cardLabel: "text-emerald-300",
-    chip: "border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20",
-    chipCheck: "bg-emerald-500",
-    progress: "bg-emerald-500",
+  fuchsia: {
+    card: "border-fuchsia-500 ring-2 ring-fuchsia-500/25 bg-fuchsia-500/5",
+    cardIcon: "text-fuchsia-400",
+    cardLabel: "text-fuchsia-300",
+    chip: "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-300 ring-1 ring-fuchsia-500/20",
+    chipCheck: "bg-fuchsia-500",
+    progress: "bg-fuchsia-500",
   },
   rose: {
     card: "border-rose-500 ring-2 ring-rose-500/25 bg-rose-500/5",

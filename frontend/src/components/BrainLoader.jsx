@@ -5,11 +5,11 @@
 import { motion } from "framer-motion";
 
 const MINI_NODES = [
-  { dx: -55, dy: -30, delay: 0.1, color: "#10B981" },
-  { dx: 50, dy: -35, delay: 0.5, color: "#60A5FA" },
-  { dx: -58, dy: 22, delay: 0.9, color: "#F59E0B" },
-  { dx: 52, dy: 28, delay: 1.3, color: "#10B981" },
-  { dx: 0, dy: -52, delay: 1.7, color: "#60A5FA" },
+  { dx: -55, dy: -30, delay: 0.1, color: "#7c3aed" },
+  { dx: 50, dy: -35, delay: 0.5, color: "#a855f7" },
+  { dx: -58, dy: 22, delay: 0.9, color: "#d946ef" },
+  { dx: 52, dy: 28, delay: 1.3, color: "#7c3aed" },
+  { dx: 0, dy: -52, delay: 1.7, color: "#a855f7" },
 ];
 
 const CX = 50; // brain centre in the mini SVG
@@ -37,7 +37,7 @@ export default function BrainLoader({ message = "Researching your feed…" }) {
           <motion.path
             d="M 50,10 C 38,10 26,14 19,22 C 12,30 10,40 12,50 C 14,60 20,68 29,73 C 36,77 44,78 50,77 L 50,10 Z"
             fill="none"
-            stroke="#10B981"
+            stroke="#7c3aed"
             strokeWidth={1.2}
             strokeLinecap="round"
             filter="url(#mini-glow)"
@@ -54,7 +54,7 @@ export default function BrainLoader({ message = "Researching your feed…" }) {
           <motion.path
             d="M 50,10 C 62,10 74,14 81,22 C 88,30 90,40 88,50 C 86,60 80,68 71,73 C 64,77 56,78 50,77 L 50,10 Z"
             fill="none"
-            stroke="#10B981"
+            stroke="#7c3aed"
             strokeWidth={1.2}
             strokeLinecap="round"
             filter="url(#mini-glow)"
@@ -74,7 +74,7 @@ export default function BrainLoader({ message = "Researching your feed…" }) {
             y1={10}
             x2={50}
             y2={77}
-            stroke="#10B981"
+            stroke="#7c3aed"
             strokeWidth={0.6}
             strokeOpacity={0.4}
             initial={{ pathLength: 0 }}
@@ -120,7 +120,7 @@ export default function BrainLoader({ message = "Researching your feed…" }) {
             cy={CY}
             r={8}
             fill="none"
-            stroke="#10B981"
+            stroke="#7c3aed"
             strokeWidth={0.5}
             animate={{ r: [8, 24, 8], opacity: [0.5, 0, 0.5] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
@@ -143,7 +143,7 @@ export default function BrainLoader({ message = "Researching your feed…" }) {
           {[0, 1, 2].map((i) => (
             <motion.span
               key={i}
-              className="w-1 h-1 rounded-full bg-emerald-500"
+              className="w-1 h-1 rounded-full bg-violet-500"
               animate={{ opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 1.2, delay: i * 0.25, repeat: Infinity }}
             />
