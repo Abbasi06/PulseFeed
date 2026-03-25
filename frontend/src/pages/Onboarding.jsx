@@ -29,7 +29,7 @@ function StepIndicator({ current }) {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   done
-                    ? "bg-fuchsia-600 text-white"
+                    ? "bg-violet-600 text-white"
                     : active
                       ? "bg-violet-600 text-white ring-4 ring-violet-600/20"
                       : "bg-slate-800 text-slate-500 border border-slate-700"
@@ -38,14 +38,14 @@ function StepIndicator({ current }) {
                 {done ? <Check className="w-4 h-4" /> : n}
               </div>
               <span
-                className={`text-[10px] font-medium tracking-wide ${active ? "text-violet-400" : done ? "text-fuchsia-400" : "text-slate-600"}`}
+                className={`text-[10px] font-medium tracking-wide ${active ? "text-violet-400" : done ? "text-violet-400" : "text-slate-600"}`}
               >
                 {label}
               </span>
             </div>
             {i < STEP_LABELS.length - 1 && (
               <div
-                className={`flex-1 h-px mx-2 mb-4 transition-colors ${done ? "bg-fuchsia-600/40" : "bg-slate-800"}`}
+                className={`flex-1 h-px mx-2 mb-4 transition-colors ${done ? "bg-violet-600/40" : "bg-slate-800"}`}
               />
             )}
           </div>
@@ -149,9 +149,9 @@ export default function Onboarding() {
         {/* Brand */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Pulse<span className="text-violet-400">Board</span>
+            Pulse<span className="text-violet-400">Feed</span>
           </h1>
-          <p className="mt-2 text-slate-400 text-sm">
+          <p className="mt-2 text-slate-500 text-sm">
             Build your personalized AI knowledge feed in 2 steps.
           </p>
         </div>

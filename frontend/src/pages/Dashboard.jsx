@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, BookMarked, Eye, ExternalLink,
@@ -298,7 +298,33 @@ export default function Dashboard() {
     fetch(`${API_URL}/feed/items/${id}/click`, { method: "POST", credentials: "include" }).catch(() => {});
   }, []);
 
+  const [filterText, setFilterText] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterInputRef = useRef(null);
+  const q = filterText.trim().toLowerCase();
+
+  const filteredFeed = q
+    ? feed.filter(item =>
+        [item.title, item.summary, item.source, item.topic]
+          .some(v => (v || "").toLowerCase().includes(q))
+      )
+    : feed;
+
+  const filteredEvents = q
+    ? events.filter(ev =>
+        [ev.name, ev.type, ev.location, ev.reason]
+          .some(v => (v || "").toLowerCase().includes(q))
+      )
+    : events;
+
   const savedFeed = feed.filter(item => item.saved);
+  const filteredSaved = q
+    ? savedFeed.filter(item =>
+        [item.title, item.summary, item.source, item.topic]
+          .some(v => (v || "").toLowerCase().includes(q))
+      )
+    : savedFeed;
+
   const totalViews = feed.reduce((s, item) => s + (item.read_count || 0), 0);
 
   return (
@@ -319,8 +345,9 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Tabs + reads stat */}
-            <div className="flex items-center gap-3 mb-6">
+            {/* Tabs + actions */}
+            <div className="flex items-center gap-2 mb-6">
+              {/* Tab group */}
               <div className="flex gap-1 bg-slate-900/80 border border-slate-800 p-1 rounded-xl backdrop-blur-sm">
                 {TABS.map(tab => (
                   <button key={tab} onClick={() => setActiveTab(tab)}
@@ -340,7 +367,7 @@ export default function Dashboard() {
                         <span className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
                           activeTab === tab ? "bg-violet-500/40 text-violet-100" : "bg-slate-800 text-slate-500"
                         }`}>
-                          {tab === "Feed" ? feed.length : tab === "Events" ? events.length : savedFeed.length}
+                          {tab === "Feed" ? filteredFeed.length : tab === "Events" ? filteredEvents.length : filteredSaved.length}
                         </span>
                       )}
                     </span>
@@ -348,12 +375,77 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {!loading && totalViews > 0 && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-500 text-xs">
-                  <Eye className="w-3.5 h-3.5" />
-                  {totalViews} reads
-                </div>
-              )}
+              {/* Expandable keyword filter */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <AnimatePresence>
+                  {filterOpen && (
+                    <motion.div
+                      key="filter-input"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 168, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="relative flex items-center">
+                        <input
+                          ref={filterInputRef}
+                          type="text"
+                          value={filterText}
+                          onChange={e => setFilterText(e.target.value)}
+                          placeholder="Filter by keyword…"
+                          className="w-full pl-3 pr-7 py-1.5 text-xs rounded-lg bg-slate-900/80 border border-slate-700 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20"
+                        />
+                        {filterText && (
+                          <button onClick={() => setFilterText("")}
+                            className="absolute right-2 text-slate-600 hover:text-slate-400 transition-colors">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Filter icon toggle */}
+                <button
+                  onClick={() => {
+                    const next = !filterOpen;
+                    setFilterOpen(next);
+                    if (!next) setFilterText("");
+                    else setTimeout(() => filterInputRef.current?.focus(), 60);
+                  }}
+                  title="Filter by keyword"
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
+                    filterOpen || filterText
+                      ? "bg-violet-500/15 border-violet-500/40 text-violet-400"
+                      : "bg-slate-900/80 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700"
+                  }`}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z" />
+                  </svg>
+                </button>
+
+                {/* Refresh icon */}
+                <button
+                  onClick={() => loadData(true)}
+                  disabled={refreshing || loading}
+                  title={refreshing ? "Refreshing…" : "Refresh feed"}
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border bg-slate-900/80 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                </button>
+
+                {!loading && totalViews > 0 && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-500 text-xs">
+                    <Eye className="w-3.5 h-3.5" />
+                    {totalViews}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tab content */}
@@ -375,14 +467,16 @@ export default function Dashboard() {
                       ? Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)
                       : feed.length === 0
                         ? <EmptyState message="No news items yet. Hit the refresh icon to generate your feed." />
-                        : feed.map(item => (
-                            <NewsCard key={item.id} {...item}
-                              onLike={() => toggleFeedLike(item.id)}
-                              onDislike={() => toggleFeedDislike(item.id)}
-                              onSave={() => toggleFeedSave(item.id)}
-                              onReadClick={() => recordClick(item.id)}
-                            />
-                          ))
+                        : filteredFeed.length === 0
+                          ? <EmptyState message={`No results for "${filterText}"`} />
+                          : filteredFeed.map(item => (
+                              <NewsCard key={item.id} {...item}
+                                onLike={() => toggleFeedLike(item.id)}
+                                onDislike={() => toggleFeedDislike(item.id)}
+                                onSave={() => toggleFeedSave(item.id)}
+                                onReadClick={() => recordClick(item.id)}
+                              />
+                            ))
                     }
                   </div>
                 </motion.div>
@@ -412,9 +506,11 @@ export default function Dashboard() {
                       </div>
                     : events.length === 0
                       ? <EmptyState message="No events found yet. Hit refresh to discover upcoming conferences and meetups." />
-                      : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                          {events.map(ev => <EventCard key={ev.id} {...ev} />)}
-                        </div>
+                      : filteredEvents.length === 0
+                        ? <EmptyState message={`No events match "${filterText}"`} />
+                        : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {filteredEvents.map(ev => <EventCard key={ev.id} {...ev} />)}
+                          </div>
                   }
                 </motion.div>
               )}
@@ -431,16 +527,18 @@ export default function Dashboard() {
                       </div>
                     : savedFeed.length === 0
                       ? <EmptyState message="Nothing saved yet. Tap the bookmark icon on any article to save it here." />
-                      : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                          {savedFeed.map(item => (
-                            <NewsCard key={item.id} {...item}
-                              onLike={() => toggleFeedLike(item.id)}
-                              onDislike={() => toggleFeedDislike(item.id)}
-                              onSave={() => toggleFeedSave(item.id)}
-                              onReadClick={() => recordClick(item.id)}
-                            />
-                          ))}
-                        </div>
+                      : filteredSaved.length === 0
+                        ? <EmptyState message={`No saved items match "${filterText}"`} />
+                        : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {filteredSaved.map(item => (
+                              <NewsCard key={item.id} {...item}
+                                onLike={() => toggleFeedLike(item.id)}
+                                onDislike={() => toggleFeedDislike(item.id)}
+                                onSave={() => toggleFeedSave(item.id)}
+                                onReadClick={() => recordClick(item.id)}
+                              />
+                            ))}
+                          </div>
                   }
                 </motion.div>
               )}
@@ -467,14 +565,6 @@ export default function Dashboard() {
           <div className="flex-1 h-px bg-slate-800" />
           <p className="text-xs text-slate-500 shrink-0">Personalised by AI · refreshes every 6 hours</p>
           <div className="flex-1 h-px bg-slate-800" />
-          <button
-            onClick={() => loadData(true)}
-            disabled={refreshing || loading}
-            title={refreshing ? "Refreshing…" : "Refresh feed"}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
         </div>
       </div>
 

@@ -37,7 +37,7 @@ export default function DashboardLayout() {
             {initials || "?"}
           </div>
           <span className="text-base font-bold text-white">
-            Pulse<span className="text-violet-400">Board</span>
+            Pulse<span className="text-violet-400">Feed</span>
           </span>
         </div>
         <nav className="flex gap-1">
@@ -60,13 +60,13 @@ export default function DashboardLayout() {
       </div>
 
       {/* ── Main content ── */}
-      <main className="flex-1 min-h-0 pt-14 overflow-hidden flex flex-col">
+      <main className="flex-1 min-h-0 md:pt-0 pt-14 overflow-hidden flex flex-col">
         <Outlet />
       </main>
 
       {/* ── Floating brand — desktop only ── */}
       <div
-        className="hidden md:block fixed top-5 left-5 z-50"
+        className="hidden md:block fixed bottom-11 left-5 z-50"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
       >
@@ -74,39 +74,39 @@ export default function DashboardLayout() {
         <motion.div
           whileHover={{ scale: 1.04 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer border border-slate-700/60 shadow-lg shadow-black/40 select-none bg-slate-900"
+          className="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer border border-slate-700/60 shadow-lg shadow-black/40 select-none bg-slate-900"
         >
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-            style={{ background: "linear-gradient(135deg, #B7397A, #4C6E94)", boxShadow: "0 0 10px rgba(183,57,122,0.4)" }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+            style={{ background: "linear-gradient(135deg, #B7397A, #4C6E94)", boxShadow: "0 0 12px rgba(183,57,122,0.45)" }}
           >
             {initials || "AI"}
           </div>
           <div className="leading-tight">
-            <p className="text-xs font-bold text-white">
-              Pulse<span className="text-violet-400">Board</span>
+            <p className="text-sm font-bold text-white">
+              Pulse<span className="text-violet-400">Feed</span>
             </p>
-            <p className="text-[9px] text-slate-500">AI knowledge feed</p>
+            <p className="text-[10px] text-slate-500">AI knowledge feed</p>
           </div>
           <motion.svg
             animate={{ rotate: open ? 180 : 0 }}
             transition={{ duration: 0.2 }}
-            className="w-3 h-3 text-slate-600 shrink-0 ml-0.5"
+            className="w-3.5 h-3.5 text-slate-600 shrink-0 ml-0.5"
             fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </motion.svg>
         </motion.div>
 
-        {/* Popup menu — drops downward */}
+        {/* Popup menu — opens upward */}
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              exit={{ opacity: 0, y: 8, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 440, damping: 30 }}
-              className="absolute top-full left-0 mt-2 w-44 rounded-xl overflow-hidden shadow-2xl shadow-black/60 border border-slate-700/60"
+              className="absolute bottom-full left-0 mb-2 w-44 rounded-xl overflow-hidden shadow-2xl shadow-black/60 border border-slate-700/60"
               style={{ background: "#13141F" }}
             >
               <NavLink

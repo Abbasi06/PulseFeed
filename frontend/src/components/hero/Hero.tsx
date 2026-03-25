@@ -72,24 +72,29 @@ export default function Hero() {
           <span className="text-sm font-medium text-gray-300">Your personalized AI knowledge feed — updated daily.</span>
         </motion.div>
 
-        {/* Headline */}
+        {/* App title */}
         <motion.h1
            variants={fadeUpVariants}
-           className="text-[48px] sm:text-[64px] md:text-[80px] font-medium leading-[1.05] tracking-tight mb-8"
+           className="text-[56px] sm:text-[72px] md:text-[90px] font-bold leading-[1.0] tracking-tight mb-4"
         >
-          <span className="text-white">Stay ahead of</span>
-          <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#D1E8E2] to-[#B7397A]">
-            your field.
-          </span>
+          <span className="text-white">Pulse</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B7397A] via-[#7c3aed] to-[#4C6E94]">Feed</span>
         </motion.h1>
+
+        {/* Subtitle — "Stay ahead of your field" */}
+        <motion.p
+           variants={fadeUpVariants}
+           className="text-xl sm:text-2xl md:text-3xl font-medium text-white/55 tracking-tight mb-8"
+        >
+          Stay ahead of your field.
+        </motion.p>
 
         {/* Subheadline */}
         <motion.p
            variants={fadeUpVariants}
-           className="text-lg md:text-xl text-white/80 max-w-2xl mb-12 leading-relaxed"
+           className="text-lg md:text-xl text-white/70 max-w-2xl mb-12 leading-relaxed"
         >
-          PulseBoard curates the latest research, articles, and events tailored to your role — so you spend less time searching and more time building.
+          PulseFeed curates the latest research, articles, and events tailored to your role — so you spend less time searching and more time building.
         </motion.p>
 
         {/* CTA Button */}
