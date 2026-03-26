@@ -197,7 +197,9 @@ def personalize_feed_sync(user_id: int) -> list[dict[str, Any]]:
             fts_query = _build_fts_query(user)
             rows = _fts_search(conn, fts_query, limit=20)
             if len(rows) < MIN_FTS_RESULTS:
-                rows = _fallback_recent(conn, limit=20)
+                # Not enough relevant content in generator.db — skip so the
+                # async route can fall back to research_agent on next request.
+                return []
             return _rows_to_feed_items(rows, user_id)
         finally:
             conn.close()

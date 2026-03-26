@@ -35,8 +35,8 @@ from .status_store import AGENT_STATUS
 
 logger = logging.getLogger(__name__)
 
-GATEKEEPER_MODEL = "gemini-2.5-flash-lite"  # 20 req/day — 1 batch call/round, max 5 rounds = 5 calls
-EXTRACTOR_MODEL  = "gemini-2.5-flash"       # 25 req/day — 1 call/doc, separate daily quota
+GATEKEEPER_MODEL = "gemini-2.5-flash-lite"  # 1500 req/day — 1 batch call/round
+EXTRACTOR_MODEL  = "gemini-2.5-flash-lite"  # 1500 req/day — switched from flash (free tier 20/day exhausted)
 _JSON_CFG = gtypes.GenerateContentConfig(response_mime_type="application/json")
 
 # ---------------------------------------------------------------------------
