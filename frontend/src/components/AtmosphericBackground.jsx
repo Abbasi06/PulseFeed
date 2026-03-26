@@ -125,8 +125,8 @@ function FloatingShards({ count = 200 }) {
     >
       <tetrahedronGeometry args={[1, 0]} />
       <meshStandardMaterial
-        color="#4f46e5"
-        emissive="#3730a3"
+        color="#7C3AED"
+        emissive="#5b21b6"
         emissiveIntensity={0.6}
         metalness={0.9}
         roughness={0.15}
@@ -179,7 +179,7 @@ function DataNodes({ count = 80 }) {
     >
       <octahedronGeometry args={[1, 0]} />
       <meshBasicMaterial
-        color="#34d399"
+        color="#B7397A"
         transparent
         opacity={0.55}
         blending={THREE.AdditiveBlending}
@@ -207,19 +207,15 @@ function KnowledgeMoon() {
 
     // Glow shell opacity pulse
     if (glow1Ref.current)
-      glow1Ref.current.material.opacity =
-        0.18 + Math.sin(t * 0.6) * 0.06;
+      glow1Ref.current.material.opacity = 0.18 + Math.sin(t * 0.6) * 0.06;
     if (glow2Ref.current)
-      glow2Ref.current.material.opacity =
-        0.09 + Math.sin(t * 0.6 + 0.8) * 0.03;
+      glow2Ref.current.material.opacity = 0.09 + Math.sin(t * 0.6 + 0.8) * 0.03;
 
     // Slow mouse parallax (factor 0.5 — feels far away)
     const tx = MOON_BASE.x + state.mouse.x * 0.5;
     const ty = MOON_BASE.y + state.mouse.y * 0.35;
-    groupRef.current.position.x +=
-      (tx - groupRef.current.position.x) * 0.025;
-    groupRef.current.position.y +=
-      (ty - groupRef.current.position.y) * 0.025;
+    groupRef.current.position.x += (tx - groupRef.current.position.x) * 0.025;
+    groupRef.current.position.y += (ty - groupRef.current.position.y) * 0.025;
   });
 
   return (
@@ -228,8 +224,8 @@ function KnowledgeMoon() {
       <mesh>
         <sphereGeometry args={[1.2, 32, 32]} />
         <meshStandardMaterial
-          color="#0d9488"
-          emissive="#06d6a0"
+          color="#7C3AED"
+          emissive="#A855F7"
           emissiveIntensity={0.9}
           roughness={0.25}
           metalness={0.7}
@@ -240,7 +236,7 @@ function KnowledgeMoon() {
       <mesh ref={glow1Ref}>
         <sphereGeometry args={[1.65, 20, 20]} />
         <meshBasicMaterial
-          color="#34d399"
+          color="#B7397A"
           transparent
           opacity={0.18}
           blending={THREE.AdditiveBlending}
@@ -253,7 +249,7 @@ function KnowledgeMoon() {
       <mesh ref={glow2Ref}>
         <sphereGeometry args={[2.3, 16, 16]} />
         <meshBasicMaterial
-          color="#6ee7b7"
+          color="#F472B6"
           transparent
           opacity={0.09}
           blending={THREE.AdditiveBlending}
@@ -262,8 +258,8 @@ function KnowledgeMoon() {
         />
       </mesh>
 
-      {/* Teal scene light so nearby shards catch the glow */}
-      <pointLight color="#06d6a0" intensity={1.5} distance={18} decay={2} />
+      {/* Violet scene light so nearby shards catch the glow */}
+      <pointLight color="#A855F7" intensity={1.5} distance={18} decay={2} />
     </group>
   );
 }
@@ -289,10 +285,8 @@ function DataSingularity() {
     // Very slow parallax (factor 0.3 — feels even further away than moon)
     const tx = SINGULARITY_BASE.x + state.mouse.x * 0.3;
     const ty = SINGULARITY_BASE.y + state.mouse.y * 0.2;
-    groupRef.current.position.x +=
-      (tx - groupRef.current.position.x) * 0.018;
-    groupRef.current.position.y +=
-      (ty - groupRef.current.position.y) * 0.018;
+    groupRef.current.position.x += (tx - groupRef.current.position.x) * 0.018;
+    groupRef.current.position.y += (ty - groupRef.current.position.y) * 0.018;
   });
 
   return (
@@ -307,7 +301,7 @@ function DataSingularity() {
       <mesh ref={ring1Ref} rotation={[Math.PI / 4, 0, 0]}>
         <torusGeometry args={[2.2, 0.22, 8, 80]} />
         <meshBasicMaterial
-          color="#f97316"
+          color="#B7397A"
           transparent
           opacity={0.45}
           blending={THREE.AdditiveBlending}
@@ -319,7 +313,7 @@ function DataSingularity() {
       <mesh ref={ring2Ref} rotation={[Math.PI / 3.5, 0.4, 0]}>
         <torusGeometry args={[3.0, 0.14, 8, 80]} />
         <meshBasicMaterial
-          color="#fb923c"
+          color="#7C3AED"
           transparent
           opacity={0.3}
           blending={THREE.AdditiveBlending}
@@ -331,7 +325,7 @@ function DataSingularity() {
       <mesh ref={ring3Ref} rotation={[Math.PI / 2.8, -0.3, 0.2]}>
         <torusGeometry args={[3.9, 0.08, 8, 80]} />
         <meshBasicMaterial
-          color="#fdba74"
+          color="#4C6E94"
           transparent
           opacity={0.18}
           blending={THREE.AdditiveBlending}
@@ -375,12 +369,9 @@ function Navigator() {
       (state.mouse.y * 0.8 - mouseOffset.current.y) * 0.04;
 
     // Diagonal drift: top-left → bottom-right + gentle Z wobble
-    groupRef.current.position.x =
-      -16 + progress * 34 + mouseOffset.current.x;
-    groupRef.current.position.y =
-      9 - progress * 19 + mouseOffset.current.y;
-    groupRef.current.position.z =
-      -1 + Math.sin(progress * Math.PI * 4) * 1.2;
+    groupRef.current.position.x = -16 + progress * 34 + mouseOffset.current.x;
+    groupRef.current.position.y = 9 - progress * 19 + mouseOffset.current.y;
+    groupRef.current.position.z = -1 + Math.sin(progress * Math.PI * 4) * 1.2;
 
     // Slow tumble on all axes
     groupRef.current.rotation.x = t * 0.07;
@@ -411,7 +402,7 @@ function Navigator() {
           opacity={0.9}
           metalness={0.95}
           roughness={0.05}
-          emissive="#4f46e5"
+          emissive="#7C3AED"
           emissiveIntensity={0.4}
         />
       </mesh>
@@ -506,7 +497,7 @@ function SearchLight() {
     <pointLight
       ref={lightRef}
       position={[0, 0, 7]}
-      color="#c7d2fe"
+      color="#DDD6FE"
       intensity={5}
       distance={20}
       decay={2}
@@ -521,8 +512,8 @@ function SearchLight() {
 function Scene() {
   return (
     <>
-      {/* Deep indigo fog */}
-      <fog attach="fog" color="#06061a" near={16} far={42} />
+      {/* Deep dark fog */}
+      <fog attach="fog" color="#04040f" near={16} far={42} />
 
       {/* Dim violet fill so unlit shards aren't pure black */}
       <ambientLight color="#1e1b4b" intensity={0.5} />
@@ -530,7 +521,7 @@ function Scene() {
       {/* Static back-light for depth */}
       <pointLight
         position={[-6, 10, -8]}
-        color="#312e81"
+        color="#4C1D95"
         intensity={3}
         distance={35}
         decay={1.5}

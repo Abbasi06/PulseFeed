@@ -4,14 +4,46 @@ import { Check, Plus, X } from "lucide-react";
 
 // The chips the user can choose from
 const PRESET_CHIPS = [
-  "Artificial Intelligence", "Machine Learning", "Neural Networks", "NLP",
-  "LLMs", "RAG", "Agentic Workflows", "Prompt Engineering", "Computer Vision",
-  "Predictive Modeling", "Deep Learning", "Data Science", "Data Engineering",
-  "Cloud Computing", "AWS", "Azure", "GCP", "Kubernetes", "Docker", "DevOps",
-  "Software Engineering", "Full Stack Development", "Backend", "Frontend",
-  "React", "Node.js", "Python", "Rust", "Go", "Cybersecurity", "Zero Trust",
-  "OSINT", "Malware Analysis", "Penetration Testing", "Cryptography",
-  "Blockchain", "Web3", "Smart Contracts", "DeFi", "Quantum Computing"
+  "Artificial Intelligence",
+  "Machine Learning",
+  "Neural Networks",
+  "NLP",
+  "LLMs",
+  "RAG",
+  "Agentic Workflows",
+  "Prompt Engineering",
+  "Computer Vision",
+  "Predictive Modeling",
+  "Deep Learning",
+  "Data Science",
+  "Data Engineering",
+  "Cloud Computing",
+  "AWS",
+  "Azure",
+  "GCP",
+  "Kubernetes",
+  "Docker",
+  "DevOps",
+  "Software Engineering",
+  "Full Stack Development",
+  "Backend",
+  "Frontend",
+  "React",
+  "Node.js",
+  "Python",
+  "Rust",
+  "Go",
+  "Cybersecurity",
+  "Zero Trust",
+  "OSINT",
+  "Malware Analysis",
+  "Penetration Testing",
+  "Cryptography",
+  "Blockchain",
+  "Web3",
+  "Smart Contracts",
+  "DeFi",
+  "Quantum Computing",
 ];
 
 const CHIPS_REQUIRED = 5;
@@ -59,7 +91,11 @@ function CustomChipEntry({ onAdd }) {
         />
         <button
           type="button"
-          onMouseDown={(e) => { e.preventDefault(); setValue(""); setOpen(false); }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setValue("");
+            setOpen(false);
+          }}
           className="text-white/40 hover:text-white transition-colors"
         >
           <X className="w-3.5 h-3.5" />
@@ -105,12 +141,15 @@ export default function ChipSelection({ selectedChips, onChange }) {
           Select Your Focus Areas
         </label>
         <div className="flex items-center justify-between w-full">
-            <p className="text-sm text-white/50">
-              Curate your intelligence feed by selecting exactly {CHIPS_REQUIRED} topics.
-            </p>
-            <span className={`text-sm font-bold tabular-nums ${isComplete ? 'text-mint-glow shadow-[0_0_10px_rgba(209,232,226,0.5)]' : 'text-white/50'}`}>
-                {selectedCount} / {CHIPS_REQUIRED}
-            </span>
+          <p className="text-sm text-white/50">
+            Curate your intelligence feed by selecting exactly {CHIPS_REQUIRED}{" "}
+            topics.
+          </p>
+          <span
+            className={`text-sm font-bold tabular-nums ${isComplete ? "text-mint-glow shadow-[0_0_10px_rgba(209,232,226,0.5)]" : "text-white/50"}`}
+          >
+            {selectedCount} / {CHIPS_REQUIRED}
+          </span>
         </div>
       </div>
 
@@ -137,13 +176,13 @@ export default function ChipSelection({ selectedChips, onChange }) {
               onClick={() => toggleChip(chip)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${
                 isSelected
-                  ? 'border-mint-glow/50 bg-mint-glow/10 text-mint-glow liquid-glass shadow-[0_0_15px_rgba(209,232,226,0.3)] scale-105'
-                  : 'border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:border-white/30 hover:text-white'
+                  ? "border-mint-glow/50 bg-mint-glow/10 text-mint-glow liquid-glass shadow-[0_0_15px_rgba(209,232,226,0.3)] scale-105"
+                  : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:border-white/30 hover:text-white"
               }`}
             >
               {isSelected && (
                 <span className="flex items-center justify-center w-4 h-4 bg-mint-glow/20 rounded-full">
-                    <Check className="w-3 h-3 text-mint-glow" strokeWidth={3} />
+                  <Check className="w-3 h-3 text-mint-glow" strokeWidth={3} />
                 </span>
               )}
               {chip}
@@ -162,19 +201,23 @@ export default function ChipSelection({ selectedChips, onChange }) {
               className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-mint-glow/50 bg-mint-glow/10 text-mint-glow liquid-glass shadow-[0_0_15px_rgba(209,232,226,0.3)] scale-105 transition-all duration-300"
             >
               <span className="flex items-center justify-center w-4 h-4 bg-mint-glow/20 rounded-full">
-                  <Check className="w-3 h-3 text-mint-glow" strokeWidth={3} />
+                <Check className="w-3 h-3 text-mint-glow" strokeWidth={3} />
               </span>
               {chip}
             </motion.button>
           ))}
-        
+
         {/* Only show custom input if not full */}
         <AnimatePresence>
-            {!isComplete && (
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
-                    <CustomChipEntry onAdd={addCustom} />
-                </motion.div>
-            )}
+          {!isComplete && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <CustomChipEntry onAdd={addCustom} />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -187,7 +230,9 @@ export default function ChipSelection({ selectedChips, onChange }) {
             className="mt-6 flex items-center justify-center gap-2 p-3 liquid-glass border border-mint-glow/30 rounded-xl bg-mint-glow/5 text-mint-glow shadow-[0_0_20px_rgba(209,232,226,0.15)]"
           >
             <Check className="w-5 h-5" />
-            <span className="text-sm font-bold tracking-wide">Core parameters locked. Ready to synthesize.</span>
+            <span className="text-sm font-bold tracking-wide">
+              Core parameters locked. Ready to synthesize.
+            </span>
           </motion.div>
         )}
       </AnimatePresence>

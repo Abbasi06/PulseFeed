@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 from jose import jwt
 from sqlalchemy.orm import Session
 
+import routes.feed as _feed_route
 from auth import ALGORITHM, SECRET_KEY, create_access_token
 from models import Event, FeedItem, User
 from tests.conftest import USER_A, USER_B
@@ -208,7 +209,9 @@ def test_second_refresh_does_not_double_items(client: TestClient, db: Session) -
     with patch("agents.research_agent.generate_feed", new_callable=AsyncMock) as mock_gen:
         mock_gen.return_value = _feed_payload(user_id, count=5)
         client.post(f"/feed/{user_id}/refresh")
-        # Second refresh — old 5 deleted, 5 new stored
+        # Second refresh — reset cooldown so the route allows it, then verify
+        # old 5 are deleted and 5 new are stored (no doubling).
+        _feed_route._last_refresh.clear()
         mock_gen.return_value = _feed_payload(user_id, count=5)
         resp = client.post(f"/feed/{user_id}/refresh")
     assert resp.status_code == 200
@@ -335,20 +338,26 @@ def test_deleting_user_cascades_to_events(db: Session) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_get_feed_502_surfaces_when_api_key_missing(client: TestClient) -> None:
+def test_get_feed_background_generation_on_api_error(client: TestClient) -> None:
+    """GET /feed returns 200 with X-Feed-Generating; errors are logged in background."""
     user_id = client.post("/users", json=USER_A).json()["id"]
     with patch("agents.research_agent.generate_feed", new_callable=AsyncMock) as mock_gen:
         mock_gen.side_effect = ValueError("GEMINI_API_KEY is not set in environment")
         resp = client.get(f"/feed/{user_id}")
-    assert resp.status_code == 502
+    assert resp.status_code == 200
+    assert resp.headers.get("X-Feed-Generating") == "true"
+    assert resp.json() == []
 
 
-def test_get_events_502_surfaces_when_api_key_missing(client: TestClient) -> None:
+def test_get_events_background_generation_on_api_error(client: TestClient) -> None:
+    """GET /events returns 200 with X-Events-Generating; errors are logged in background."""
     user_id = client.post("/users", json=USER_A).json()["id"]
     with patch("agents.research_agent.generate_events", new_callable=AsyncMock) as mock_gen:
         mock_gen.side_effect = ValueError("GEMINI_API_KEY is not set in environment")
         resp = client.get(f"/events/{user_id}")
-    assert resp.status_code == 502
+    assert resp.status_code == 200
+    assert resp.headers.get("X-Events-Generating") == "true"
+    assert resp.json() == []
 
 
 # ---------------------------------------------------------------------------

@@ -70,8 +70,10 @@ def test_get_events_triggers_agent_when_no_cache(client: TestClient, db: Session
         mock_gen.return_value = _mock_events(user_id)
         resp = client.get(f"/events/{user_id}")
     assert resp.status_code == 200
+    # Background task is queued; response returns immediately with empty list + header
+    assert resp.headers.get("X-Events-Generating") == "true"
+    assert isinstance(resp.json(), list)
     mock_gen.assert_called_once()
-    assert resp.json()[0]["name"] == "PyCon 2026"
 
 
 def test_get_events_returns_cache_when_fresh(client: TestClient, db: Session) -> None:
@@ -91,8 +93,10 @@ def test_get_events_refreshes_when_stale(client: TestClient, db: Session) -> Non
         mock_gen.return_value = _mock_events(user_id)
         resp = client.get(f"/events/{user_id}")
     assert resp.status_code == 200
+    # Stale items returned immediately with background refresh queued
+    assert resp.headers.get("X-Events-Generating") == "true"
+    assert resp.json()[0]["name"] == "Cached Event"
     mock_gen.assert_called_once()
-    assert resp.json()[0]["name"] == "PyCon 2026"
 
 
 # ---------------------------------------------------------------------------

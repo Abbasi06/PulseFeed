@@ -29,23 +29,23 @@ function StepIndicator({ current }) {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                   done
-                    ? "bg-violet-600 text-white"
+                    ? "bg-[#B7397A] text-white"
                     : active
-                      ? "bg-violet-600 text-white ring-4 ring-violet-600/20"
+                      ? "bg-[#7C3AED] text-white ring-4 ring-[#7C3AED]/20"
                       : "bg-slate-800 text-slate-500 border border-slate-700"
                 }`}
               >
                 {done ? <Check className="w-4 h-4" /> : n}
               </div>
               <span
-                className={`text-[10px] font-medium tracking-wide ${active ? "text-violet-400" : done ? "text-violet-400" : "text-slate-600"}`}
+                className={`text-[10px] font-medium tracking-wide ${active ? "text-[#7C3AED]" : done ? "text-[#B7397A]" : "text-slate-600"}`}
               >
                 {label}
               </span>
             </div>
             {i < STEP_LABELS.length - 1 && (
               <div
-                className={`flex-1 h-px mx-2 mb-4 transition-colors ${done ? "bg-violet-600/40" : "bg-slate-800"}`}
+                className={`flex-1 h-px mx-2 mb-4 transition-colors ${done ? "bg-[#B7397A]/40" : "bg-slate-800"}`}
               />
             )}
           </div>
@@ -149,7 +149,7 @@ export default function Onboarding() {
         {/* Brand */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Pulse<span className="text-violet-400">Feed</span>
+            Pulse<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D946EF] to-[#8B5CF6]">Feed.ai</span>
           </h1>
           <p className="mt-2 text-slate-500 text-sm">
             Build your personalized AI knowledge feed in 2 steps.
@@ -202,7 +202,7 @@ export default function Onboarding() {
                     className={`w-full px-3.5 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors ${
                       errors.name
                         ? "border-red-500"
-                        : "border-slate-700 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
+                        : "border-slate-700 focus:border-[#B7397A] focus:ring-1 focus:ring-[#B7397A]/30"
                     }`}
                   />
                   {errors.name && (
@@ -231,7 +231,7 @@ export default function Onboarding() {
                     className={`w-full px-3.5 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors ${
                       errors.occupation
                         ? "border-red-500"
-                        : "border-slate-700 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
+                        : "border-slate-700 focus:border-[#B7397A] focus:ring-1 focus:ring-[#B7397A]/30"
                     }`}
                   />
                   {errors.occupation && (
@@ -297,8 +297,19 @@ export default function Onboarding() {
                           fill="none"
                           viewBox="0 0 24 24"
                         >
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
                         </svg>
                         Building your feed…
                       </>

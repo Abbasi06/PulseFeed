@@ -11,7 +11,7 @@ from tests.conftest import USER_A, USER_B
 def test_health(client: TestClient) -> None:
     resp = client.get("/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok"}
+    assert resp.json()["status"] == "ok"
 
 
 # ---------------------------------------------------------------------------

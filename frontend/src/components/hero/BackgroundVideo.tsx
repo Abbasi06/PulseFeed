@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import Hls from 'hls.js';
+import { useEffect, useRef } from "react";
+import Hls from "hls.js";
 
 interface BackgroundVideoProps {
   src: string;
@@ -11,24 +11,24 @@ export default function BackgroundVideo({ src }: BackgroundVideoProps) {
   useEffect(() => {
     let hls: Hls;
     const video = videoRef.current;
-    
+
     if (video) {
-        if (Hls.isSupported()) {
-          hls = new Hls();
-          hls.loadSource(src);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            video.play().catch(() => {
-                // Auto-play was prevented by browser
-            });
+      if (Hls.isSupported()) {
+        hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {
+            // Auto-play was prevented by browser
           });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // Fallback to native HLS support (Safari)
-          video.src = src;
-          video.addEventListener('loadedmetadata', () => {
-            video.play().catch(() => {});
-          });
-        }
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        // Fallback to native HLS support (Safari)
+        video.src = src;
+        video.addEventListener("loadedmetadata", () => {
+          video.play().catch(() => {});
+        });
+      }
     }
 
     return () => {

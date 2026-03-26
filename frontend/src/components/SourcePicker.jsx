@@ -214,7 +214,7 @@ function CreatorSection({ field, creators, onCreatorsChange }) {
         <TagInput
           tags={creators}
           onChange={onCreatorsChange}
-          placeholder='e.g. Andrej Karpathy, Fireship…'
+          placeholder="e.g. Andrej Karpathy, Fireship…"
         />
       </div>
 

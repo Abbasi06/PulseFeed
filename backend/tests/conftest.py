@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
+import routes.feed as _feed_route
+import routes.events as _events_route
 from database import Base, get_db
 from main import app
 
@@ -24,6 +26,21 @@ USER_B: dict = {
     "occupation": "Data Scientist",
     "selected_chips": ["ML", "Statistics"],
 }
+
+
+# ---------------------------------------------------------------------------
+# Reset module-level cooldown trackers before every test so that tests that
+# call POST /feed/{id}/refresh or POST /events/{id}/refresh don't bleed into
+# each other via the 60-second in-memory cooldown dict.
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def reset_refresh_cooldowns() -> None:
+    _feed_route._last_refresh.clear()
+    _events_route._last_refresh.clear()
+    _feed_route._generating.clear()
+    _events_route._generating.clear()
 
 
 # ---------------------------------------------------------------------------
