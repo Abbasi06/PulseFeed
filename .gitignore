@@ -21,6 +21,8 @@ __pypackages__/
 # Database
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 
 # Test / coverage
 .pytest_cache/
