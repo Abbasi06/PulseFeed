@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -19,6 +19,7 @@ CACHE_TTL_HOURS = 6
 REFRESH_COOLDOWN_SECONDS = 60
 
 _last_refresh: dict[int, float] = {}
+_generating: set[int] = set()
 
 
 def _is_stale(fetched_at: datetime) -> bool:
@@ -68,6 +69,8 @@ def _save_events(evs: list[dict], db: Session) -> None:
 @router.get("/{user_id}", response_model=list[EventRead])
 async def get_events(
     user_id: int,
+    background_tasks: BackgroundTasks,
+    response: Response,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> list[Event]:
@@ -84,7 +87,17 @@ async def get_events(
             .all()
         )
 
-    return await _refresh_events(user_id, db)
+    existing = (
+        db.query(Event)
+        .filter(Event.user_id == user_id)
+        .order_by(Event.fetched_at.desc())
+        .all()
+    )
+    if user_id not in _generating:
+        _generating.add(user_id)
+        background_tasks.add_task(_background_refresh_events, user_id)
+    response.headers["X-Events-Generating"] = "true"
+    return existing
 
 
 @router.post("/{user_id}/refresh", response_model=list[EventRead])
@@ -118,6 +131,29 @@ def toggle_like(
     db.commit()
     db.refresh(ev)
     return ev
+
+
+async def _background_refresh_events(user_id: int) -> None:
+    """Background events refresh — creates its own DB session."""
+    from agents.research_agent import generate_events
+    from database import engine
+    from sqlalchemy.orm import Session as SASession
+
+    db = SASession(engine)
+    try:
+        evs = await generate_events(user_id, db)
+        db.query(Event).filter(Event.user_id == user_id).delete()
+        _save_events(evs, db)
+        logger.info(
+            "Background events refresh complete for user %d: %d items stored",
+            user_id,
+            len(evs),
+        )
+    except Exception as exc:
+        logger.error("Background events refresh failed for user %d: %s", user_id, exc)
+    finally:
+        db.close()
+        _generating.discard(user_id)
 
 
 async def _refresh_events(user_id: int, db: Session) -> list[Event]:

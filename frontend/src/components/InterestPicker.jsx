@@ -125,7 +125,11 @@ function CustomChipEntry({ onAdd }) {
         />
         <button
           type="button"
-          onMouseDown={(e) => { e.preventDefault(); setValue(""); setOpen(false); }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setValue("");
+            setOpen(false);
+          }}
           className="text-slate-500 hover:text-slate-300"
         >
           <X className="w-3 h-3" />
@@ -150,9 +154,16 @@ function CustomChipEntry({ onAdd }) {
 // Main InterestPicker
 // ---------------------------------------------------------------------------
 
-export default function InterestPicker({ field, subFields, onFieldChange, onSubFieldsChange }) {
+export default function InterestPicker({
+  field,
+  subFields,
+  onFieldChange,
+  onSubFieldsChange,
+}) {
   const activeRole = ROLES.find((r) => r.backendField === field) ?? null;
-  const colors = activeRole ? ROLE_COLORS[activeRole.color] : ROLE_COLORS.violet;
+  const colors = activeRole
+    ? ROLE_COLORS[activeRole.color]
+    : ROLE_COLORS.violet;
   const selected = subFields.length;
   const ready = selected >= MIN_SUBFIELDS;
 
@@ -213,7 +224,7 @@ export default function InterestPicker({ field, subFields, onFieldChange, onSubF
               </label>
               <span
                 className={`text-xs font-medium tabular-nums ${
-                  ready ? "text-violet-400" : "text-slate-500"
+                  ready ? "text-[#7C3AED]" : "text-slate-500"
                 }`}
               >
                 {selected} / {MIN_SUBFIELDS} minimum
@@ -261,7 +272,7 @@ export default function InterestPicker({ field, subFields, onFieldChange, onSubF
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-3 text-xs text-violet-400 font-medium"
+                className="mt-3 text-xs text-[#7C3AED] font-medium"
               >
                 ✓ Great picks — you can select up to 10 total
               </motion.p>

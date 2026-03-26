@@ -7,7 +7,9 @@ function Section({ icon: Icon, label, color, children }) {
     <div>
       <div className={`flex items-center gap-1.5 mb-2`}>
         <Icon className={`w-3.5 h-3.5 ${color}`} />
-        <span className={`text-xs font-semibold uppercase tracking-wider ${color}`}>
+        <span
+          className={`text-xs font-semibold uppercase tracking-wider ${color}`}
+        >
           {label}
         </span>
       </div>
@@ -70,12 +72,20 @@ export default function InsightBrief({ brief, loading }) {
             <div className="px-4 pb-4 pt-1 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-violet-500/10">
               {/* Key Signals */}
               {brief.signals?.length > 0 && (
-                <Section icon={Zap} label="Key Signals" color="text-fuchsia-400">
+                <Section
+                  icon={Zap}
+                  label="Key Signals"
+                  color="text-fuchsia-400"
+                >
                   <ul className="space-y-1">
                     {brief.signals.map((s, i) => (
                       <li key={i} className="flex items-start gap-1.5">
-                        <span className="text-fuchsia-400/60 mt-1 text-[8px]">●</span>
-                        <span className="text-xs text-slate-300 leading-relaxed">{s}</span>
+                        <span className="text-fuchsia-400/60 mt-1 text-[8px]">
+                          ●
+                        </span>
+                        <span className="text-xs text-slate-300 leading-relaxed">
+                          {s}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -84,7 +94,11 @@ export default function InsightBrief({ brief, loading }) {
 
               {/* Worth Your Time */}
               {brief.top_reads?.length > 0 && (
-                <Section icon={BookMarked} label="Worth Your Time" color="text-violet-400">
+                <Section
+                  icon={BookMarked}
+                  label="Worth Your Time"
+                  color="text-violet-400"
+                >
                   <ul className="space-y-2">
                     {brief.top_reads.map((r, i) => (
                       <li key={i}>
@@ -99,7 +113,9 @@ export default function InsightBrief({ brief, loading }) {
                             <p className="text-xs text-slate-300 group-hover:text-violet-300 leading-snug line-clamp-2">
                               {r.title}
                             </p>
-                            <p className="text-[10px] text-slate-500 mt-0.5">{r.source}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">
+                              {r.source}
+                            </p>
                           </div>
                         </a>
                       </li>
@@ -110,7 +126,11 @@ export default function InsightBrief({ brief, loading }) {
 
               {/* Watch This Space */}
               {brief.watch?.length > 0 && (
-                <Section icon={Eye} label="Watch This Space" color="text-blue-400">
+                <Section
+                  icon={Eye}
+                  label="Watch This Space"
+                  color="text-blue-400"
+                >
                   <div className="flex flex-wrap gap-1.5">
                     {brief.watch.map((w, i) => (
                       <span

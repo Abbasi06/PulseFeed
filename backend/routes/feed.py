@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,9 @@ REFRESH_COOLDOWN_SECONDS = 60
 
 # In-memory cooldown tracker (per-process; acceptable for single-server dev)
 _last_refresh: dict[int, float] = {}
+
+# Tracks user IDs whose feed is currently being generated in the background
+_generating: set[int] = set()
 
 
 def _is_stale(fetched_at: datetime) -> bool:
@@ -69,6 +72,8 @@ def _save_items(items: list[dict], db: Session) -> None:
 @router.get("/{user_id}", response_model=list[FeedRead])
 async def get_feed(
     user_id: int,
+    background_tasks: BackgroundTasks,
+    response: Response,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> list[FeedItem]:
@@ -85,7 +90,18 @@ async def get_feed(
             .all()
         )
 
-    return await _refresh_feed(user_id, db)
+    # Cache is cold — return existing items immediately and generate in background
+    existing = (
+        db.query(FeedItem)
+        .filter(FeedItem.user_id == user_id)
+        .order_by(FeedItem.fetched_at.desc())
+        .all()
+    )
+    if user_id not in _generating:
+        _generating.add(user_id)
+        background_tasks.add_task(_background_refresh, user_id)
+    response.headers["X-Feed-Generating"] = "true"
+    return existing
 
 
 @router.post("/{user_id}/refresh", response_model=list[FeedRead])
@@ -198,11 +214,35 @@ def record_click(
     return item
 
 
+async def _background_refresh(user_id: int) -> None:
+    """Background feed refresh — creates its own DB session so it outlives the request."""
+    from agents.feed_personalizer import personalize_feed
+    from database import engine
+    from sqlalchemy.orm import Session as SASession
+
+    db = SASession(engine)
+    try:
+        items = await personalize_feed(user_id, db)
+        db.query(FeedItem).filter(FeedItem.user_id == user_id).delete()
+        db.query(FeedBrief).filter(FeedBrief.user_id == user_id).delete()
+        _save_items(items, db)
+        logger.info(
+            "Background feed refresh complete for user %d: %d items stored",
+            user_id,
+            len(items),
+        )
+    except Exception as exc:
+        logger.error("Background feed refresh failed for user %d: %s", user_id, exc)
+    finally:
+        db.close()
+        _generating.discard(user_id)
+
+
 async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
-    from agents.research_agent import generate_feed
+    from agents.feed_personalizer import personalize_feed
 
     try:
-        items = await generate_feed(user_id, db)
+        items = await personalize_feed(user_id, db)
     except Exception as exc:
         logger.error("generate_feed failed for user %d: %s", user_id, exc, exc_info=True)
         raise HTTPException(status_code=502, detail="Feed generation failed") from exc

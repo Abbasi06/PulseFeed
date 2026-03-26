@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import time
 from datetime import date
@@ -101,17 +102,46 @@ async def _search_all(
     return [item for batch in result_batches for item in batch]
 
 
+_MAX_RETRIES = 3
+
+
+def _extract_retry_delay(err_str: str) -> int:
+    match = re.search(r"retry in (\d+)", err_str, re.IGNORECASE)
+    return int(match.group(1)) + 5 if match else 65
+
+
+def _gemini_call_sync(client: genai.Client, contents: str) -> str:
+    """Synchronous Gemini call with 429/RESOURCE_EXHAUSTED retry logic."""
+    for attempt in range(_MAX_RETRIES + 1):
+        try:
+            return (
+                client.models.generate_content(
+                    model=MODEL,
+                    contents=contents,
+                    config=_JSON_CONFIG,
+                ).text
+                or ""
+            )
+        except Exception as exc:
+            err = str(exc)
+            if ("429" in err or "RESOURCE_EXHAUSTED" in err) and attempt < _MAX_RETRIES:
+                delay = _extract_retry_delay(err)
+                logger.warning(
+                    "Gemini rate limited — retrying in %ds (attempt %d/%d)",
+                    delay,
+                    attempt + 1,
+                    _MAX_RETRIES,
+                )
+                time.sleep(delay)
+            else:
+                raise
+    return ""
+
+
 async def _gemini(client: genai.Client, contents: str) -> str:
     """Run a synchronous Gemini call in a thread so it doesn't block the event loop."""
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(
-            model=MODEL,
-            contents=contents,
-            config=_JSON_CONFIG,
-        ).text or "",
-    )
+    return await loop.run_in_executor(None, _gemini_call_sync, client, contents)
 
 
 def _strip_fence(text: str) -> str:

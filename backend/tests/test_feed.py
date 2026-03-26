@@ -73,8 +73,10 @@ def test_get_feed_triggers_agent_when_no_cache(client: TestClient, db: Session) 
         mock_gen.return_value = _mock_items(user_id)
         resp = client.get(f"/feed/{user_id}")
     assert resp.status_code == 200
+    # Background task is queued; response returns immediately with empty list + header
+    assert resp.headers.get("X-Feed-Generating") == "true"
+    assert isinstance(resp.json(), list)
     mock_gen.assert_called_once()
-    assert resp.json()[0]["title"] == "AI Breakthrough"
 
 
 def test_get_feed_returns_cache_when_fresh(client: TestClient, db: Session) -> None:
@@ -94,8 +96,10 @@ def test_get_feed_refreshes_when_stale(client: TestClient, db: Session) -> None:
         mock_gen.return_value = _mock_items(user_id)
         resp = client.get(f"/feed/{user_id}")
     assert resp.status_code == 200
+    # Stale items returned immediately with background refresh queued
+    assert resp.headers.get("X-Feed-Generating") == "true"
+    assert resp.json()[0]["title"] == "Cached Article"
     mock_gen.assert_called_once()
-    assert resp.json()[0]["title"] == "AI Breakthrough"
 
 
 # ---------------------------------------------------------------------------
