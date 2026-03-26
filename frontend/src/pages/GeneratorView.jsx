@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { API_URL } from "../config";
+import { GENERATOR_URL } from "../config";
 
 // ---------------------------------------------------------------------------
 // Static data
@@ -502,7 +502,7 @@ function PipelineTab() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/generator/stats`);
+      const res = await fetch(`${GENERATOR_URL}/generator/stats`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setStats(data);
@@ -685,7 +685,7 @@ function TrendAnalystTab() {
     setError(null);
     setResults(null);
     try {
-      const res = await fetch(`${API_URL}/generator/analyze`, {
+      const res = await fetch(`${GENERATOR_URL}/generator/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -981,7 +981,7 @@ function RunNowButton({ generatorState }) {
     setPending(true);
     setToast(null);
     try {
-      const res = await fetch(`${API_URL}/generator/run-now`, {
+      const res = await fetch(`${GENERATOR_URL}/generator/run-now`, {
         method: "POST",
       });
       if (res.status === 202) setToast({ type: "success", msg: "Run started" });
@@ -1055,7 +1055,7 @@ function RunTrendButton({ trendState }) {
     setPending(true);
     setToast(null);
     try {
-      const res = await fetch(`${API_URL}/generator/run-trend`, { method: "POST" });
+      const res = await fetch(`${GENERATOR_URL}/generator/run-trend`, { method: "POST" });
       if (res.status === 202) setToast({ type: "success", msg: "Analysis started" });
       else if (res.status === 409) setToast({ type: "warn", msg: "Already running" });
       else setToast({ type: "error", msg: `Error ${res.status}` });
@@ -1282,7 +1282,7 @@ function LiveRunTab() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/generator/agent-status`);
+      const res = await fetch(`${GENERATOR_URL}/generator/agent-status`);
       if (!res.ok) return;
       const data = await res.json();
       setAgentStatus(data);
@@ -1293,7 +1293,7 @@ function LiveRunTab() {
 
   const fetchKeywords = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/generator/trend-keywords`);
+      const res = await fetch(`${GENERATOR_URL}/generator/trend-keywords`);
       if (!res.ok) return;
       const data = await res.json();
       setKeywords(data.keywords ?? []);
