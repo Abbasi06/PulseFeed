@@ -1055,9 +1055,13 @@ function RunTrendButton({ trendState }) {
     setPending(true);
     setToast(null);
     try {
-      const res = await fetch(`${GENERATOR_URL}/generator/run-trend`, { method: "POST" });
-      if (res.status === 202) setToast({ type: "success", msg: "Analysis started" });
-      else if (res.status === 409) setToast({ type: "warn", msg: "Already running" });
+      const res = await fetch(`${GENERATOR_URL}/generator/run-trend`, {
+        method: "POST",
+      });
+      if (res.status === 202)
+        setToast({ type: "success", msg: "Analysis started" });
+      else if (res.status === 409)
+        setToast({ type: "warn", msg: "Already running" });
       else setToast({ type: "error", msg: `Error ${res.status}` });
     } catch {
       setToast({ type: "error", msg: "Request failed" });
@@ -1076,9 +1080,24 @@ function RunTrendButton({ trendState }) {
       >
         {pending ? (
           <>
-            <svg className="w-3.5 h-3.5 animate-spin shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity={0.25} />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 00-9-9" />
+            <svg
+              className="w-3.5 h-3.5 animate-spin shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                opacity={0.25}
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 12a9 9 0 00-9-9"
+              />
             </svg>
             Starting…
           </>
@@ -1407,14 +1426,26 @@ export default function GeneratorView() {
             className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 transition-colors shrink-0"
             title="Back to Feed"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
             <span className="text-xs font-medium hidden sm:inline">Feed</span>
           </button>
           <div className="w-px h-5 bg-slate-800" />
           <div>
-            <h1 className="text-lg font-bold text-slate-100">Generator Engine</h1>
+            <h1 className="text-lg font-bold text-slate-100">
+              Generator Engine
+            </h1>
             <p className="text-slate-500 text-sm mt-0.5">
               Inference Cascade + Trend Intelligence
             </p>

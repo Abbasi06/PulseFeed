@@ -356,7 +356,7 @@ export default function Dashboard() {
         setEvents(eventsData);
         const isGenerating =
           feedRes.headers.get("X-Feed-Generating") === "true";
-        setGenerating(isGenerating && feedData.length === 0);
+        setGenerating(isGenerating);
         if (feedData.length > 0) {
           fetchBrief();
         } else {
@@ -742,11 +742,12 @@ export default function Dashboard() {
                       Array.from({ length: 6 }, (_, i) => (
                         <SkeletonCard key={i} />
                       ))
-                    ) : generating ? (
+                    ) : generating && feed.length === 0 ? (
                       <div className="col-span-full flex flex-col items-center justify-center py-20">
                         <BrainLoader message="Personalising your feed for the first time…" />
                         <p className="mt-4 text-xs text-slate-500">
-                          This takes about 30–60 seconds. We'll update automatically.
+                          This takes about 30–60 seconds. We'll update
+                          automatically.
                         </p>
                       </div>
                     ) : feed.length === 0 ? (

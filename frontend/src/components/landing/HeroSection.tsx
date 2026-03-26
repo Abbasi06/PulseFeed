@@ -64,7 +64,6 @@ export default function HeroSection() {
           <span className="text-white">Your Technical Context.</span>
         </motion.h1>
 
-
         <motion.p
           custom={3}
           variants={fadeUp}

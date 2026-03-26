@@ -18,7 +18,9 @@ export default function Capabilities() {
           <div className="h-2 w-3/4 rounded bg-white/20 mb-2" />
           <div className="h-2 w-1/2 rounded bg-white/10 mb-4" />
           <div className="mt-auto h-8 w-18 self-end rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-            <span className="text-[8px] text-white/50 uppercase tracking-widest font-bold">Scanning...</span>
+            <span className="text-[8px] text-white/50 uppercase tracking-widest font-bold">
+              Scanning...
+            </span>
           </div>
         </div>
       ),
@@ -32,7 +34,9 @@ export default function Capabilities() {
       visual: (
         <div className="relative w-48 h-32 rounded-xl border border-white/10 bg-[rgba(255,255,255,0.05)] shadow-2xl backdrop-blur-md flex flex-col items-center justify-center p-4">
           <div className="text-3xl font-bold text-white mb-2">15%</div>
-          <div className="text-[10px] text-white/50 uppercase tracking-widest font-bold">High Signal Density</div>
+          <div className="text-[10px] text-white/50 uppercase tracking-widest font-bold">
+            High Signal Density
+          </div>
         </div>
       ),
     },
@@ -90,7 +94,8 @@ export default function Capabilities() {
             transition={{ delay: 0.2 }}
             className="text-lg text-white/50 max-w-2xl mx-auto"
           >
-            PulseFeed isn’t a news reader. It’s a distributed inference engine working exclusively for your career.
+            PulseFeed isn’t a news reader. It’s a distributed inference engine
+            working exclusively for your career.
           </motion.p>
         </div>
 
@@ -115,7 +120,9 @@ export default function Capabilities() {
                 </p>
               </div>
               <div className="flex-1 min-h-[250px] md:min-h-[auto] relative bg-[#010101]/50 flex items-center justify-center p-12">
-                <div className={`absolute inset-0 bg-gradient-to-${idx % 2 === 0 ? "l" : "r"} ${block.gradient} pointer-events-none`} />
+                <div
+                  className={`absolute inset-0 bg-gradient-to-${idx % 2 === 0 ? "l" : "r"} ${block.gradient} pointer-events-none`}
+                />
                 {block.visual}
               </div>
             </motion.div>

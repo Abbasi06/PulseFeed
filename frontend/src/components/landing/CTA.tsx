@@ -16,9 +16,9 @@ export default function CTA() {
           initial={{ opacity: 0, y: 100, scale: 0.9 }}
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ 
-            duration: 1.2, 
-            ease: [0.16, 1, 0.3, 1] 
+          transition={{
+            duration: 1.2,
+            ease: [0.16, 1, 0.3, 1],
           }}
           className="p-10 md:p-20 rounded-[3rem] bg-[rgba(28,27,36,0.3)] border border-white/10 shadow-[0_0_50px_rgba(183,57,122,0.1)] backdrop-blur-2xl relative overflow-hidden"
         >
@@ -33,9 +33,10 @@ export default function CTA() {
           </h2>
 
           <p className="text-lg md:text-xl text-white/40 mb-12 max-w-3xl mx-auto leading-relaxed">
-            The industry's leading engineers don't just write more code; they possess the 
-            situational awareness to know exactly what architectures are disrupting the 
-            stack right now. PulseFeed gives you that advantage.
+            The industry's leading engineers don't just write more code; they
+            possess the situational awareness to know exactly what architectures
+            are disrupting the stack right now. PulseFeed gives you that
+            advantage.
           </p>
 
           <div className="flex justify-center relative group w-max mx-auto">
@@ -54,7 +55,7 @@ export default function CTA() {
           </div>
 
           <p className="mt-8 text-[10px] text-white/20 tracking-[2px] font-bold uppercase">
-             Spend less time sifting. Spend more time building.
+            Spend less time sifting. Spend more time building.
           </p>
         </motion.div>
       </div>

@@ -28,17 +28,17 @@ const fadeUpVariants: Variants = {
 const FloatingFragment = ({ children, className, delay = 0 }: any) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.9, y: 20 }}
-    animate={{ 
-      opacity: [0.4, 0.7, 0.4], 
-      scale: 1, 
+    animate={{
+      opacity: [0.4, 0.7, 0.4],
+      scale: 1,
       y: [0, -10, 0],
-      x: [0, 5, 0] 
+      x: [0, 5, 0],
     }}
-    transition={{ 
-      duration: 5 + Math.random() * 2, 
-      repeat: Infinity, 
+    transition={{
+      duration: 5 + Math.random() * 2,
+      repeat: Infinity,
       delay,
-      opacity: { duration: 3, repeat: Infinity }
+      opacity: { duration: 3, repeat: Infinity },
     }}
     className={`absolute p-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl pointer-events-none hidden lg:block ${className}`}
   >
@@ -49,7 +49,7 @@ const FloatingFragment = ({ children, className, delay = 0 }: any) => (
 export default function Hero() {
   const navigate = useNavigate();
   const containerRef = useRef(null);
-  
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -60,41 +60,54 @@ export default function Hero() {
   const scale = useTransform(scrollYProgress, [0, 0.8], [1, 0.9]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative w-full min-h-[120vh] flex flex-col items-center justify-start bg-[#010101] overflow-hidden pt-48 pb-32 font-sans selection:bg-[#B7397A]/30"
     >
       {/* Visual Fragments (Filling the 'Empty' Space) */}
       <FloatingFragment className="top-[20%] left-[8%] w-64" delay={0.5}>
-          <div className="flex items-center gap-2 mb-2 text-[10px] text-white/40 uppercase tracking-tighter">
-             <PulseFeedIcon size={10} color="#B7397A" /> Swarm Log // 09:42:11
-          </div>
-          <p className="text-[11px] font-mono text-white/70 leading-tight">
-            [INFO] Ingesting ArXiv:2403.00123 <br/>
-            [SUCCESS] Vectorizing embeddings... <br/>
-            [ACTION] Synthesis initialized.
-          </p>
+        <div className="flex items-center gap-2 mb-2 text-[10px] text-white/40 uppercase tracking-tighter">
+          <PulseFeedIcon size={10} color="#B7397A" /> Swarm Log // 09:42:11
+        </div>
+        <p className="text-[11px] font-mono text-white/70 leading-tight">
+          [INFO] Ingesting ArXiv:2403.00123 <br />
+          [SUCCESS] Vectorizing embeddings... <br />
+          [ACTION] Synthesis initialized.
+        </p>
       </FloatingFragment>
 
       <FloatingFragment className="top-[35%] right-[10%] w-56" delay={1.2}>
-          <div className="flex items-center gap-2 mb-2">
-             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-             <span className="text-[10px] font-bold text-white/60">GITHUB_REPO: vLLM</span>
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <span className="text-[10px] font-bold text-white/60">
+            GITHUB_REPO: vLLM
+          </span>
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+            <motion.div
+              animate={{ x: [-100, 100] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="h-full w-1/3 bg-[#B7397A]"
+            />
           </div>
-          <div className="space-y-1.5">
-             <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                <motion.div animate={{ x: [-100, 100] }} transition={{ duration: 2, repeat: Infinity }} className="h-full w-1/3 bg-[#B7397A]" />
-             </div>
-             <p className="text-[10px] text-white/40 italic">Aggregating 124 open PRs for synthesis...</p>
-          </div>
+          <p className="text-[10px] text-white/40 italic">
+            Aggregating 124 open PRs for synthesis...
+          </p>
+        </div>
       </FloatingFragment>
 
       <FloatingFragment className="bottom-[25%] left-[12%] w-60" delay={2}>
-          <div className="px-2 py-1 rounded bg-[#B7397A]/20 border border-[#B7397A]/40 text-[9px] text-[#B7397A] font-bold w-fit mb-2">
-             HIGH_SIGNAL MATCH
-          </div>
-          <h4 className="text-[12px] font-bold text-white mb-1">Attention Is All You Need</h4>
-          <p className="text-[10px] text-white/50 leading-relaxed">The cornerstone of the Transformer architecture remains the core retrieval target...</p>
+        <div className="px-2 py-1 rounded bg-[#B7397A]/20 border border-[#B7397A]/40 text-[9px] text-[#B7397A] font-bold w-fit mb-2">
+          HIGH_SIGNAL MATCH
+        </div>
+        <h4 className="text-[12px] font-bold text-white mb-1">
+          Attention Is All You Need
+        </h4>
+        <p className="text-[10px] text-white/50 leading-relaxed">
+          The cornerstone of the Transformer architecture remains the core
+          retrieval target...
+        </p>
       </FloatingFragment>
 
       {/* Particle Canvas Layer (z-0) */}
@@ -134,7 +147,7 @@ export default function Hero() {
           className="flex items-center gap-3 px-2 py-2 pr-6 mb-12 rounded-full bg-[rgba(28,27,36,0.3)] border border-white/10 backdrop-blur-md shadow-[0_0_30px_rgba(183,57,122,0.1)]"
         >
           <div className="flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-[#B7397A] to-[#4C6E94] shadow-[0_0_15px_rgba(183,57,122,0.6)]">
-             <Zap size={13} className="text-white" />
+            <Zap size={13} className="text-white" />
           </div>
           <span className="text-sm font-medium text-gray-400 tracking-tight">
             Initialize your autonomous research swarm today.
@@ -157,8 +170,10 @@ export default function Hero() {
           variants={fadeUpVariants}
           className="text-xl sm:text-2xl md:text-3xl font-bold text-white/80 tracking-tight mb-8 max-w-3xl"
         >
-          Autonomous Research Swarm for <br/>
-          <span className="text-[#B7397A] italic">High-Signal Technical Context.</span>
+          Autonomous Research Swarm for <br />
+          <span className="text-[#B7397A] italic">
+            High-Signal Technical Context.
+          </span>
         </motion.p>
 
         {/* Detailed Description */}
@@ -166,8 +181,8 @@ export default function Hero() {
           variants={fadeUpVariants}
           className="text-lg md:text-xl text-white/40 max-w-2xl mb-14 leading-relaxed font-medium"
         >
-          Ingest, Filter, and Synthesize the global firehose of ArXiv papers, 
-          GitHub repos, and engineering blogs into a hyper-personalized, 
+          Ingest, Filter, and Synthesize the global firehose of ArXiv papers,
+          GitHub repos, and engineering blogs into a hyper-personalized,
           zero-noise intelligence feed.
         </motion.p>
 
@@ -200,7 +215,6 @@ export default function Hero() {
           fallbackSrc="/_videos/v1/f0c78f536d5f21a047fb7792723a36f9d647daa1.mp4"
         />
       </motion.div>
-
     </div>
   );
 }

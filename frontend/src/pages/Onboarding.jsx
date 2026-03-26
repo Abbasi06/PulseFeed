@@ -149,7 +149,10 @@ export default function Onboarding() {
         {/* Brand */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-white">
-            Pulse<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D946EF] to-[#8B5CF6]">Feed.ai</span>
+            Pulse
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D946EF] to-[#8B5CF6]">
+              Feed.ai
+            </span>
           </h1>
           <p className="mt-2 text-slate-500 text-sm">
             Build your personalized AI knowledge feed in 2 steps.
