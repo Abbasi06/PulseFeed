@@ -62,7 +62,7 @@ export default function Hero() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full min-h-[120vh] flex flex-col items-center justify-start bg-[#010101] overflow-hidden pt-48 pb-32 font-sans selection:bg-[#B7397A]/30"
+      className="relative w-full min-h-[120vh] flex flex-col items-center justify-start bg-transparent overflow-hidden pt-48 pb-32 font-sans selection:bg-[#B7397A]/30"
     >
       {/* Visual Fragments (Filling the 'Empty' Space) */}
       <FloatingFragment className="top-[20%] left-[8%] w-64" delay={0.5}>

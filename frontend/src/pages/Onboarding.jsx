@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import InterestPicker from "../components/InterestPicker";
-import AtmosphericBackground from "../components/AtmosphericBackground";
 import { MIN_SUBFIELDS } from "../constants/taxonomy";
 import { API_URL } from "../config";
 
@@ -144,7 +143,6 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <AtmosphericBackground />
       <div className="relative z-10 w-full max-w-lg">
         {/* Brand */}
         <div className="text-center mb-8">

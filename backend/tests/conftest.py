@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -36,11 +37,23 @@ USER_B: dict = {
 
 
 @pytest.fixture(autouse=True)
-def reset_refresh_cooldowns() -> None:
+def reset_refresh_cooldowns() -> Generator[None, None, None]:
     _feed_route._last_refresh.clear()
     _events_route._last_refresh.clear()
     _feed_route._generating.clear()
     _events_route._generating.clear()
+    yield
+
+
+@pytest.fixture(autouse=True)
+def isolate_generator_db() -> Generator[None, None, None]:
+    """
+    Prevent tests from reading the real generator.db on disk.
+    With _open_generator_db returning None, personalize_feed falls back to
+    research_agent.generate_feed — the path all tests were written to exercise.
+    """
+    with patch("agents.feed_personalizer._open_generator_db", return_value=None):
+        yield
 
 
 # ---------------------------------------------------------------------------

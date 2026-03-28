@@ -20,7 +20,7 @@ COOKIE_OPTS: dict = dict(
     key="access_token",
     httponly=True,
     samesite="lax",
-    secure=False,   # set True in production (HTTPS)
+    secure=os.environ.get("COOKIE_SECURE", "false").lower() == "true",
     path="/",
     max_age=TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
 )

@@ -1,9 +1,10 @@
+import os
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session
 
-DATABASE_URL = "sqlite:///./pulseboard.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./pulseboard.db")
 
 engine = create_engine(
     DATABASE_URL,

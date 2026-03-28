@@ -8,6 +8,7 @@ import LandingPage from "./pages/LandingPage";
 import Onboarding from "./pages/Onboarding";
 import Settings from "./pages/Settings";
 import GeneratorView from "./pages/GeneratorView";
+import WarpBackground from "./components/WarpBackground";
 
 // ---------------------------------------------------------------------------
 // Error boundary — prevents white-screen crashes
@@ -72,14 +73,21 @@ const fade = {
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
+// Landing exits sliding left, onboarding enters from right — simultaneous pan effect
+const landingExit = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.4, ease: "easeOut" } },
+  exit: { opacity: 0, x: -60, transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } },
+};
+
 const slideFromRight = {
-  initial: { opacity: 0, x: 48 },
+  initial: { opacity: 0, x: 60 },
   animate: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
   },
-  exit: { opacity: 0, x: -24, transition: { duration: 0.22 } },
+  exit: { opacity: 0, x: -40, transition: { duration: 0.3 } },
 };
 
 function Page({ children, variant = fade }) {
@@ -141,19 +149,32 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const location = useLocation();
+  const isLandingOrOnboarding = ["/" , "/onboarding"].includes(location.pathname);
+  const isLanding = location.pathname === "/";
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<LandingPage />} />
-        <Route
-          path="/onboarding"
-          element={
-            <Page variant={slideFromRight}>
-              <Onboarding />
-            </Page>
-          }
-        />
+    <>
+      {/* Persistent neural background — stays mounted across landing ↔ onboarding */}
+      {isLandingOrOnboarding && <WarpBackground bright={isLanding} />}
+
+      <AnimatePresence mode="sync" initial={false}>
+        <Routes location={location} key={location.pathname}>
+          <Route
+            path="/"
+            element={
+              <Page variant={landingExit}>
+                <LandingPage />
+              </Page>
+            }
+          />
+          <Route
+            path="/onboarding"
+            element={
+              <Page variant={slideFromRight}>
+                <Onboarding />
+              </Page>
+            }
+          />
         <Route
           element={
             <ProtectedRoute>
@@ -189,6 +210,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AnimatePresence>
+    </>
   );
 }
 

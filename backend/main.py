@@ -146,20 +146,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(title="PulseFeed API", lifespan=lifespan)
 
+_ALLOWED_ORIGINS = [
+    # local dev
+    *[f"http://localhost:{p}" for p in range(5173, 5183)],
+    # production — set ALLOWED_ORIGIN env var to your Vercel URL, e.g.
+    # https://pulseboard.vercel.app
+    *([o.strip() for o in os.environ["ALLOWED_ORIGIN"].split(",")]
+      if os.environ.get("ALLOWED_ORIGIN") else []),
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:5175",
-        "http://localhost:5176",
-        "http://localhost:5177",
-        "http://localhost:5178",
-        "http://localhost:5179",
-        "http://localhost:5180",
-        "http://localhost:5181",
-        "http://localhost:5182",
-    ],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
