@@ -23,6 +23,7 @@ import logging
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -55,8 +56,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning("GEMINI_API_KEY is not set — harvesting will fail")
 
     scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 60})
+    now = datetime.now(tz=timezone.utc)
 
-    # Swarm runs every 5 minutes
+    # Swarm runs every 5 minutes — fires immediately on startup
     scheduler.add_job(
         run_swarm_job,
         "interval",
@@ -64,9 +66,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         id="swarm",
         kwargs={"scheduler": scheduler, "target_docs_per_topic": 5},
         max_instances=1,
+        next_run_time=now,
     )
 
-    # Trend analyst runs every 15 minutes
+    # Trend analyst runs every 15 minutes — fires immediately on startup
+    # (gracefully skips if generator.db has no documents yet)
     scheduler.add_job(
         run_trend_job,
         "interval",
@@ -74,6 +78,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         id="trend_analyst",
         kwargs={"scheduler": scheduler},
         max_instances=1,
+        next_run_time=now,
     )
 
     scheduler.start()

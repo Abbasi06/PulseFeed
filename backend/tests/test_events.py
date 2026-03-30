@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
@@ -169,3 +170,39 @@ def test_toggle_event_like_forbidden_when_other_user(client: TestClient, db: Ses
 def test_toggle_event_like_not_found_404(client: TestClient) -> None:
     client.post("/users", json=USER_A)
     assert client.patch("/events/items/99999/like").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# POST /events/{user_id}/refresh — edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_refresh_events_preserves_existing_when_generation_returns_empty(
+    client: TestClient, db: Session
+) -> None:
+    user_id = client.post("/users", json=USER_A).json()["id"]
+    _insert_event(db, user_id)
+    with patch("agents.research_agent.generate_events", new_callable=AsyncMock) as mock_gen:
+        mock_gen.return_value = []  # agent returns nothing
+        resp = client.post(f"/events/{user_id}/refresh")
+    assert resp.status_code == 200
+    names = [ev["name"] for ev in resp.json()]
+    assert "Cached Event" in names
+
+
+def test_refresh_events_504_on_timeout(client: TestClient) -> None:
+    user_id = client.post("/users", json=USER_A).json()["id"]
+    with patch("agents.research_agent.generate_events", new_callable=AsyncMock) as mock_gen:
+        mock_gen.side_effect = asyncio.TimeoutError()
+        resp = client.post(f"/events/{user_id}/refresh")
+    assert resp.status_code == 504
+
+
+def test_refresh_events_cooldown_429(client: TestClient, db: Session) -> None:
+    user_id = client.post("/users", json=USER_A).json()["id"]
+    with patch("agents.research_agent.generate_events", new_callable=AsyncMock) as mock_gen:
+        mock_gen.return_value = _mock_events(user_id)
+        client.post(f"/events/{user_id}/refresh")  # first — sets cooldown
+        resp = client.post(f"/events/{user_id}/refresh")  # second within 60s
+    assert resp.status_code == 429
+    assert "Retry-After" in resp.headers

@@ -2,137 +2,117 @@ import { useRef, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-const PARTICLE_COUNT = 3000;
+const PARTICLE_COUNT = 1500;
 
-function buildParticleData() {
-  // We use Float32Array for performance
-  const positions = new Float32Array(PARTICLE_COUNT * 3);
-  const colors = new Float32Array(PARTICLE_COUNT * 3);
+// All animation runs on the GPU — zero JS loop per frame
+const vertexShader = `
+  attribute float aIndex;
+  attribute vec3  aColor;
+  attribute vec3  basePosition;
 
-  // Celestial Aurora Palette
-  const colorMint = new THREE.Color("#D1E8E2");
-  const colorPink = new THREE.Color("#B7397A");
+  uniform float uTime;
+  uniform vec3  uMouse;
 
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 40;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 20 - 10; // Keep slightly behind
+  varying vec3  vColor;
+  varying float vAlpha;
 
-    const rand = Math.random();
-    // 50/50 mix of Mint and Pink
-    const baseColor = rand > 0.5 ? colorMint : colorPink;
-    colors[i * 3] = baseColor.r;
-    colors[i * 3 + 1] = baseColor.g;
-    colors[i * 3 + 2] = baseColor.b;
+  void main() {
+    vColor = aColor;
+
+    // Ambient drift — pure GPU sin/cos, no CPU math
+    vec3 pos = basePosition;
+    pos.x += sin(uTime * 0.45 + aIndex * 0.09) * 1.6;
+    pos.y += cos(uTime * 0.45 + aIndex * 0.09) * 1.6;
+
+    // Mouse repulsion
+    vec3  diff = pos - uMouse;
+    float dist = length(diff);
+    if (dist < 8.0) {
+      float force = dist < 4.0 ? 5.0 : -1.8;
+      pos.xy += normalize(diff.xy) * force * (1.0 - dist / 8.0);
+    }
+
+    // Subtle pulse
+    vAlpha = 0.45 + sin(uTime * 1.2 + aIndex * 0.6) * 0.3;
+
+    // Screen-space point size with mild depth attenuation
+    vec4 mvPos  = modelViewMatrix * vec4(pos, 1.0);
+    gl_PointSize = max(1.0, 220.0 / -mvPos.z);
+    gl_Position  = projectionMatrix * mvPos;
   }
-  return { positions, colors };
-}
+`;
 
-const PARTICLE_DATA = buildParticleData();
+const fragmentShader = `
+  varying vec3  vColor;
+  varying float vAlpha;
+
+  void main() {
+    // Soft circular sprite
+    vec2  coord = gl_PointCoord - vec2(0.5);
+    float r     = length(coord);
+    if (r > 0.5) discard;
+    float alpha = vAlpha * smoothstep(0.5, 0.1, r);
+    gl_FragColor = vec4(vColor, alpha);
+  }
+`;
 
 export default function AntigravityField() {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const pointsRef = useRef<THREE.Points>(null);
   const { viewport } = useThree();
 
-  // Create a dummy object for matrix calculations (avoids GC overhead)
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const { positions, colors } = PARTICLE_DATA;
+  const { geometry, material } = useMemo(() => {
+    const posArr   = new Float32Array(PARTICLE_COUNT * 3);
+    const colArr   = new Float32Array(PARTICLE_COUNT * 3);
+    const idxArr   = new Float32Array(PARTICLE_COUNT);
+    const colorMint = new THREE.Color("#D1E8E2");
+    const colorPink = new THREE.Color("#B7397A");
 
-  // Store localized particle state for physics (velocity, current position)
-  const particleState = useRef(
-    Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
-      pos: new THREE.Vector3(
-        positions[i * 3],
-        positions[i * 3 + 1],
-        positions[i * 3 + 2],
-      ),
-      vel: new THREE.Vector3(0, 0, 0),
-      baseScale: Math.random() * 0.4 + 0.1,
-    })),
-  );
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      posArr[i * 3]     = (Math.random() - 0.5) * 40;
+      posArr[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      posArr[i * 3 + 2] = (Math.random() - 0.5) * 20 - 10;
 
+      const c = Math.random() > 0.5 ? colorMint : colorPink;
+      colArr[i * 3]     = c.r;
+      colArr[i * 3 + 1] = c.g;
+      colArr[i * 3 + 2] = c.b;
+
+      idxArr[i] = i;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    // basePosition = rest position (static), position = required by Three.js
+    geo.setAttribute("position",     new THREE.BufferAttribute(posArr.slice(), 3));
+    geo.setAttribute("basePosition", new THREE.BufferAttribute(posArr, 3));
+    geo.setAttribute("aColor",       new THREE.BufferAttribute(colArr, 3));
+    geo.setAttribute("aIndex",       new THREE.BufferAttribute(idxArr, 1));
+
+    const mat = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime:  { value: 0 },
+        uMouse: { value: new THREE.Vector3(999, 999, 0) },
+      },
+      transparent: true,
+      depthWrite:  false,
+      blending:    THREE.AdditiveBlending,
+    });
+
+    return { geometry: geo, material: mat };
+  }, []);
+
+  // Per frame: only 2 uniform writes — no JS particle loop at all
   useFrame((state) => {
-    if (!meshRef.current) return;
-
-    // Map pointer to world coordinates
-    const mouse = new THREE.Vector3(
-      (state.pointer.x * viewport.width) / 2,
+    if (!pointsRef.current) return;
+    const u = (pointsRef.current.material as THREE.ShaderMaterial).uniforms;
+    u.uTime.value = state.clock.elapsedTime;
+    u.uMouse.value.set(
+      (state.pointer.x * viewport.width)  / 2,
       (state.pointer.y * viewport.height) / 2,
       0,
     );
-
-    const time = state.clock.elapsedTime;
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const p = particleState.current[i];
-      const baseIndex = i * 3;
-
-      // Base anchor point (with slight ambient floating)
-      const targetX = positions[baseIndex] + Math.sin(time * 0.5 + i) * 1.5;
-      const targetY = positions[baseIndex + 1] + Math.cos(time * 0.5 + i) * 1.5;
-      const targetZ = positions[baseIndex + 2];
-
-      let targetPos = new THREE.Vector3(targetX, targetY, targetZ);
-
-      // Antigravity Mouse Interaction: TUG & SCATTER
-      const distToMouse = p.pos.distanceTo(mouse);
-
-      if (distToMouse < 8) {
-        const dir = p.pos.clone().sub(mouse).normalize();
-        if (distToMouse < 4) {
-          // Scatter (Push away very strongly when extremely close)
-          targetPos.add(dir.multiplyScalar(6));
-        } else {
-          // Tug (Pull slightly towards mouse when somewhat close)
-          targetPos.sub(dir.multiplyScalar(2));
-        }
-      }
-
-      // Spring physics logic
-      const springForce = targetPos.clone().sub(p.pos).multiplyScalar(0.02);
-      p.vel.add(springForce);
-      p.vel.multiplyScalar(0.9); // Damping value (lower = more friction)
-
-      p.pos.add(p.vel);
-
-      // Apply transformations
-      dummy.position.copy(p.pos);
-
-      // Pulsating scale effect
-      const scale = p.baseScale + Math.sin(time * 2 + i) * 0.05;
-      dummy.scale.set(scale, scale, scale);
-
-      // Slow continuous rotation of individual nodes
-      dummy.rotation.x = time * 0.5 + i;
-      dummy.rotation.y = time * 0.3 + i;
-
-      dummy.updateMatrix();
-      meshRef.current.setMatrixAt(i, dummy.matrix);
-    }
-
-    // Slightly rotate the entire field for an epic cosmic feel
-    meshRef.current.rotation.y = Math.sin(time * 0.05) * 0.1;
-    meshRef.current.rotation.x = Math.cos(time * 0.05) * 0.1;
-
-    meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[null as any, null as any, PARTICLE_COUNT]}
-    >
-      {/* Geometric Nodes */}
-      <octahedronGeometry args={[0.1, 0]} />
-
-      <meshStandardMaterial
-        roughness={0.2}
-        metalness={0.8}
-        transparent={true}
-        opacity={0.8}
-      />
-
-      <instancedBufferAttribute attach="instanceColor" args={[colors, 3]} />
-    </instancedMesh>
-  );
+  return <points ref={pointsRef} geometry={geometry} material={material} />;
 }

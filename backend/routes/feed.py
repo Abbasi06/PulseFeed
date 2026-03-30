@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 from datetime import datetime, timedelta, timezone
@@ -214,6 +215,9 @@ def record_click(
     return item
 
 
+_GENERATION_TIMEOUT = 180  # seconds
+
+
 async def _background_refresh(user_id: int) -> None:
     """Background feed refresh — creates its own DB session so it outlives the request."""
     from agents.feed_personalizer import personalize_feed
@@ -222,7 +226,13 @@ async def _background_refresh(user_id: int) -> None:
 
     db = SASession(engine)
     try:
-        items = await personalize_feed(user_id, db)
+        items = await asyncio.wait_for(personalize_feed(user_id, db), timeout=_GENERATION_TIMEOUT)
+        if not items:
+            logger.warning(
+                "Background refresh returned 0 items for user %d — keeping existing feed", user_id
+            )
+            return
+        # Only replace once we have confirmed items to store
         db.query(FeedItem).filter(FeedItem.user_id == user_id).delete()
         db.query(FeedBrief).filter(FeedBrief.user_id == user_id).delete()
         _save_items(items, db)
@@ -231,8 +241,14 @@ async def _background_refresh(user_id: int) -> None:
             user_id,
             len(items),
         )
+    except asyncio.TimeoutError:
+        logger.error(
+            "Background feed refresh timed out after %ds for user %d",
+            _GENERATION_TIMEOUT,
+            user_id,
+        )
     except Exception as exc:
-        logger.error("Background feed refresh failed for user %d: %s", user_id, exc)
+        logger.error("Background feed refresh failed for user %d: %s", user_id, exc, exc_info=True)
     finally:
         db.close()
         _generating.discard(user_id)
@@ -242,10 +258,22 @@ async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
     from agents.feed_personalizer import personalize_feed
 
     try:
-        items = await personalize_feed(user_id, db)
+        items = await asyncio.wait_for(personalize_feed(user_id, db), timeout=_GENERATION_TIMEOUT)
+    except asyncio.TimeoutError as exc:
+        logger.error("Feed generation timed out for user %d", user_id)
+        raise HTTPException(status_code=504, detail="Feed generation timed out") from exc
     except Exception as exc:
         logger.error("generate_feed failed for user %d: %s", user_id, exc, exc_info=True)
         raise HTTPException(status_code=502, detail="Feed generation failed") from exc
+
+    if not items:
+        logger.warning("Feed generation returned 0 items for user %d — keeping existing", user_id)
+        return (
+            db.query(FeedItem)
+            .filter(FeedItem.user_id == user_id)
+            .order_by(FeedItem.fetched_at.desc())
+            .all()
+        )
 
     db.query(FeedItem).filter(FeedItem.user_id == user_id).delete()
     db.query(FeedBrief).filter(FeedBrief.user_id == user_id).delete()
