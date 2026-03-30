@@ -35,12 +35,15 @@ TODAY = date.today().isoformat()
 
 
 def _open_generator_db() -> sqlite3.Connection | None:
-    """Open generator.db in read-only mode. Returns None if the file does not exist."""
-    from generator.db import db_path
+    """Open generator.db in read-only mode. Returns None if not available."""
+    try:
+        from generator.db import db_path  # only present when PulseGen is installed
+    except ImportError:
+        logger.info("generator package not installed — will use research_agent")
+        return None
 
-    path = db_path()
     import os
-
+    path = db_path()
     if not os.path.exists(path):
         logger.warning("generator.db not found at %s — will fall back to research_agent", path)
         return None

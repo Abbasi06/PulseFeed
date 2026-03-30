@@ -110,8 +110,11 @@ def _extract_retry_delay(err_str: str) -> int:
     return int(match.group(1)) + 5 if match else 65
 
 
+_TRANSIENT_KEYWORDS = ("timeout", "connection", "unavailable", "503", "service_unavailable")
+
+
 def _gemini_call_sync(client: genai.Client, contents: str) -> str:
-    """Synchronous Gemini call with 429/RESOURCE_EXHAUSTED retry logic."""
+    """Synchronous Gemini call with retry logic for rate limits and transient errors."""
     for attempt in range(_MAX_RETRIES + 1):
         try:
             return (
@@ -124,10 +127,13 @@ def _gemini_call_sync(client: genai.Client, contents: str) -> str:
             )
         except Exception as exc:
             err = str(exc)
-            if ("429" in err or "RESOURCE_EXHAUSTED" in err) and attempt < _MAX_RETRIES:
-                delay = _extract_retry_delay(err)
+            is_rate_limit = "429" in err or "RESOURCE_EXHAUSTED" in err
+            is_transient = any(kw in err.lower() for kw in _TRANSIENT_KEYWORDS)
+            if (is_rate_limit or is_transient) and attempt < _MAX_RETRIES:
+                delay = _extract_retry_delay(err) if is_rate_limit else 10
                 logger.warning(
-                    "Gemini rate limited — retrying in %ds (attempt %d/%d)",
+                    "Gemini %s — retrying in %ds (attempt %d/%d)",
+                    "rate limited" if is_rate_limit else "transient error",
                     delay,
                     attempt + 1,
                     _MAX_RETRIES,
@@ -345,8 +351,15 @@ async def generate_feed(
     queries = _build_feed_queries(user)
     logger.info("Feed queries for user %d: %s", user_id, queries)
 
-    # Step 2: run searches in parallel — limit to yesterday's news
+    # Step 2: run searches in parallel — try yesterday first, widen to last week if sparse
     raw_results = await _search_all(queries, timelimit="d")
+    if len(raw_results) < 5:
+        logger.info(
+            "Only %d results with timelimit='d' for user %d — widening to 'w'",
+            len(raw_results),
+            user_id,
+        )
+        raw_results = await _search_all(queries, timelimit="w")
 
     if not raw_results:
         logger.warning("No search results for user %d — returning placeholder", user_id)
@@ -354,7 +367,7 @@ async def generate_feed(
             {
                 "user_id": user_id,
                 "title": "No new updates found",
-                "summary": "No search results were available at this time.",
+                "summary": "No search results were available at this time. Try refreshing shortly.",
                 "source": "Unknown",
                 "url": "#",
                 "topic": "General",

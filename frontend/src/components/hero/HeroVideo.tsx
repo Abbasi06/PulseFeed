@@ -55,7 +55,7 @@ export default function HeroVideo({ src, fallbackSrc }: HeroVideoProps) {
   }, [src, fallbackSrc]);
 
   return (
-    <div className="relative w-full h-auto min-h-[500px] overflow-hidden -mt-[150px] -z-10">
+    <div className="relative w-full h-auto min-h-[500px] overflow-hidden">
       {/* 
          Video blending magic: 
          - mix-blend-screen ensures black background disappears into #010101

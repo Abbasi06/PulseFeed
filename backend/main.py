@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 from database import Base, engine  # noqa: E402
-from routes import events, feed, feed_v2, users  # noqa: E402
+from routes import events, feed, feed_v2, generator_obs, users  # noqa: E402
 
 
 def _run_migrations() -> None:
@@ -168,6 +168,7 @@ app.include_router(users.router)
 app.include_router(feed.router)
 app.include_router(events.router)
 app.include_router(feed_v2.router)
+app.include_router(generator_obs.router)
 
 
 @app.get("/health")

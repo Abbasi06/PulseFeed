@@ -258,17 +258,18 @@ def run_now(
     background_tasks: BackgroundTasks,
     target_docs: int = Query(default=20, ge=1, le=200),
 ) -> RunNowResponse:
-    """Manually trigger ingestion — runs until target_docs stored or max_rounds hit."""
+    """Manually trigger the swarm ingestion pipeline."""
     from generator.status_store import AGENT_STATUS
-    from generator.inline_pipeline import run_ingestion_job
+    from generator_service.swarm import TOPICS, run_swarm_job
 
     if AGENT_STATUS["generator"]["state"] == "running":
         raise HTTPException(status_code=409, detail="Pipeline is already running")
 
-    background_tasks.add_task(run_ingestion_job, target_docs=target_docs)
+    per_topic = max(1, target_docs // len(TOPICS))
+    background_tasks.add_task(run_swarm_job, target_docs_per_topic=per_topic)
     return RunNowResponse(
         accepted=True,
-        message=f"Pipeline queued — target {target_docs} docs",
+        message=f"Swarm queued — ~{per_topic} docs per topic ({len(TOPICS)} topics)",
     )
 
 
