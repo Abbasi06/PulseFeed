@@ -2,18 +2,40 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from security.sanitize import sanitize_llm_input
+
 
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     occupation: str = Field(..., min_length=1, max_length=150)
     selected_chips: list[str] = Field(..., min_length=1, max_length=5)
-    field: str = ""
-    sub_fields: list[str] = Field(default_factory=list)
+    field: str = Field(default="", max_length=100)
+    sub_fields: list[str] = Field(default_factory=list, max_length=10)
 
     @field_validator("name", "occupation", mode="before")
     @classmethod
     def strip_str(cls, v: str) -> str:
-        return v.strip()
+        return sanitize_llm_input(v.strip(), field_name="occupation")
+
+    @field_validator("field", mode="before")
+    @classmethod
+    def sanitize_field(cls, v: str) -> str:
+        return sanitize_llm_input(v.strip(), field_name="field")
+
+    @field_validator("sub_fields", mode="before")
+    @classmethod
+    def clean_sub_fields(cls, v: list[str]) -> list[str]:
+        if not isinstance(v, list):
+            return v
+        seen: set[str] = set()
+        result: list[str] = []
+        for tag in v:
+            tag = sanitize_llm_input(tag.strip()[:100], field_name="sub_fields")
+            lower = tag.lower()
+            if tag and lower not in seen:
+                seen.add(lower)
+                result.append(tag)
+        return result
 
     @field_validator("selected_chips", mode="before")
     @classmethod
@@ -23,7 +45,7 @@ class UserCreate(BaseModel):
         seen: set[str] = set()
         result: list[str] = []
         for tag in v:
-            tag = tag.strip()[:50]
+            tag = sanitize_llm_input(tag.strip()[:50], field_name="selected_chips")
             lower = tag.lower()
             if tag and lower not in seen:
                 seen.add(lower)
@@ -46,14 +68,34 @@ class UserUpdate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     occupation: str = Field(..., min_length=1, max_length=150)
     selected_chips: list[str] | None = None
-    field: str = ""
-    sub_fields: list[str] = Field(default_factory=list)
+    field: str = Field(default="", max_length=100)
+    sub_fields: list[str] = Field(default_factory=list, max_length=10)
     preferred_formats: list[str] = Field(default_factory=list)
 
     @field_validator("name", "occupation", mode="before")
     @classmethod
     def strip_str(cls, v: str) -> str:
-        return v.strip()
+        return sanitize_llm_input(v.strip(), field_name="occupation")
+
+    @field_validator("field", mode="before")
+    @classmethod
+    def sanitize_field(cls, v: str) -> str:
+        return sanitize_llm_input(v.strip(), field_name="field")
+
+    @field_validator("sub_fields", mode="before")
+    @classmethod
+    def clean_sub_fields(cls, v: list[str]) -> list[str]:
+        if not isinstance(v, list):
+            return v
+        seen: set[str] = set()
+        result: list[str] = []
+        for tag in v:
+            tag = sanitize_llm_input(tag.strip()[:100], field_name="sub_fields")
+            lower = tag.lower()
+            if tag and lower not in seen:
+                seen.add(lower)
+                result.append(tag)
+        return result
 
     @field_validator("selected_chips", mode="before")
     @classmethod
@@ -65,7 +107,7 @@ class UserUpdate(BaseModel):
         seen: set[str] = set()
         result: list[str] = []
         for tag in v:
-            tag = tag.strip()[:50]
+            tag = sanitize_llm_input(tag.strip()[:50], field_name="selected_chips")
             lower = tag.lower()
             if tag and lower not in seen:
                 seen.add(lower)

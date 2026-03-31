@@ -18,7 +18,9 @@ import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
+import redis.asyncio as aioredis
 import sqlalchemy.exc
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
@@ -32,6 +34,7 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 from database import Base, engine  # noqa: E402
 from routes import events, feed, feed_v2, generator_obs, users  # noqa: E402
+from security import AuditMiddleware, SecurityHeadersMiddleware  # noqa: E402
 
 
 def _run_migrations() -> None:
@@ -129,6 +132,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "generator.db pool only; start PulseGen to populate it"
         )
 
+    # Redis for rate limiting — fail-open if unavailable
+    redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    redis_client: Any = None
+    try:
+        redis_client = aioredis.from_url(
+            redis_url,
+            decode_responses=True,
+            socket_connect_timeout=2,
+        )
+        await redis_client.ping()
+        logger.info("Redis connected at %s — rate limiting active", redis_url)
+    except Exception as exc:
+        logger.warning(
+            "Redis unavailable (%s) — rate limiting is disabled", exc
+        )
+        redis_client = None
+    app.state.redis = redis_client
+
     scheduler = BackgroundScheduler(job_defaults={"misfire_grace_time": 60})
     scheduler.add_job(
         _batch_repersonalize,
@@ -141,6 +162,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
+    if redis_client is not None:
+        await redis_client.aclose()
     scheduler.shutdown(wait=False)
 
 
@@ -155,6 +178,9 @@ _ALLOWED_ORIGINS = [
       if os.environ.get("ALLOWED_ORIGIN") else []),
 ]
 
+# Middleware stack — registered innermost-first; last add_middleware = outermost.
+# Request flow:  SecurityHeaders → Audit → CORS → Router
+# Response flow: Router → CORS → Audit (log 4xx) → SecurityHeaders (add headers)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
@@ -163,6 +189,8 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["X-Feed-Generating", "X-Events-Generating", "Retry-After"],
 )
+app.add_middleware(AuditMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(users.router)
 app.include_router(feed.router)

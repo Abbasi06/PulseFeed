@@ -11,6 +11,7 @@ from auth import get_current_user_id
 from database import get_db
 from models import FeedBrief, FeedItem, User
 from schemas import BriefRead, FeedRead
+from security.rate_limiter import feed_rate_limit
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ def _save_items(items: list[dict], db: Session) -> None:
     db.commit()
 
 
-@router.get("/{user_id}", response_model=list[FeedRead])
+@router.get("/{user_id}", response_model=list[FeedRead], dependencies=[Depends(feed_rate_limit)])
 async def get_feed(
     user_id: int,
     background_tasks: BackgroundTasks,
