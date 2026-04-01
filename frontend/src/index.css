@@ -9,7 +9,7 @@
   --color-clay: #D97757;
   --color-nautical: #26498D;
   --color-steel: #8a8a8a;
-  
+
   --font-display: "Space Mono", "Courier New", monospace;
   --font-sans: "Geist", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
@@ -39,6 +39,7 @@ a:not([class]) {
   text-decoration: none;
   transition: none;
 }
+
 a:not([class]):hover {
   text-decoration: underline;
 }
@@ -48,6 +49,7 @@ a:not([class]):hover {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -59,7 +61,7 @@ a:not([class]):hover {
     border-radius: 0;
     box-shadow: none;
   }
-  
+
   .print-panel-heavy {
     background-color: var(--color-paper);
     border: 2px solid var(--color-ink);
@@ -71,13 +73,13 @@ a:not([class]):hover {
   .interactive-snap {
     transition: none !important;
   }
-  
+
   .interactive-snap:hover {
     background-color: var(--color-clay);
     color: var(--color-paper);
     border-color: var(--color-clay);
   }
-  
+
   /* Primary CTA — Clay accent */
   .btn-print {
     background-color: var(--color-ink);
@@ -101,74 +103,5 @@ a:not([class]):hover {
   .btn-print:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-  }
-
-  /* ── Skeuomorphic Ripple Effect ─────────────────────────────────── */
-  /* Applied to feature cards: a crisp inner-to-outer border highlight
-     that simulates tactile material physics on scroll-into-view.       */
-  .ripple-card {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border: 2px solid transparent;
-    z-index: 10;
-    pointer-events: none;
-    transition: none;
-  }
-
-  .ripple-card::after {
-    content: "";
-    position: absolute;
-    inset: 6px;
-    border: 1px solid transparent;
-    z-index: 10;
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  /* When the card enters the viewport, fire the ripple */
-  .ripple-card.in-view::after {
-    animation: ripple-inner 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .ripple-card.in-view::before {
-    animation: ripple-outer 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards;
-  }
-
-  @keyframes ripple-inner {
-    0% {
-      border-color: transparent;
-      opacity: 0;
-    }
-    30% {
-      border-color: var(--color-clay);
-      opacity: 0.6;
-    }
-    100% {
-      border-color: transparent;
-      opacity: 0;
-    }
-  }
-
-  @keyframes ripple-outer {
-    0% {
-      border-color: transparent;
-    }
-    30% {
-      border-color: var(--color-ink);
-    }
-    100% {
-      border-color: var(--color-ink);
-    }
-  }
-
-  /* Warm hover shade — replaces hardcoded #EEEEEE */
-  .hover-warm:hover {
-    background-color: #F5F0E8;
   }
 }

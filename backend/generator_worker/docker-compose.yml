@@ -1,0 +1,106 @@
+version: "3.9"
+
+# ── PulseGen Generator Microservice ──────────────────────────────────────────
+# Completely independent of the PulseFeed serving backend.
+# Shares only the PostgreSQL database with the Retriever service.
+#
+# Start:      docker compose up -d
+# Scale:      docker compose up -d --scale generator_worker=4
+# Worker logs: docker compose logs -f generator_worker
+# Beat logs:   docker compose logs -f generator_beat
+
+services:
+
+  # ── Infrastructure ─────────────────────────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: pulsegen
+      POSTGRES_USER: pulsegen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulsegen_dev}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulsegen -d pulsegen"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Generator Worker (scalable) ────────────────────────────────────────────
+
+  generator_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      MCP_SQL_COMMAND: >
+        uv run mcp-sql-server
+        --pg-url postgresql://pulsegen:${POSTGRES_PASSWORD:-pulsegen_dev}@postgres:5432/pulsegen
+      MCP_STORAGE_COMMAND: >
+        uv run mcp-storage-server
+        --pg-url postgresql://pulsegen:${POSTGRES_PASSWORD:-pulsegen_dev}@postgres:5432/pulsegen
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+    # Default CMD from Dockerfile: celery worker --pool=gevent --concurrency=8
+
+  # ── Beat Scheduler (singleton — must never run more than 1) ───────────────
+
+  generator_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      replicas: 1  # MUST stay 1 — beat is not safe to run in parallel
+    command: >
+      celery -A src.celery_app beat
+      --loglevel=info
+      --scheduler celery.beat.PersistentScheduler
+      --schedule /tmp/celerybeat-schedule
+
+  # ── Flower (optional monitoring UI on :5555) ──────────────────────────────
+
+  flower:
+    image: mher/flower:2.0
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    profiles:
+      - monitoring  # only start with: docker compose --profile monitoring up
+
+volumes:
+  redis_data:
+  pg_data:

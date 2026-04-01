@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const NODE_COUNT      = 55;
-const CONNECT_RADIUS  = 0.28;  // fraction of min(W,H)
-const PULSE_SPEED     = 3.2;   // px per frame
-const PULSE_EVERY     = 120;   // frames between new pulses
-const REPEL_RADIUS    = 150;   // px — mouse pushes nodes away gently
-const FLASH_DURATION  = 90;    // frames for activation bloom to decay
+const NODE_COUNT = 45;
+const CONNECT_RADIUS = 0.26;  // fraction of min(W,H)
+const PULSE_SPEED = 2.8;   // px per frame
+const PULSE_EVERY = 220;   // frames between new pulses
+const REPEL_RADIUS = 130;   // px — mouse pushes nodes away gently
+const FLASH_DURATION = 110;   // frames for activation bloom to decay
 
 // Ink & Clay Aesthetic Colors
 const INK_COLOR = "#231F20";
@@ -23,13 +23,13 @@ function hexToRgba(hex, a) {
 
 function buildNodes(W, H) {
   return Array.from({ length: NODE_COUNT }, (_, i) => ({
-    x:           Math.random() * W,
-    y:           Math.random() * H,
-    vx:          (Math.random() - 0.5) * 0.8,
-    vy:          (Math.random() - 0.5) * 0.8,
-    r:           Math.random() * 2.2 + 1.4,
-    phase:       (i / NODE_COUNT) * Math.PI * 2,
-    beatRate:    Math.random() * 0.018 + 0.012,
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.18,
+    vy: (Math.random() - 0.5) * 0.18,
+    r: Math.random() * 2.2 + 1.4,
+    phase: (i / NODE_COUNT) * Math.PI * 2,
+    beatRate: Math.random() * 0.018 + 0.012,
     activatedAt: -9999,
   }));
 }
@@ -45,16 +45,16 @@ export default function WarpBackground({ bright = false }) {
 
     let W, H, nodes, rafId;
     let pulses = [];
-    let time   = 0;
-    const mouse       = { x: 0.5, y: 0.5 };
+    let time = 0;
+    const mouse = { x: 0.5, y: 0.5 };
     const smoothMouse = { x: 0.5, y: 0.5 };
     let scrollProgress = 0; // 0..1 based on page scroll
-    let smoothScroll   = 0;
+    let smoothScroll = 0;
 
     function resize() {
-      W = canvas.width  = window.innerWidth;
+      W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
-      nodes  = buildNodes(W, H);
+      nodes = buildNodes(W, H);
       pulses = [];
     }
 
@@ -73,7 +73,7 @@ export default function WarpBackground({ bright = false }) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
           const dy = nodes[i].y - nodes[j].y;
-          const d  = Math.sqrt(dx * dx + dy * dy);
+          const d = Math.sqrt(dx * dx + dy * dy);
           if (d < maxD) edges.push({ i, j, d, alpha: 1 - d / maxD });
         }
       }
@@ -111,17 +111,17 @@ export default function WarpBackground({ bright = false }) {
 
         const dx = n.x - mx;
         const dy = n.y - my;
-        const d  = Math.sqrt(dx * dx + dy * dy);
+        const d = Math.sqrt(dx * dx + dy * dy);
         if (d < REPEL_RADIUS && d > 0) {
           const force = (REPEL_RADIUS - d) / REPEL_RADIUS * 0.4;
           n.x += (dx / d) * force;
           n.y += (dy / d) * force;
         }
 
-        if (n.x < -60)  n.x = W + 60;
-        if (n.x > W+60) n.x = -60;
-        if (n.y < -60)  n.y = H + 60;
-        if (n.y > H+60) n.y = -60;
+        if (n.x < -60) n.x = W + 60;
+        if (n.x > W + 60) n.x = -60;
+        if (n.y < -60) n.y = H + 60;
+        if (n.y > H + 60) n.y = -60;
       }
 
       const edges = buildEdges();
@@ -150,16 +150,16 @@ export default function WarpBackground({ bright = false }) {
         ctx.moveTo(nodes[e.i].x, nodes[e.i].y);
         ctx.lineTo(nodes[e.j].x, nodes[e.j].y);
         ctx.strokeStyle = hexToRgba(INK_COLOR, e.alpha * 0.6); // Ink color with variable opacity
-        ctx.lineWidth   = 1; // Strict 1px geometric lines
+        ctx.lineWidth = 1; // Strict 1px geometric lines
         ctx.stroke();
       }
 
       // ── Pulse particles (Ink pencil marks) ────────────────────────────
       for (const p of pulses) {
         const from = p.reverse ? nodes[p.j] : nodes[p.i];
-        const to   = p.reverse ? nodes[p.i] : nodes[p.j];
-        const px   = from.x + (to.x - from.x) * p.progress;
-        const py   = from.y + (to.y - from.y) * p.progress;
+        const to = p.reverse ? nodes[p.i] : nodes[p.j];
+        const px = from.x + (to.x - from.x) * p.progress;
+        const py = from.y + (to.y - from.y) * p.progress;
 
         ctx.fillStyle = INK_COLOR;
         ctx.fillRect(px - 3, py - 3, 6, 6);
@@ -170,10 +170,10 @@ export default function WarpBackground({ bright = false }) {
 
       // ── Nodes (Ink Geometry) ─────────────────────────────────────────────
       for (const n of nodes) {
-        const beat  = 0.5 + 0.5 * Math.sin(time * n.beatRate + n.phase);
-        const age   = time - n.activatedAt;
+        const beat = 0.5 + 0.5 * Math.sin(time * n.beatRate + n.phase);
+        const age = time - n.activatedAt;
         const flash = age < FLASH_DURATION ? 1 - age / FLASH_DURATION : 0;
-        
+
         // Base geometry
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
@@ -186,7 +186,7 @@ export default function WarpBackground({ bright = false }) {
           ctx.beginPath();
           ctx.arc(n.x, n.y, ringR, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(217,119,87, ${flash})`; // Clay terracotta rings on activation
-          ctx.lineWidth   = 1.5;
+          ctx.lineWidth = 1.5;
           ctx.stroke();
         } else if (beat > 0.8) {
           // Subtle idle beat ring
@@ -194,7 +194,7 @@ export default function WarpBackground({ bright = false }) {
           ctx.beginPath();
           ctx.arc(n.x, n.y, beatR, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(35,31,32, ${0.4 * (beat - 0.8) * 5})`;
-          ctx.lineWidth   = 1;
+          ctx.lineWidth = 1;
           ctx.stroke();
         }
       }
@@ -205,7 +205,7 @@ export default function WarpBackground({ bright = false }) {
     resize();
     rafId = requestAnimationFrame(frame);
 
-    window.addEventListener("resize",    resize);
+    window.addEventListener("resize", resize);
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("touchmove", onTouchMove, { passive: true });
 
@@ -218,10 +218,10 @@ export default function WarpBackground({ bright = false }) {
 
     return () => {
       cancelAnimationFrame(rafId);
-      window.removeEventListener("resize",    resize);
+      window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("scroll",    onScroll);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -229,7 +229,8 @@ export default function WarpBackground({ bright = false }) {
     <>
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 w-full h-full pointer-events-none z-[-1]"
+        aria-hidden="true"
+        className="fixed inset-0 z-0 block"
       />
       {/* Subtle Grain Overlay (Replaced dark vignette) */}
       <div

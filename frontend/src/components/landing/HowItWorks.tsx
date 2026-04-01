@@ -28,9 +28,8 @@ const ContextSyncUI = () => (
       {["vLLM", "RAG", "KEDA", "Nvidia", "PyTorch"].map((t, i) => (
         <div
           key={i}
-          className={`px-2 py-1 border text-[10px] font-bold font-mono uppercase ${
-            i < 3 ? "bg-clay text-paper border-clay" : "bg-paper text-ink border-ink"
-          }`}
+          className={`px-2 py-1 border text-[10px] font-bold font-mono uppercase ${i < 3 ? "bg-clay text-paper border-clay" : "bg-paper text-ink border-ink"
+            }`}
         >
           {t}
         </div>
@@ -84,7 +83,7 @@ const SynthesisUI = () => (
         READY
       </span>
     </div>
-    
+
     <div className="p-4 border-2 border-ink bg-paper space-y-4">
       <div className="flex justify-between items-start gap-4">
         <h5 className="text-sm font-bold font-display text-ink uppercase leading-tight">
@@ -97,7 +96,7 @@ const SynthesisUI = () => (
         <div className="h-1.5 w-1/2 bg-ink opacity-40" />
       </div>
     </div>
-    
+
     <div className="flex justify-between items-center mt-auto pt-2">
       <div className="flex -space-x-2">
         {[1, 2, 3].map((i) => (
@@ -127,10 +126,10 @@ const GlobalFlowUI = () => (
           <div className="w-full flex-1 border border-ink" />
         </div>
       </div>
-      
+
       <div className="relative flex-1 flex items-center justify-center">
         <motion.div
-           className="w-full h-[2px] bg-ink overflow-hidden absolute"
+          className="w-full h-[2px] bg-ink overflow-hidden absolute"
         >
           <motion.div
             animate={{ x: ["-100%", "100%"] }}
@@ -139,10 +138,10 @@ const GlobalFlowUI = () => (
           />
         </motion.div>
         <div className="bg-paper px-2 z-10">
-           <Zap size={14} className="text-clay" />
+          <Zap size={14} className="text-clay" />
         </div>
       </div>
-      
+
       <div className="flex flex-col items-center gap-3">
         <div className="w-14 h-10 border-2 border-ink bg-paper p-1.5 flex gap-1">
           <div className="w-3 h-full bg-ink border border-ink" />
@@ -220,7 +219,7 @@ export default function HowItWorks() {
           {steps.map((step, i) => (
             <div
               key={i}
-              className="bg-paper flex flex-col group transition-all duration-300"
+              className="bg-paper flex flex-col group transition-none"
             >
               {/* Visual Area */}
               <div className="relative w-full h-[240px] border-b-2 border-ink bg-paper overflow-hidden">
@@ -230,14 +229,14 @@ export default function HowItWorks() {
               </div>
 
               {/* Text Content */}
-              <div className="p-8 md:p-12 relative flex-1 flex flex-col justify-between hover-warm">
+              <div className="p-8 md:p-12 relative flex-1 flex flex-col justify-between hover:bg-[#EEEEEE]">
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-xs font-mono text-ink font-bold tracking-widest border border-ink py-1 px-2">
-                       [/] {step.tag}
+                      [/] {step.tag}
                     </span>
                     <span className="text-sm font-mono font-bold tracking-tight text-clay border-b border-clay">
-                       {step.number}
+                      {step.number}
                     </span>
                   </div>
                   <h3 className="text-3xl font-display font-bold text-ink mb-4 tracking-tight uppercase group-hover:text-clay">
