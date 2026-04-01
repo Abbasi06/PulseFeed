@@ -92,9 +92,9 @@ const OrbitingIcon = ({
         transition={{ duration, repeat: Infinity, ease: "linear", delay }}
         className="relative group pointer-events-auto"
       >
-        <div className="relative flex items-center justify-center w-10 h-10 border-2 border-ink rounded-none bg-paper text-ink transition-none group-hover:bg-clay group-hover:text-paper group-hover:border-clay">
+        <div className="relative flex items-center justify-center w-10 h-10 border-2 border-ink rounded-none bg-paper text-ink transition-all duration-300 group-hover:bg-clay group-hover:text-paper group-hover:border-clay">
           <Icon size={16} />
-          <span className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase font-mono font-bold tracking-widest text-ink bg-paper border border-ink px-1 opacity-0 group-hover:opacity-100 transition-none z-10 block">
+          <span className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase font-mono font-bold tracking-widest text-ink bg-paper border border-ink px-1 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 block">
             {label}
           </span>
         </div>
@@ -124,7 +124,7 @@ export default function WhyUs() {
         </div>
 
         {/* Large Top Card (Print) */}
-        <div className="relative group border-2 border-ink bg-paper transition-none overflow-hidden mb-8 flex flex-col items-center text-center">
+        <div className="relative group border-2 border-ink bg-paper transition-all duration-300 overflow-hidden mb-8 flex flex-col items-center text-center">
           <div className="p-12 pb-0 relative z-10 w-full">
             <div className="text-xs font-mono font-bold uppercase tracking-widest text-ink border-b-2 border-ink pb-4 mb-6 text-left">
               [/] Component // Continuous Sourcing & Vectorization
@@ -135,7 +135,7 @@ export default function WhyUs() {
           </div>
 
           {/* Animation Area */}
-          <div className="relative w-full h-[400px] flex items-center justify-center mt-8 border-y-2 border-ink bg-[#EEEEEE] overflow-hidden">
+          <div className="relative w-full h-[400px] flex items-center justify-center mt-8 border-y-2 border-ink bg-[#F5F0E8] overflow-hidden">
             {/* Trace Lines */}
             {[0, 60, 120, 180, 240, 300].map((r) => (
               <TraceLine key={r} rotate={r} />
@@ -192,8 +192,8 @@ export default function WhyUs() {
 
         {/* Two Small Cards Below */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t-2 border-ink pt-8">
-          <div className="p-10 border-2 border-ink bg-paper flex flex-col items-center text-center hover:bg-ink hover:text-paper group transition-none interactive-snap">
-            <div className="w-16 h-16 border-2 border-ink rounded-none flex items-center justify-center mb-6 bg-paper text-ink transition-none">
+          <div className="p-10 border-2 border-ink bg-paper flex flex-col items-center text-center hover:bg-ink hover:text-paper group transition-all duration-300 interactive-snap">
+            <div className="w-16 h-16 border-2 border-ink rounded-none flex items-center justify-center mb-6 bg-paper text-ink transition-all duration-300">
               <Zap size={24} />
             </div>
             <h4 className="text-2xl font-display font-bold uppercase mb-4 tracking-tighter">
@@ -204,8 +204,8 @@ export default function WhyUs() {
             </p>
           </div>
 
-          <div className="p-10 border-2 border-ink bg-paper flex flex-col items-center text-center hover:bg-ink hover:text-paper group transition-none interactive-snap">
-            <div className="w-16 h-16 border-2 border-ink rounded-none flex items-center justify-center mb-6 bg-paper text-ink transition-none">
+          <div className="p-10 border-2 border-ink bg-paper flex flex-col items-center text-center hover:bg-ink hover:text-paper group transition-all duration-300 interactive-snap">
+            <div className="w-16 h-16 border-2 border-ink rounded-none flex items-center justify-center mb-6 bg-paper text-ink transition-all duration-300">
               <Globe size={24} />
             </div>
             <h4 className="text-2xl font-display font-bold uppercase mb-4 tracking-tighter">

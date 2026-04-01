@@ -138,7 +138,7 @@ export default function Hero() {
           >
             <button
               onClick={() => navigate("/onboarding")}
-              className="flex items-center gap-4 px-8 py-4 bg-clay text-paper font-display uppercase tracking-wider text-sm font-bold border-2 border-clay transition-none hover:bg-ink hover:border-ink hover:text-paper"
+              className="flex items-center gap-4 px-8 py-4 bg-clay text-paper font-display uppercase tracking-wider text-sm font-bold border-2 border-clay transition-all duration-300 hover:bg-ink hover:border-ink hover:text-paper"
             >
               Start Your Swarm →
             </button>

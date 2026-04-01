@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const NODE_COUNT      = 45;
-const CONNECT_RADIUS  = 0.26;  // fraction of min(W,H)
-const PULSE_SPEED     = 2.8;   // px per frame
-const PULSE_EVERY     = 220;   // frames between new pulses
-const REPEL_RADIUS    = 130;   // px — mouse pushes nodes away gently
-const FLASH_DURATION  = 110;   // frames for activation bloom to decay
+const NODE_COUNT      = 55;
+const CONNECT_RADIUS  = 0.28;  // fraction of min(W,H)
+const PULSE_SPEED     = 3.2;   // px per frame
+const PULSE_EVERY     = 120;   // frames between new pulses
+const REPEL_RADIUS    = 150;   // px — mouse pushes nodes away gently
+const FLASH_DURATION  = 90;    // frames for activation bloom to decay
 
 // Ink & Clay Aesthetic Colors
 const INK_COLOR = "#231F20";
@@ -25,8 +25,8 @@ function buildNodes(W, H) {
   return Array.from({ length: NODE_COUNT }, (_, i) => ({
     x:           Math.random() * W,
     y:           Math.random() * H,
-    vx:          (Math.random() - 0.5) * 0.18,
-    vy:          (Math.random() - 0.5) * 0.18,
+    vx:          (Math.random() - 0.5) * 0.8,
+    vy:          (Math.random() - 0.5) * 0.8,
     r:           Math.random() * 2.2 + 1.4,
     phase:       (i / NODE_COUNT) * Math.PI * 2,
     beatRate:    Math.random() * 0.018 + 0.012,
@@ -229,8 +229,7 @@ export default function WarpBackground({ bright = false }) {
     <>
       <canvas
         ref={canvasRef}
-        aria-hidden="true"
-        className="fixed inset-0 z-0 block"
+        className="fixed inset-0 w-full h-full pointer-events-none z-[-1]"
       />
       {/* Subtle Grain Overlay (Replaced dark vignette) */}
       <div

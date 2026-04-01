@@ -102,4 +102,73 @@ a:not([class]):hover {
     opacity: 0.4;
     cursor: not-allowed;
   }
+
+  /* ── Skeuomorphic Ripple Effect ─────────────────────────────────── */
+  /* Applied to feature cards: a crisp inner-to-outer border highlight
+     that simulates tactile material physics on scroll-into-view.       */
+  .ripple-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    z-index: 10;
+    pointer-events: none;
+    transition: none;
+  }
+
+  .ripple-card::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid transparent;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  /* When the card enters the viewport, fire the ripple */
+  .ripple-card.in-view::after {
+    animation: ripple-inner 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .ripple-card.in-view::before {
+    animation: ripple-outer 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.08s forwards;
+  }
+
+  @keyframes ripple-inner {
+    0% {
+      border-color: transparent;
+      opacity: 0;
+    }
+    30% {
+      border-color: var(--color-clay);
+      opacity: 0.6;
+    }
+    100% {
+      border-color: transparent;
+      opacity: 0;
+    }
+  }
+
+  @keyframes ripple-outer {
+    0% {
+      border-color: transparent;
+    }
+    30% {
+      border-color: var(--color-ink);
+    }
+    100% {
+      border-color: var(--color-ink);
+    }
+  }
+
+  /* Warm hover shade — replaces hardcoded #EEEEEE */
+  .hover-warm:hover {
+    background-color: #F5F0E8;
+  }
 }

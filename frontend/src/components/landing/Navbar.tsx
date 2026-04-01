@@ -52,7 +52,7 @@ export default function Navbar() {
         {/* Right: CTA */}
         <button
           onClick={() => navigate("/onboarding")}
-          className="px-5 py-2 bg-clay text-paper text-[13px] font-display font-bold uppercase tracking-wider border-0 transition-none hover:bg-ink"
+          className="px-5 py-2 bg-clay text-paper text-[13px] font-display font-bold uppercase tracking-wider border-0 transition-all duration-300 hover:bg-ink"
         >
           Start Your Swarm
         </button>

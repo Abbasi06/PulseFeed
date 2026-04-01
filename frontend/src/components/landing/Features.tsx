@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
 import {
   Globe,
   Zap,
@@ -6,6 +7,60 @@ import {
   BarChart3,
   TrendingDown,
 } from "lucide-react";
+
+// ── Ripple-enabled Feature Card ──
+// Uses IntersectionObserver to add `.in-view` class, triggering
+// the skeuomorphic ripple CSS animation (inner → outer border flash)
+function FeatureCard({ feature, index }: { feature: any; index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{
+        duration: 0.7,
+        ease: [0.16, 1, 0.3, 1],
+        delay: index * 0.1,
+      }}
+      className={`ripple-card ${inView ? "in-view" : ""} p-8 lg:p-12 ${feature.className} bg-paper hover-warm group`}
+    >
+      <div className="flex flex-col h-full justify-between relative z-20">
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 border-2 border-ink flex items-center justify-center bg-paper group-hover:bg-clay group-hover:text-paper group-hover:border-clay group-active:scale-95 transition-all duration-300">
+              <feature.icon size={20} className="text-current" />
+            </div>
+            <span className="text-xs font-mono font-bold text-clay">{feature.tag}</span>
+          </div>
+          <h3 className="text-2xl font-display font-bold text-ink mb-4 tracking-tight uppercase group-hover:text-clay">
+            {feature.title}
+          </h3>
+          <p className="text-ink font-mono text-sm leading-relaxed">
+            {feature.description}
+          </p>
+        </div>
+        <div className="mt-auto">
+          {feature.visual && <feature.visual />}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 // Signal vs Noise Chart Component
 const SignalChart = () => (
@@ -167,58 +222,16 @@ export default function Features() {
         </div>
       </div>
 
-      {/* ── EDITORIAL SUB-GRID ── */}
+      {/* ── EDITORIAL SUB-GRID (with ripple) ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-ink">
-        {/* Top Row */}
         {features.slice(0, 2).map((feature, i) => (
-          <div key={i} className={`p-8 lg:p-12 border-b-2 border-ink ${feature.className} bg-paper hover:bg-[#EEEEEE] transition-none group`}>
-            <div className="flex flex-col h-full justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 border-2 border-ink flex items-center justify-center bg-paper group-hover:bg-clay group-hover:text-paper group-hover:border-clay transition-none">
-                    <feature.icon size={20} className="text-current" />
-                  </div>
-                  <span className="text-xs font-mono font-bold text-clay">{feature.tag}</span>
-                </div>
-                <h3 className="text-2xl font-display font-bold text-ink mb-4 tracking-tight uppercase group-hover:text-clay">
-                  {feature.title}
-                </h3>
-                <p className="text-ink font-mono text-sm leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-              <div className="mt-auto">
-                {feature.visual && <feature.visual />}
-              </div>
-            </div>
-          </div>
+          <FeatureCard key={i} feature={feature} index={i} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-ink">
-         {/* Bottom Row */}
-         {features.slice(2).map((feature, i) => (
-          <div key={i} className={`p-8 lg:p-12 ${feature.className} bg-paper hover:bg-[#EEEEEE] transition-none group`}>
-            <div className="flex flex-col h-full justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 border-2 border-ink flex items-center justify-center bg-paper group-hover:bg-clay group-hover:text-paper group-hover:border-clay transition-none">
-                    <feature.icon size={20} className="text-current" />
-                  </div>
-                  <span className="text-xs font-mono font-bold text-clay">{feature.tag}</span>
-                </div>
-                <h3 className="text-2xl font-display font-bold text-ink mb-4 tracking-tight uppercase group-hover:text-clay">
-                  {feature.title}
-                </h3>
-                <p className="text-ink font-mono text-sm leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-              <div className="mt-auto">
-                {feature.visual && <feature.visual />}
-              </div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-ink border-t border-ink">
+        {features.slice(2).map((feature, i) => (
+          <FeatureCard key={i + 2} feature={feature} index={i + 2} />
         ))}
       </div>
       

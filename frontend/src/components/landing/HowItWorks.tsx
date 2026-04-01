@@ -220,7 +220,7 @@ export default function HowItWorks() {
           {steps.map((step, i) => (
             <div
               key={i}
-              className="bg-paper flex flex-col group transition-none"
+              className="bg-paper flex flex-col group transition-all duration-300"
             >
               {/* Visual Area */}
               <div className="relative w-full h-[240px] border-b-2 border-ink bg-paper overflow-hidden">
@@ -230,7 +230,7 @@ export default function HowItWorks() {
               </div>
 
               {/* Text Content */}
-              <div className="p-8 md:p-12 relative flex-1 flex flex-col justify-between hover:bg-[#EEEEEE]">
+              <div className="p-8 md:p-12 relative flex-1 flex flex-col justify-between hover-warm">
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-xs font-mono text-ink font-bold tracking-widest border border-ink py-1 px-2">

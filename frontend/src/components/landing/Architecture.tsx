@@ -31,9 +31,9 @@ const ConnectionLine = ({ x1, y1, x2, y2, delay = 0 }: any) => (
 
 const Node = ({ icon: Icon, title, desc, delay = 0, className = "" }: any) => (
   <div
-    className={`relative z-10 p-4 border-2 border-ink bg-paper flex flex-col items-center text-center w-48 transition-none group hover:bg-clay hover:border-clay hover:text-paper ${className}`}
+    className={`relative z-10 p-4 border-2 border-ink bg-paper flex flex-col items-center text-center w-48 transition-all duration-300 group hover:bg-clay hover:border-clay hover:text-paper ${className}`}
   >
-    <div className="w-10 h-10 border border-ink bg-paper flex items-center justify-center mb-3 group-hover:border-paper group-hover:bg-nautical transition-none">
+    <div className="w-10 h-10 border border-ink bg-paper flex items-center justify-center mb-3 group-hover:border-paper group-hover:bg-nautical transition-all duration-300">
       <Icon size={18} className="text-ink group-hover:text-paper" />
     </div>
     <h4 className="text-[10px] font-bold font-mono text-ink mb-1 uppercase tracking-widest px-2 border-b border-ink pb-1 group-hover:text-paper group-hover:border-paper">

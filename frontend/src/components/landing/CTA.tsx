@@ -25,7 +25,7 @@ export default function CTA() {
 
           <button
             onClick={() => navigate("/onboarding")}
-            className="flex items-center gap-4 px-10 py-6 mx-auto bg-clay text-paper font-display uppercase tracking-wider text-sm font-bold border-2 border-clay transition-none hover:bg-ink hover:border-ink hover:text-paper"
+            className="flex items-center gap-4 px-10 py-6 mx-auto bg-clay text-paper font-display uppercase tracking-wider text-sm font-bold border-2 border-clay transition-all duration-300 hover:bg-ink hover:border-ink hover:text-paper"
           >
             INITIALIZE YOUR SWARM →
           </button>

@@ -26,7 +26,7 @@ function StepIndicator({ current }) {
           <div key={label} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-10 h-10 border-2 items-center justify-center text-sm font-bold font-mono transition-none interactive-snap ${
+                className={`w-10 h-10 border-2 items-center justify-center text-sm font-bold font-mono transition-all duration-300 interactive-snap ${
                   done
                     ? "bg-ink border-ink text-paper flex"
                     : active
@@ -192,7 +192,7 @@ export default function Onboarding() {
                     value={name}
                     onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
                     placeholder="E.G. ADA LOVELACE"
-                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-none focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
+                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-all duration-300 focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
                       errors.name ? "border-red-500" : "border-ink"
                     }`}
                   />
@@ -221,7 +221,7 @@ export default function Onboarding() {
                       setOccupation(e.target.value.slice(0, MAX_OCC))
                     }
                     placeholder="E.G. CHIEF SYSTEMS ARCHITECT"
-                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-none focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
+                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-all duration-300 focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
                       errors.occupation ? "border-red-500" : "border-ink"
                     }`}
                   />
