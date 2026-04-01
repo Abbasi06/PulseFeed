@@ -1,4 +1,4 @@
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -56,7 +56,7 @@ const fragmentShader = `
   }
 `;
 
-export default function AntigravityField() {
+export default function AntigravityField({ inView = true }: { inView?: boolean }) {
   const pointsRef = useRef<THREE.Points>(null);
   const { viewport } = useThree();
 
@@ -102,8 +102,16 @@ export default function AntigravityField() {
     return { geometry: geo, material: mat };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [geometry, material]);
+
   // Per frame: only 2 uniform writes — no JS particle loop at all
   useFrame((state) => {
+    if (!inView) return;
     if (!pointsRef.current) return;
     const u = (pointsRef.current.material as THREE.ShaderMaterial).uniforms;
     u.uTime.value = state.clock.elapsedTime;

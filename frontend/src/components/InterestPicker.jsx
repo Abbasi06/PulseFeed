@@ -15,36 +15,28 @@ const ROLE_ICONS = {
 
 function RoleCard({ role, selected, onSelect }) {
   const Icon = ROLE_ICONS[role.id];
-  const colors = ROLE_COLORS[role.color];
+  const colors = ROLE_COLORS.ink;
 
   return (
     <button
       type="button"
       onClick={() => onSelect(role)}
-      style={
-        selected
-          ? {
-              boxShadow:
-                "0 0 28px rgba(183,57,122,0.35), 0 0 60px rgba(76,110,148,0.18)",
-            }
-          : undefined
-      }
-      className={`flex-1 flex flex-col items-center gap-2 px-3 py-4 rounded-xl border transition-all text-center ${
+      className={`flex-1 flex flex-col items-center gap-2 px-3 py-4 rounded-none border-2 transition-none text-center interactive-snap ${
         selected
           ? colors.card
-          : "liquid-glass hover:border-white/25 hover:bg-white/[0.05]"
+          : "border-ink bg-paper text-ink"
       }`}
     >
       <Icon
-        className={`w-6 h-6 ${selected ? colors.cardIcon : "text-slate-400"}`}
+        className={`w-6 h-6 ${selected ? colors.cardIcon : "text-ink"}`}
       />
       <div>
         <p
-          className={`text-sm font-semibold ${selected ? colors.cardLabel : "text-slate-300"}`}
+          className={`text-sm font-display uppercase tracking-tight ${selected ? colors.cardLabel : "font-bold"}`}
         >
           {role.shortLabel}
         </p>
-        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+        <p className="text-[10px] font-mono mt-0.5 leading-tight">
           {role.description}
         </p>
       </div>
@@ -61,17 +53,17 @@ function SubChip({ label, selected, onToggle, colors }) {
     <button
       type="button"
       onClick={() => onToggle(label)}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-tight border-2 transition-none interactive-snap ${
         selected
           ? colors.chip
-          : "border-slate-700 bg-slate-800/60 text-slate-400 hover:border-slate-500 hover:text-slate-300"
+          : "border-ink bg-paper text-ink"
       }`}
     >
       {selected && (
         <span
-          className={`w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 ${colors.chipCheck}`}
+          className={`w-3.5 h-3.5 flex items-center justify-center shrink-0 border border-ink bg-paper`}
         >
-          <Check className="w-2 h-2 text-white" strokeWidth={3} />
+          <Check className="w-2 h-2 text-ink" strokeWidth={3} />
         </span>
       )}
       {label}
@@ -113,15 +105,15 @@ function CustomChipEntry({ onAdd }) {
 
   if (open) {
     return (
-      <div className="flex items-center gap-1 border border-slate-600 bg-slate-800 rounded-full px-2 py-1">
+      <div className="flex items-center gap-1 border-2 border-ink bg-paper px-2 py-1">
         <input
           ref={inputRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKey}
           onBlur={commit}
-          placeholder="Type & press Enter…"
-          className="text-xs text-slate-200 bg-transparent outline-none w-32 placeholder-slate-500"
+          placeholder="TYPE & ENTER"
+          className="text-xs font-mono text-ink bg-transparent outline-none w-32 placeholder-steel uppercase"
         />
         <button
           type="button"
@@ -130,7 +122,7 @@ function CustomChipEntry({ onAdd }) {
             setValue("");
             setOpen(false);
           }}
-          className="text-slate-500 hover:text-slate-300"
+          className="text-ink hover:text-clay interactive-snap p-1"
         >
           <X className="w-3 h-3" />
         </button>
@@ -142,10 +134,10 @@ function CustomChipEntry({ onAdd }) {
     <button
       type="button"
       onClick={openInput}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-300 transition-all"
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-tight border-2 border-dashed border-ink text-ink bg-paper hover:border-solid interactive-snap"
     >
       <Plus className="w-3 h-3" />
-      Add Custom
+      ADD CUSTOM
     </button>
   );
 }
@@ -161,9 +153,7 @@ export default function InterestPicker({
   onSubFieldsChange,
 }) {
   const activeRole = ROLES.find((r) => r.backendField === field) ?? null;
-  const colors = activeRole
-    ? ROLE_COLORS[activeRole.color]
-    : ROLE_COLORS.violet;
+  const colors = ROLE_COLORS.ink;
   const selected = subFields.length;
   const ready = selected >= MIN_SUBFIELDS;
 
@@ -187,16 +177,16 @@ export default function InterestPicker({
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Level 1 — Role cards */}
-      <div>
-        <label className="block text-sm font-medium text-slate-200 mb-1">
+      <div className="p-6 border-b-2 border-ink">
+        <label className="block text-2xl font-display font-bold text-ink uppercase mb-2">
           What do you build?
         </label>
-        <p className="text-xs text-slate-500 mb-3">
-          Pick your primary domain — this shapes every query your feed runs.
+        <p className="text-xs font-mono text-ink mb-6 max-w-sm uppercase">
+          Select primary domain to initialize your swarm index parameters.
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-4 flex-col sm:flex-row">
           {ROLES.map((role) => (
             <RoleCard
               key={role.id}
@@ -217,33 +207,34 @@ export default function InterestPicker({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
+            className="p-6 pt-0"
           >
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-slate-200">
-                Pick your focus areas
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-4 border-b border-ink pb-2">
+              <label className="text-xl font-display font-bold text-ink uppercase">
+                Vector Trajectories
               </label>
               <span
-                className={`text-xs font-medium tabular-nums ${
-                  ready ? "text-[#7C3AED]" : "text-slate-500"
+                className={`text-xs font-mono uppercase bg-paper border border-ink px-1 mt-2 sm:mt-0 ${
+                  ready ? "text-clay border-clay font-bold" : "text-ink"
                 }`}
               >
-                {selected} / {MIN_SUBFIELDS} minimum
+                {selected} / {MIN_SUBFIELDS} MAPPED
               </span>
             </div>
 
-            {/* Progress bar */}
-            <div className="h-1 w-full bg-slate-800 rounded-full mb-3 overflow-hidden">
+            {/* Progress bar (Print style) */}
+            <div className="h-3 w-full border-2 border-ink bg-paper mb-6 overflow-hidden p-[1px] relative">
               <motion.div
-                className={`h-full rounded-full ${colors.progress}`}
+                className={`h-full border-r-2 border-ink ${colors.progress}`}
                 initial={{ width: 0 }}
                 animate={{
                   width: `${Math.min((selected / MIN_SUBFIELDS) * 100, 100)}%`,
                 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                transition={{ duration: 0.25, ease: "linear" }}
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-6">
               {activeRole.subFields.map((sf) => (
                 <SubChip
                   key={sf}
@@ -272,9 +263,9 @@ export default function InterestPicker({
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mt-3 text-xs text-[#7C3AED] font-medium"
+                className="text-xs font-mono font-bold text-clay uppercase border-l-2 border-clay pl-2"
               >
-                ✓ Great picks — you can select up to 10 total
+                [SYSTEM READY] Trajectories Confirmed.
               </motion.p>
             )}
           </motion.div>

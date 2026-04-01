@@ -3,11 +3,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
-import Dashboard from "./pages/Dashboard";
+import { lazy, Suspense } from "react";
 import LandingPage from "./pages/LandingPage";
-import Onboarding from "./pages/Onboarding";
-import Settings from "./pages/Settings";
-import GeneratorView from "./pages/GeneratorView";
+
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Settings = lazy(() => import("./pages/Settings"));
+const GeneratorView = lazy(() => import("./pages/GeneratorView"));
 import WarpBackground from "./components/WarpBackground";
 
 // ---------------------------------------------------------------------------
@@ -149,7 +151,7 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const location = useLocation();
-  const isLandingOrOnboarding = ["/" , "/onboarding"].includes(location.pathname);
+  const isLandingOrOnboarding = ["/", "/onboarding"].includes(location.pathname);
   const isLanding = location.pathname === "/";
 
   return (
@@ -157,59 +159,61 @@ function AppRoutes() {
       {/* Persistent neural background — stays mounted across landing ↔ onboarding */}
       {isLandingOrOnboarding && <WarpBackground bright={isLanding} />}
 
-      <AnimatePresence mode="sync" initial={false}>
-        <Routes location={location} key={location.pathname}>
-          <Route
-            path="/"
-            element={
-              <Page variant={landingExit}>
-                <LandingPage />
-              </Page>
-            }
-          />
-          <Route
-            path="/onboarding"
-            element={
-              <Page variant={slideFromRight}>
-                <Onboarding />
-              </Page>
-            }
-          />
-        <Route
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route
-            path="/dashboard"
-            element={
-              <Page variant={fade}>
-                <Dashboard />
-              </Page>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <Page variant={fade}>
-                <Settings />
-              </Page>
-            }
-          />
-          <Route
-            path="/generator"
-            element={
-              <Page variant={fade}>
-                <GeneratorView />
-              </Page>
-            }
-          />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AnimatePresence>
+      <Suspense fallback={<Pulse />}>
+        <AnimatePresence mode="sync" initial={false}>
+          <Routes location={location} key={location.pathname}>
+            <Route
+              path="/"
+              element={
+                <Page variant={landingExit}>
+                  <LandingPage />
+                </Page>
+              }
+            />
+            <Route
+              path="/onboarding"
+              element={
+                <Page variant={slideFromRight}>
+                  <Onboarding />
+                </Page>
+              }
+            />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route
+                path="/dashboard"
+                element={
+                  <Page variant={fade}>
+                    <Dashboard />
+                  </Page>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <Page variant={fade}>
+                    <Settings />
+                  </Page>
+                }
+              />
+              <Route
+                path="/generator"
+                element={
+                  <Page variant={fade}>
+                    <GeneratorView />
+                  </Page>
+                }
+              />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
+      </Suspense>
     </>
   );
 }

@@ -1,15 +1,17 @@
 import { useEffect, useRef } from "react";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const NODE_COUNT      = 52;
+const NODE_COUNT      = 45;
 const CONNECT_RADIUS  = 0.26;  // fraction of min(W,H)
 const PULSE_SPEED     = 2.8;   // px per frame
 const PULSE_EVERY     = 220;   // frames between new pulses
 const REPEL_RADIUS    = 130;   // px — mouse pushes nodes away gently
 const FLASH_DURATION  = 110;   // frames for activation bloom to decay
 
-const NODE_COLORS  = ["#9333EA", "#7C3AED", "#B7397A", "#D946EF", "#0EA5E9", "#6366F1"];
-const PULSE_COLORS = ["#D946EF", "#9333EA", "#7C3AED", "#38BDF8", "#C084FC", "#E879F9"];
+// Ink & Clay Aesthetic Colors
+const INK_COLOR = "#231F20";
+const CLAY_COLOR = "#D97757";
+const PAPER_COLOR = "#FDFCF8";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function hexToRgba(hex, a) {
@@ -28,7 +30,6 @@ function buildNodes(W, H) {
     r:           Math.random() * 2.2 + 1.4,
     phase:       (i / NODE_COUNT) * Math.PI * 2,
     beatRate:    Math.random() * 0.018 + 0.012,
-    color:       NODE_COLORS[i % NODE_COLORS.length],
     activatedAt: -9999,
   }));
 }
@@ -83,7 +84,6 @@ export default function WarpBackground({ bright = false }) {
       pulses.push({
         i: e.i, j: e.j, d: e.d,
         progress: 0,
-        color: PULSE_COLORS[Math.floor(Math.random() * PULSE_COLORS.length)],
         reverse: Math.random() > 0.5,
       });
     }
@@ -134,83 +134,63 @@ export default function WarpBackground({ bright = false }) {
       }
       pulses = nextPulses;
 
-      // ── Background ───────────────────────────────────────────────────────
-      ctx.fillStyle = "#06080F";
+      // ── Background (Print Paper) ─────────────────────────────────────────
+      ctx.fillStyle = PAPER_COLOR;
       ctx.fillRect(0, 0, W, H);
 
-      // ── Edges ────────────────────────────────────────────────────────────
+      // ── Edges (Ink Lines) ────────────────────────────────────────────────
       for (const e of edges) {
         ctx.beginPath();
         ctx.moveTo(nodes[e.i].x, nodes[e.i].y);
         ctx.lineTo(nodes[e.j].x, nodes[e.j].y);
-        ctx.strokeStyle = `rgba(139,92,246,${e.alpha * 0.22})`;
-        ctx.lineWidth   = e.alpha * 1.4;
+        ctx.strokeStyle = hexToRgba(INK_COLOR, e.alpha * 0.6); // Ink color with variable opacity
+        ctx.lineWidth   = 1; // Strict 1px geometric lines
         ctx.stroke();
       }
 
-      // ── Pulse particles ───────────────────────────────────────────────────
+      // ── Pulse particles (Ink pencil marks) ────────────────────────────
       for (const p of pulses) {
         const from = p.reverse ? nodes[p.j] : nodes[p.i];
         const to   = p.reverse ? nodes[p.i] : nodes[p.j];
         const px   = from.x + (to.x - from.x) * p.progress;
         const py   = from.y + (to.y - from.y) * p.progress;
 
-        const glow = ctx.createRadialGradient(px, py, 0, px, py, 10);
-        glow.addColorStop(0,   hexToRgba(p.color, 0.85));
-        glow.addColorStop(0.5, hexToRgba(p.color, 0.25));
-        glow.addColorStop(1,   hexToRgba(p.color, 0));
-        ctx.beginPath();
-        ctx.arc(px, py, 10, 0, Math.PI * 2);
-        ctx.fillStyle = glow;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(px, py, 1.8, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,0.95)";
-        ctx.fill();
+        ctx.fillStyle = INK_COLOR;
+        ctx.fillRect(px - 3, py - 3, 6, 6);
+        ctx.strokeStyle = INK_COLOR;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px - 3, py - 3, 6, 6);
       }
 
-      // ── Nodes ─────────────────────────────────────────────────────────────
+      // ── Nodes (Ink Geometry) ─────────────────────────────────────────────
       for (const n of nodes) {
         const beat  = 0.5 + 0.5 * Math.sin(time * n.beatRate + n.phase);
-
         const age   = time - n.activatedAt;
         const flash = age < FLASH_DURATION ? 1 - age / FLASH_DURATION : 0;
+        
+        // Base geometry
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = INK_COLOR;
+        ctx.fill();
 
-        const r     = n.r + beat * 1.8 + flash * n.r * 2.5;
-        const alpha = 0.78 + beat * 0.18 + flash * 0.4;
-
-        // shockwave ring
+        // Pulsing / Activation Rings
         if (flash > 0) {
-          const ringR = n.r * (1 + (1 - flash) * 12);
+          const ringR = n.r + (1 - flash) * 15;
           ctx.beginPath();
           ctx.arc(n.x, n.y, ringR, 0, Math.PI * 2);
-          ctx.strokeStyle = hexToRgba(n.color, flash * 0.6);
-          ctx.lineWidth   = 2 * flash;
+          ctx.strokeStyle = `rgba(217,119,87, ${flash})`; // Clay terracotta rings on activation
+          ctx.lineWidth   = 1.5;
+          ctx.stroke();
+        } else if (beat > 0.8) {
+          // Subtle idle beat ring
+          const beatR = n.r + 4;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, beatR, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(35,31,32, ${0.4 * (beat - 0.8) * 5})`;
+          ctx.lineWidth   = 1;
           ctx.stroke();
         }
-
-        // outer glow
-        const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 5);
-        glow.addColorStop(0,   hexToRgba(n.color, alpha * 0.55));
-        glow.addColorStop(0.5, hexToRgba(n.color, alpha * 0.12));
-        glow.addColorStop(1,   hexToRgba(n.color, 0));
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, r * 5, 0, Math.PI * 2);
-        ctx.fillStyle = glow;
-        ctx.fill();
-
-        // solid core
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = hexToRgba(n.color, alpha);
-        ctx.fill();
-
-        // specular highlight
-        ctx.beginPath();
-        ctx.arc(n.x - r * 0.25, n.y - r * 0.25, r * 0.45, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${alpha * 0.35})`;
-        ctx.fill();
       }
 
       rafId = requestAnimationFrame(frame);
@@ -238,15 +218,12 @@ export default function WarpBackground({ bright = false }) {
         aria-hidden="true"
         className="fixed inset-0 z-0 block"
       />
-      {/* Vignette: lighter on landing (bright=true), heavier on onboarding */}
+      {/* Subtle Grain Overlay (Replaced dark vignette) */}
       <div
         aria-hidden="true"
-        className="fixed inset-0 z-0 pointer-events-none"
+        className="fixed inset-0 z-0 pointer-events-none opacity-20 mix-blend-multiply"
         style={{
-          transition: "background 0.9s ease",
-          background: bright
-            ? "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 15%, rgba(6,8,15,0.18) 55%, rgba(6,8,15,0.60) 100%)"
-            : "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 10%, rgba(6,8,15,0.52) 58%, rgba(6,8,15,0.92) 100%)",
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
         }}
       />
     </>

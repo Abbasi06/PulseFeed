@@ -8,7 +8,7 @@ import Footer from "../components/landing/Footer";
 
 export default function LandingPage() {
   return (
-    <main className="bg-transparent min-h-screen w-full font-sans text-white overflow-x-hidden">
+    <main className="bg-transparent min-h-screen w-full font-sans text-ink overflow-x-hidden">
       <Hero />
       <Features />
       <WhyUs />

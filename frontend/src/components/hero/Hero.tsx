@@ -1,17 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import {
-  motion,
-  Variants,
-  useInView,
-  useScroll,
-  useTransform,
-  useMotionTemplate,
-} from "framer-motion";
-import { ArrowRight, Zap } from "lucide-react";
+import { motion, Variants, useInView } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import PulseFeedIcon from "../PulseFeedIcon.jsx";
 import { useRef } from "react";
-import HeroVideo from "./HeroVideo";
-import ParticleField from "./ParticleField";
 
 const fadeUpVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
@@ -28,20 +19,10 @@ const fadeUpVariants: Variants = {
 
 const FloatingFragment = ({ children, className, delay = 0 }: any) => (
   <motion.div
-    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-    animate={{
-      opacity: [0.4, 0.7, 0.4],
-      scale: 1,
-      y: [0, -10, 0],
-      x: [0, 5, 0],
-    }}
-    transition={{
-      duration: 5,
-      repeat: Infinity,
-      delay,
-      opacity: { duration: 3, repeat: Infinity },
-    }}
-    className={`absolute p-3 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl pointer-events-none hidden lg:block ${className}`}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8, ease: "easeOut", delay }}
+    className={`absolute p-4 print-panel border-ink border-2 pointer-events-none hidden lg:block ${className}`}
   >
     {children}
   </motion.div>
@@ -52,102 +33,62 @@ export default function Hero() {
   const scrollRevealRef = useRef(null);
   const isInView = useInView(scrollRevealRef, { once: true, margin: "-80px" });
 
-  // Track raw document scroll — window.innerHeight ≈ 100vh
-  const { scrollY } = useScroll();
-  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
-
-  // Blur ramps in during the lower half of Section 1 and stays on for all subsequent sections
-  const blurPx = useTransform(scrollY, [vh * 0.4, vh * 0.9], [0, 20]);
-  const blurFilter = useMotionTemplate`blur(${blurPx}px)`;
-
   return (
-    <div className="relative w-full font-sans selection:bg-[#B7397A]/30">
+    <div className="relative w-full font-sans text-ink selection:bg-clay selection:text-paper border-b-2 border-ink">
 
-      {/* ── CSS particle background — compositor-threaded, zero JS loop ── */}
-      <ParticleField />
+      {/* ── SECTION 1: Terminal Masthead ── */}
+      <div className="relative z-20 w-full min-h-[80vh] flex flex-col items-center justify-center border-b border-ink pt-20">
+        
+        <div className="flex items-center justify-between w-full max-w-6xl px-6 mb-12 font-mono text-xs uppercase tracking-widest border-b border-ink pb-4">
+           <span>[/] Vol. 01 — The Knowledge Base</span>
+           <span>Wednesday, April 1, 2026</span>
+           <span>No Noise, Only Signal</span>
+        </div>
 
-      {/* ── Fixed blur overlay — scroll-driven ── */}
-      <motion.div
-        style={{ backdropFilter: blurFilter }}
-        className="fixed inset-0 z-0 pointer-events-none"
-      />
-
-      {/* ── SECTION 1: Title only — sits above the overlay so it's always sharp ── */}
-      <div className="relative z-20 w-full h-screen flex items-center justify-center">
         <motion.h1
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 1, ease: [0.21, 0.47, 0.32, 0.98] }}
-          className="text-[90px] sm:text-[124px] md:text-[164px] font-bold leading-[0.9] tracking-tighter text-center select-none"
+          className="text-[80px] sm:text-[110px] md:text-[148px] font-bold leading-[0.9] tracking-tighter text-center select-none font-display uppercase"
         >
-          <span className="text-white">Pulse</span>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B7397A] via-[#7c3aed] to-[#4C6E94]">
-            Feed
-          </span>
+          Pulse <br/> Feed
         </motion.h1>
 
         {/* Scroll hint */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          transition={{ delay: 1, duration: 1 }}
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pb-6"
         >
-          <span className="text-white/30 text-xs tracking-widest uppercase">scroll</span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-8 bg-gradient-to-b from-white/30 to-transparent"
-          />
+          <span className="text-ink font-mono text-[10px] tracking-[0.2em] uppercase">↓ Scroll</span>
+          <div className="w-px h-12 bg-ink" />
         </motion.div>
       </div>
 
-      {/* ── SECTION 2: Scroll-revealed subtitle + CTA ── */}
-      <div ref={scrollRevealRef} className="relative z-20 w-full pt-24 pb-32">
+      {/* ── SECTION 2: Scroll-revealed Grid ── */}
+      <div ref={scrollRevealRef} className="relative z-20 w-full grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-ink min-h-[60vh]">
 
-        {/* Floating fragments — anchored to page edges, clear of centre content */}
-        <FloatingFragment className="left-6 xl:left-14 top-20 w-64" delay={0.3}>
-          <div className="flex items-center gap-2 mb-2 text-[10px] text-white/40 uppercase tracking-tighter">
-            <PulseFeedIcon size={10} color="#B7397A" /> Swarm Log // 09:42:11
-          </div>
-          <p className="text-[11px] font-mono text-white/70 leading-tight">
-            [INFO] Ingesting ArXiv:2403.00123 <br />
-            [SUCCESS] Vectorizing embeddings... <br />
-            [ACTION] Synthesis initialized.
-          </p>
-        </FloatingFragment>
-
-        <FloatingFragment className="right-6 xl:right-14 top-12 w-56" delay={0.7}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-white/60">GITHUB_REPO: vLLM</span>
-          </div>
-          <div className="space-y-1.5">
-            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-              <motion.div
-                animate={{ x: [-100, 100] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="h-full w-1/3 bg-[#B7397A]"
-              />
+        {/* Left Column (Meta data) */}
+        <div className="lg:col-span-3 p-6 flex flex-col justify-between font-mono text-xs border-b lg:border-b-0 border-ink">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-2 uppercase tracking-tighter border border-ink p-2 w-fit">
+              <PulseFeedIcon size={12} color="var(--color-ink)" /> [/] Swarm_Log
             </div>
-            <p className="text-[10px] text-white/40 italic">
-              Aggregating 124 open PRs for synthesis...
+            <p className="leading-relaxed border-l-2 border-ink pl-3">
+              [INFO] Ingesting ArXiv:2403.00123 <br />
+              [OK] Vectorizing embeddings... <br />
+              [EXEC] Synthesis initialized.
             </p>
+            <div className="mt-8">
+              <span className="font-bold underline decoration-clay underline-offset-4">[→] MATCH FOUND</span>
+              <p className="mt-2 italic">Attention Is All You Need</p>
+            </div>
           </div>
-        </FloatingFragment>
+        </div>
 
-        <FloatingFragment className="left-6 xl:left-14 top-64 w-60" delay={1.1}>
-          <div className="px-2 py-1 rounded bg-[#B7397A]/20 border border-[#B7397A]/40 text-[9px] text-[#B7397A] font-bold w-fit mb-2">
-            HIGH_SIGNAL MATCH
-          </div>
-          <h4 className="text-[12px] font-bold text-white mb-1">Attention Is All You Need</h4>
-          <p className="text-[10px] text-white/50 leading-relaxed">
-            The cornerstone of the Transformer architecture remains the core retrieval target...
-          </p>
-        </FloatingFragment>
-
-        {/* Centre column */}
-        <div className="flex flex-col items-center text-center px-4 max-w-4xl mx-auto w-full">
+        {/* Centre Column (Hero Copy & CTA) */}
+        <div className="flex flex-col items-center text-center p-8 lg:p-16 lg:col-span-6 border-b lg:border-b-0 border-ink bg-paper relative">
 
           {/* Announcement pill */}
           <motion.div
@@ -155,27 +96,25 @@ export default function Hero() {
             variants={fadeUpVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            className="flex items-center gap-3 px-2 py-2 pr-6 mb-12 rounded-full bg-[rgba(28,27,36,0.3)] border border-white/10 backdrop-blur-md shadow-[0_0_30px_rgba(183,57,122,0.1)]"
+            className="flex items-center gap-3 px-3 py-1.5 mb-10 border-2 border-ink text-ink font-mono uppercase text-[10px] tracking-widest bg-paper"
           >
-            <div className="flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-gradient-to-br from-[#B7397A] to-[#4C6E94] shadow-[0_0_15px_rgba(183,57,122,0.6)]">
-              <Zap size={13} className="text-white" />
-            </div>
-            <span className="text-sm font-medium text-gray-400 tracking-tight">
-              Initialize your autonomous research swarm today.
+            <span className="text-clay font-bold">[⚡]</span>
+            <span className="font-bold">
+              Initialize your autonomous research swarm today
             </span>
           </motion.div>
 
           {/* Subtitle */}
-          <motion.p
+          <motion.h2
             custom={1}
             variants={fadeUpVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            className="text-xl sm:text-2xl md:text-3xl font-bold text-white/80 tracking-tight mb-8 max-w-3xl"
+            className="text-2xl sm:text-3xl md:text-5xl font-display font-bold tracking-tight mb-8 max-w-3xl leading-[1.1] uppercase"
           >
             Autonomous Research Swarm for <br />
-            <span className="text-[#B7397A] italic">High-Signal Technical Context.</span>
-          </motion.p>
+            <span className="italic text-clay">High-Signal Context.</span>
+          </motion.h2>
 
           {/* Description */}
           <motion.p
@@ -183,7 +122,7 @@ export default function Hero() {
             variants={fadeUpVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            className="text-lg md:text-xl text-white/40 max-w-2xl mb-14 leading-relaxed font-medium"
+            className="text-base md:text-lg max-w-xl mb-12 leading-relaxed font-sans"
           >
             Ingest, Filter, and Synthesize the global firehose of ArXiv papers,
             GitHub repos, and engineering blogs into a hyper-personalized,
@@ -196,35 +135,38 @@ export default function Hero() {
             variants={fadeUpVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
-            className="relative group"
           >
-            <div className="absolute -inset-[3px] bg-gradient-to-r from-[#B7397A]/40 to-[#4C6E94]/40 rounded-full blur-sm opacity-50 group-hover:opacity-100 transition duration-500" />
-            <div className="absolute -inset-[1px] bg-gradient-to-r from-[#B7397A]/60 to-[#4C6E94]/60 rounded-full" />
             <button
               onClick={() => navigate("/onboarding")}
-              className="relative flex items-center gap-4 px-10 py-5 bg-white rounded-full text-black font-bold text-lg hover:scale-[1.02] transition-transform duration-300"
+              className="flex items-center gap-4 px-8 py-4 bg-clay text-paper font-display uppercase tracking-wider text-sm font-bold border-2 border-clay transition-none hover:bg-ink hover:border-ink hover:text-paper"
             >
-              Start Your Swarm
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-[#B7397A] to-[#4C6E94]">
-                <ArrowRight size={16} className="text-white shrink-0" />
-              </div>
+              Start Your Swarm →
             </button>
           </motion.div>
         </div>
-      </div>
 
-      {/* Hero Video */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 2 }}
-        className="relative z-20 w-full"
-      >
-        <HeroVideo
-          src="https://customer-cbeadsgr09pnsezs.cloudflarestream.com/697945ca6b876878dba3b23fbd2f1561/manifest/video.m3u8"
-          fallbackSrc="/_videos/v1/f0c78f536d5f21a047fb7792723a36f9d647daa1.mp4"
-        />
-      </motion.div>
+        {/* Right Column (Secondary Meta) */}
+        <div className="lg:col-span-3 p-6 flex flex-col font-mono text-xs">
+          <div className="p-4 border border-ink bg-paper">
+            <div className="flex justify-between items-center mb-4 border-b border-ink pb-2">
+              <span className="font-bold">[/] GITHUB_REPO</span>
+              <span className="text-clay font-bold">vLLM</span>
+            </div>
+            <div className="space-y-4">
+              <div className="h-2 w-full border border-ink overflow-hidden p-[1px]">
+                <motion.div
+                  animate={{ width: ["0%", "100%", "0%"] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                  className="h-full bg-ink"
+                />
+              </div>
+              <p className="italic">
+                Aggregating 124 open PRs for synthesis phase...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

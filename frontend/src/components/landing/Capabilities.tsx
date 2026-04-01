@@ -109,7 +109,7 @@ export default function Capabilities() {
               transition={{ duration: 0.7 }}
               className={`relative w-full rounded-[2rem] border border-white/10 bg-[rgba(28,27,36,0.2)] backdrop-blur-xl overflow-hidden flex flex-col ${
                 idx % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-              } shadow-[0_8px_40px_rgba(0,0,0,0.5)]`}
+              }`}
             >
               <div className="flex-1 p-10 md:p-14 flex flex-col justify-center">
                 <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">

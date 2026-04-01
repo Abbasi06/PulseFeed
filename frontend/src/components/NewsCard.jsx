@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 
 const TOPIC_COLORS = {
-  AI: "bg-violet-500/80 text-white",
-  Technology: "bg-blue-500/80 text-white",
-  Science: "bg-cyan-500/80 text-white",
-  Business: "bg-amber-500/80 text-white",
-  Health: "bg-green-500/80 text-white",
-  Security: "bg-red-500/80 text-white",
-  General: "bg-slate-500/80 text-white",
+  AI: "bg-deep-purple/80 text-white",
+  Technology: "bg-neon-cyan/80 text-space-black",
+  Science: "bg-neon-pink/80 text-white",
+  Business: "bg-space-black/80 text-neon-cyan border border-neon-cyan/30",
+  Health: "bg-deep-purple/60 text-white",
+  Security: "bg-neon-pink/60 text-white",
+  General: "bg-space-black/80 text-text-secondary border border-deep-purple/30",
 };
 
 function topicClass(topic) {
@@ -17,15 +17,15 @@ function topicClass(topic) {
 function sourceBadge(source) {
   const s = (source || "").toLowerCase();
   if (s.includes("arxiv"))
-    return { label: "ArXiv", cls: "bg-purple-600/90 text-white" };
+    return { label: "ArXiv", cls: "bg-deep-purple/90 text-white border border-deep-purple/50" };
   if (s.includes("github"))
-    return { label: "GitHub", cls: "bg-slate-500/90 text-white" };
+    return { label: "GitHub", cls: "bg-space-black/80 text-text-primary border border-deep-purple/30" };
   if (s.includes("youtube"))
-    return { label: "YT", cls: "bg-red-600/90 text-white" };
+    return { label: "YT", cls: "bg-neon-pink/90 text-white border border-neon-pink/50" };
   if (s.includes("medium") || s.includes("dev.to"))
-    return { label: source, cls: "bg-cyan-600/90 text-white" };
+    return { label: source, cls: "bg-neon-cyan/90 text-space-black" };
   if (s.includes("ycombinator") || s.includes("hacker news"))
-    return { label: "HN", cls: "bg-orange-500/90 text-white" };
+    return { label: "HN", cls: "bg-deep-purple/50 text-white border border-deep-purple/40" };
   return null;
 }
 
@@ -84,10 +84,10 @@ export default function NewsCard({
   return (
     <motion.article
       variants={cardVariants}
-      className="group bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:border-violet-500/30 hover:shadow-xl hover:shadow-violet-950/40 hover:-translate-y-0.5"
+      className="group liquid-glass flex flex-col transition-all duration-300 hover:-translate-y-0.5"
     >
       {/* Image */}
-      <div className="relative aspect-[16/9] overflow-hidden bg-slate-800 shrink-0">
+      <div className="relative aspect-[16/9] overflow-hidden bg-space-black border-b border-deep-purple/30 shrink-0">
         <img
           src={imgSrc}
           alt=""
@@ -108,7 +108,7 @@ export default function NewsCard({
 
         {/* Read count */}
         {read_count > 0 && (
-          <span className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/50 text-slate-400 backdrop-blur-sm">
+          <span className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-black/50 border border-deep-purple/30 text-text-secondary backdrop-blur-sm">
             <svg
               className="w-2.5 h-2.5"
               fill="none"
@@ -140,18 +140,18 @@ export default function NewsCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={onReadClick}
-            className="text-sm font-bold text-slate-100 leading-snug hover:text-violet-300 transition-colors line-clamp-2"
+            className="text-sm font-bold text-text-primary leading-snug hover:text-neon-cyan transition-colors line-clamp-2"
           >
             {title}
           </a>
         ) : (
-          <p className="text-sm font-bold text-slate-100 leading-snug line-clamp-2">
+          <p className="text-sm font-bold text-text-primary leading-snug line-clamp-2">
             {title}
           </p>
         )}
 
         {summary && (
-          <p className="text-xs text-slate-400 leading-relaxed line-clamp-3 flex-1">
+          <p className="text-xs text-text-secondary leading-relaxed line-clamp-3 flex-1">
             {summary}
           </p>
         )}
@@ -162,8 +162,8 @@ export default function NewsCard({
           <ActionBtn
             active={liked}
             onClick={onLike}
-            activeClass="bg-rose-500/20 border-rose-500/40 text-rose-400"
-            inactiveClass="bg-slate-800/80 border-slate-700/50 text-slate-500 hover:text-slate-300 hover:border-slate-600"
+            activeClass="bg-neon-pink/20 border-neon-pink/40 text-neon-pink shadow-[0_0_8px_var(--color-neon-pink)]"
+            inactiveClass="bg-space-black/80 border-deep-purple/30 text-text-secondary hover:text-text-primary hover:border-deep-purple/60 hover:bg-deep-purple/10"
             aria-label={liked ? "Unlike" : "Like"}
           >
             <svg
@@ -185,8 +185,8 @@ export default function NewsCard({
           <ActionBtn
             active={disliked}
             onClick={onDislike}
-            activeClass="bg-orange-500/20 border-orange-500/40 text-orange-400"
-            inactiveClass="bg-slate-800/80 border-slate-700/50 text-slate-500 hover:text-slate-300 hover:border-slate-600"
+            activeClass="bg-neon-cyan/20 border-neon-cyan/40 text-neon-cyan shadow-[0_0_8px_var(--color-neon-cyan)]"
+            inactiveClass="bg-space-black/80 border-deep-purple/30 text-text-secondary hover:text-text-primary hover:border-deep-purple/60 hover:bg-deep-purple/10"
             aria-label={disliked ? "Remove dislike" : "Dislike"}
           >
             <svg
@@ -208,8 +208,8 @@ export default function NewsCard({
           <ActionBtn
             active={saved}
             onClick={onSave}
-            activeClass="bg-amber-500/20 border-amber-500/40 text-amber-400"
-            inactiveClass="bg-slate-800/80 border-slate-700/50 text-slate-500 hover:text-slate-300 hover:border-slate-600"
+            activeClass="bg-deep-purple/40 border-deep-purple text-text-primary shadow-[0_0_8px_var(--color-deep-purple)]"
+            inactiveClass="bg-space-black/80 border-deep-purple/30 text-text-secondary hover:text-text-primary hover:border-deep-purple/60 hover:bg-deep-purple/10"
             aria-label={saved ? "Unsave" : "Save"}
           >
             <svg
@@ -239,10 +239,10 @@ export default function NewsCard({
               </span>
             )}
             {source && source !== "Unknown" && (
-              <span className="text-xs text-slate-500 truncate">{source}</span>
+              <span className="text-xs text-text-secondary/80 truncate">{source}</span>
             )}
           </div>
-          <span className="text-xs text-slate-600 shrink-0">
+          <span className="text-[10px] text-text-secondary/60 uppercase tracking-wide shrink-0">
             {formatDate(published_date)}
           </span>
         </div>

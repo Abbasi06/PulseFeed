@@ -1,17 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url("https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800,900&display=swap");
 @import url("https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/style.css");
 @import "tailwindcss";
 
 @theme {
-  --color-true-black: #010101;
-  --color-deep-navy: #1b1f3a;
-  --color-steel-blue: #4c6e94;
-  --color-mint-glow: #d1e8e2;
-  --color-aurora-pink: #b7397a;
-  --color-off-white: #f7f9f8;
-  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --color-paper: #FDFCF8;
+  --color-ink: #231F20;
+  --color-clay: #D97757;
+  --color-nautical: #26498D;
+  --color-steel: #8a8a8a;
+  
+  --font-display: "Space Mono", "Courier New", monospace;
   --font-sans: "Geist", system-ui, -apple-system, sans-serif;
-  --font-switzer: "Switzer", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -23,13 +23,9 @@
 
 body {
   margin: 0;
-  background-color: #010101; /* True Black */
-  color: #f7f9f8; /* Off-White */
-  font-family:
-    "Geist",
-    system-ui,
-    -apple-system,
-    sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -37,54 +33,17 @@ body {
   min-height: 100svh;
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+/* Inline hyperlinks — always nautical blue */
+a:not([class]) {
+  color: var(--color-nautical);
+  text-decoration: none;
+  transition: none;
 }
-
-@keyframes gemini-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+a:not([class]):hover {
+  text-decoration: underline;
 }
 
 @layer utilities {
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.04) 40%,
-      rgba(255, 255, 255, 0.07) 50%,
-      rgba(255, 255, 255, 0.04) 60%,
-      transparent 100%
-    );
-    animation: shimmer 1.8s infinite;
-  }
-
-  .gemini-glow {
-    background: linear-gradient(
-      -45deg,
-      #7c3aed,
-      #3b82f6,
-      #06b6d4,
-      #a855f7,
-      #ec4899,
-      #7c3aed
-    );
-    background-size: 300% 300%;
-    animation: gemini-shift 4s ease infinite;
-  }
-
   .scrollbar-hide {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -93,39 +52,53 @@ body {
     display: none;
   }
 
-  .liquid-glass {
-    backdrop-filter: blur(15px);
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1.4px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  /* Brutalist Utilities */
+  .print-panel {
+    background-color: var(--color-paper);
+    border: 1px solid var(--color-ink);
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  .print-panel-heavy {
+    background-color: var(--color-paper);
+    border: 2px solid var(--color-ink);
+    border-radius: 0;
+    box-shadow: none;
   }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #b7397a, #4c6e94);
-    color: white;
+  /* Instant snap hover — now Clay Orange */
+  .interactive-snap {
+    transition: none !important;
+  }
+  
+  .interactive-snap:hover {
+    background-color: var(--color-clay);
+    color: var(--color-paper);
+    border-color: var(--color-clay);
+  }
+  
+  /* Primary CTA — Clay accent */
+  .btn-print {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-display);
+    text-transform: uppercase;
     font-size: 0.875rem;
-    font-weight: 600;
-    position: relative;
-    isolation: isolate;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border: 2px solid var(--color-ink);
+    border-radius: 0;
+    transition: none;
   }
 
-  .btn-primary::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(135deg, #b7397a, #4c6e94);
-    filter: blur(12px);
-    opacity: 0;
-    z-index: -1;
-    transition: opacity 0.3s ease;
+  .btn-print:hover {
+    background-color: var(--color-clay);
+    border-color: var(--color-clay);
+    color: var(--color-paper);
   }
 
-  .btn-primary:hover::after {
-    opacity: 0.55;
-  }
-
-  .btn-primary:disabled {
+  .btn-print:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }

@@ -11,7 +11,7 @@ export default function Navbar() {
 
   return (
     <motion.nav
-      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[90%] max-w-4xl px-4 py-2 rounded-full border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)]"
+      className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between w-[90%] max-w-4xl px-4 py-2 rounded-full border border-white/10"
       style={{
         backgroundColor: bgOpacity,
         backdropFilter: blurValue,
@@ -25,7 +25,7 @@ export default function Navbar() {
         className="flex items-center gap-2 px-2 cursor-pointer"
         onClick={() => navigate("/")}
       >
-        <div className="w-6 h-6 flex items-center justify-center rounded-md bg-gradient-to-br from-[#B7397A] to-[#4C6E94] shadow-[0_0_10px_rgba(183,57,122,0.4)]">
+        <div className="w-6 h-6 flex items-center justify-center rounded-md bg-gradient-to-br from-[#B7397A] to-[#4C6E94]">
           <PulseFeedIcon size={12} color="white" />
         </div>
         <span className="text-white font-semibold tracking-tight">

@@ -9,7 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-// Trace Line Component
+// Trace Line Component (Print)
 const TraceLine = ({ rotate = 0 }: { rotate?: number }) => (
   <div
     className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -21,59 +21,50 @@ const TraceLine = ({ rotate = 0 }: { rotate?: number }) => (
         y1="200"
         x2="350"
         y2="200"
-        stroke="url(#traceGrad)"
+        stroke="var(--color-ink)"
         strokeWidth="1"
-        strokeDasharray="5,10"
+        strokeDasharray="4,8"
         animate={{ strokeDashoffset: [0, -100] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
       />
-      <defs>
-        <linearGradient id="traceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#B7397A" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#4C6E94" stopOpacity="0" />
-        </linearGradient>
-      </defs>
     </svg>
   </div>
 );
 
-// Live Terminal Snippet
+// Live Terminal Snippet (Print)
 const LiveTerminal = () => (
-  <div className="mt-8 w-full max-w-md rounded-xl bg-black/60 border border-white/5 p-4 font-mono text-[10px] shadow-2xl overflow-hidden h-32 relative">
-    <div className="flex gap-1.5 mb-3 border-b border-white/5 pb-2">
-      <div className="w-2 h-2 rounded-full bg-red-500/50" />
-      <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
-      <div className="w-2 h-2 rounded-full bg-green-500/50" />
-      <span className="ml-2 text-white/20 uppercase tracking-[2px]">
-        Swarm_Monitor.sh
+  <div className="mt-12 w-full max-w-xl mx-auto border-2 border-ink bg-paper font-mono text-xs overflow-hidden">
+    <div className="flex justify-between items-center mb-0 border-b-2 border-ink p-3 bg-ink text-paper">
+      <span className="font-bold tracking-[2px] uppercase">
+        Monitor // Swarm_Init
       </span>
+      <div className="flex gap-2">
+         <div className="w-2 h-2 border border-paper bg-transparent" />
+         <div className="w-2 h-2 border border-paper bg-transparent" />
+         <div className="w-2 h-2 border border-paper bg-paper" />
+      </div>
     </div>
-    <div className="space-y-1 text-white/40">
+    <div className="p-4 space-y-2 text-ink">
       <motion.p animate={{ opacity: [0, 1] }} transition={{ delay: 0.2 }}>
-        [09:44:01] <span className="text-[#B7397A]">SWARM_INIT</span>: Listening
-        on Port 8080
+        <span className="font-bold">[09:44:01] SWARM_INIT</span>: Binding to port 8080...
       </motion.p>
       <motion.p animate={{ opacity: [0, 1] }} transition={{ delay: 0.8 }}>
-        [09:44:12] <span className="text-blue-400">INGEST_ARXIV</span>:
-        [arXiv:2403.00123] - 100%
+        <span className="font-bold">[09:44:12] INGEST_ARXIV</span>: Extracting [arXiv:2403.00123]
       </motion.p>
       <motion.p animate={{ opacity: [0, 1] }} transition={{ delay: 1.4 }}>
-        [09:44:15] <span className="text-green-400">SYNTHESIS</span>: Extracting
-        high-signal entities...
+        <span className="font-bold text-clay">[09:44:15] SYNTHESIS</span>: Validating high-signal entities.
       </motion.p>
       <motion.p
         animate={{ opacity: [0, 1] }}
         transition={{ repeat: Infinity, repeatDelay: 5 }}
       >
-        [09:44:18] <span className="text-yellow-400">MATCH</span>: Found 12
-        GitHub repos for 'KV-Cache'
+        <span className="font-bold">[09:44:18] ALIGN</span>: 12 GitHub repos mapped for 'KV-Cache'.
       </motion.p>
     </div>
-    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black to-transparent" />
   </div>
 );
 
-// Orbiting icon component
+// Orbiting icon component (Print)
 const OrbitingIcon = ({
   delay = 0,
   radius = 80,
@@ -101,10 +92,9 @@ const OrbitingIcon = ({
         transition={{ duration, repeat: Infinity, ease: "linear", delay }}
         className="relative group pointer-events-auto"
       >
-        <div className="absolute inset-0 bg-white/20 blur-md rounded-full scale-0 group-hover:scale-150 transition-transform duration-500" />
-        <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-[#1c1b24] border border-white/10 text-white/50 group-hover:text-white group-hover:border-white/30 transition-all duration-300">
-          <Icon size={18} />
-          <span className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase tracking-widest text-white/30 group-hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100 font-bold">
+        <div className="relative flex items-center justify-center w-10 h-10 border-2 border-ink rounded-none bg-paper text-ink transition-none group-hover:bg-clay group-hover:text-paper group-hover:border-clay">
+          <Icon size={16} />
+          <span className="absolute top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] uppercase font-mono font-bold tracking-widest text-ink bg-paper border border-ink px-1 opacity-0 group-hover:opacity-100 transition-none z-10 block">
             {label}
           </span>
         </div>
@@ -115,79 +105,54 @@ const OrbitingIcon = ({
 
 export default function WhyUs() {
   return (
-    <section className="relative w-full py-48 bg-[#010101] font-sans selection:bg-[#B7397A]/30 border-t border-white/5">
-      <div className="container mx-auto px-6 max-w-5xl">
+    <section className="relative w-full py-32 bg-paper font-sans selection:bg-clay selection:text-paper border-b-4 border-ink">
+      <div className="container mx-auto px-6 max-w-7xl">
         {/* Section Head */}
-        <div className="text-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-6"
-          >
-            <ShieldCheck size={14} className="text-[#B7397A]" />
-            <span className="text-xs font-semibold tracking-widest uppercase text-white/30 font-bold">
-              Dual-Brain Architecture
+        <div className="text-center mb-20 border-b-2 border-ink pb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-ink mb-6 bg-paper">
+            <ShieldCheck size={14} className="text-ink" />
+            <span className="text-xs font-mono font-bold tracking-widest uppercase text-ink">
+              [/] Dual-Brain Architecture
             </span>
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1, duration: 0.8 }}
-            className="text-4xl md:text-5xl lg:text-7xl font-bold text-white tracking-tighter leading-[0.9]"
-          >
+          </div>
+          <h2 className="text-5xl md:text-7xl font-display font-bold text-ink tracking-tighter leading-[0.9] uppercase">
             High-Performance <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B7397A] via-[#7c3aed] to-[#4C6E94]">
+            <span className="italic text-clay font-display">
               Intelligence Substrate.
             </span>
-          </motion.h2>
+          </h2>
         </div>
 
-        {/* Large Top Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 60, scale: 0.98 }}
-          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="relative group p-12 rounded-[3.5rem] bg-[rgba(28,27,36,0.25)] border border-white/10 hover:border-white/20 transition-all duration-700 overflow-hidden backdrop-blur-3xl mb-8 flex flex-col items-center text-center shadow-[0_40px_100px_rgba(0,0,0,0.5)]"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-
-          <h3 className="relative z-10 text-2xl font-bold text-white mb-4 tracking-tight">
-            Continuous Sourcing & Vectorization
-          </h3>
-          <p className="relative z-10 text-white/40 max-w-2xl mb-12 leading-relaxed text-sm">
-            PulseFeed's inference engine operates at the intersection of
-            retrieval and reasoning, extracting signal from raw technical
-            firehoses to build a persistent context graph.
-          </p>
+        {/* Large Top Card (Print) */}
+        <div className="relative group border-2 border-ink bg-paper transition-none overflow-hidden mb-8 flex flex-col items-center text-center">
+          <div className="p-12 pb-0 relative z-10 w-full">
+            <div className="text-xs font-mono font-bold uppercase tracking-widest text-ink border-b-2 border-ink pb-4 mb-6 text-left">
+              [/] Component // Continuous Sourcing & Vectorization
+            </div>
+            <p className="font-mono text-sm text-ink max-w-2xl mx-auto leading-relaxed border-l-4 border-ink pl-4 text-left">
+              The engine operates at the intersection of retrieval and reasoning. It extracts pure signal from raw firehoses to build a persistent context graph.
+            </p>
+          </div>
 
           {/* Animation Area */}
-          <div className="relative w-full h-[320px] flex items-center justify-center">
+          <div className="relative w-full h-[400px] flex items-center justify-center mt-8 border-y-2 border-ink bg-[#EEEEEE] overflow-hidden">
             {/* Trace Lines */}
             {[0, 60, 120, 180, 240, 300].map((r) => (
               <TraceLine key={r} rotate={r} />
             ))}
 
             {/* Center Core */}
-            <div className="relative z-20 w-28 h-28 rounded-full bg-gradient-to-br from-[#B7397A] to-[#4C6E94] flex items-center justify-center p-0.5 shadow-[0_0_80px_rgba(183,57,122,0.4)]">
-              <div className="w-full h-full rounded-full bg-black/60 backdrop-blur-xl flex items-center justify-center overflow-hidden border border-white/10">
-                <motion.div
-                  animate={{
-                    scale: [1, 1.3, 1],
-                    opacity: [0.3, 0.7, 0.3],
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute inset-0 bg-white/20 blur-2xl"
-                />
-                <Database size={40} className="text-white relative z-10" />
-              </div>
+            <div className="relative z-20 w-32 h-32 border-4 border-ink rounded-full bg-paper flex items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                   <div className="w-full h-[1px] bg-ink" />
+                   <div className="h-full w-[1px] bg-ink absolute" />
+                </div>
+                <Database size={32} className="text-ink relative z-10" />
             </div>
 
             {/* Orbiting Paths */}
-            <div className="absolute w-[240px] h-[100px] border border-white/10 rounded-[100%] rotate-[-15deg] opacity-20" />
-            <div className="absolute w-[320px] h-[140px] border border-white/10 rounded-[100%] rotate-[10deg] opacity-20" />
+            <div className="absolute w-[240px] h-[100px] border border-ink rounded-[100%] rotate-[-15deg] opacity-30" />
+            <div className="absolute w-[320px] h-[140px] border border-ink rounded-[100%] rotate-[10deg] opacity-30" />
 
             {/* Orbiting Icons */}
             <OrbitingIcon
@@ -220,48 +185,36 @@ export default function WhyUs() {
             />
           </div>
 
-          <LiveTerminal />
-        </motion.div>
+          <div className="p-8 w-full bg-paper">
+             <LiveTerminal />
+          </div>
+        </div>
 
         {/* Two Small Cards Below */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="p-12 rounded-[3rem] bg-[rgba(28,27,36,0.3)] border border-white/10 hover:border-white/25 transition-all duration-700 overflow-hidden backdrop-blur-3xl flex flex-col items-center"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 shadow-2xl">
-              <Zap size={24} className="text-[#B7397A]" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t-2 border-ink pt-8">
+          <div className="p-10 border-2 border-ink bg-paper flex flex-col items-center text-center hover:bg-ink hover:text-paper group transition-none interactive-snap">
+            <div className="w-16 h-16 border-2 border-ink rounded-none flex items-center justify-center mb-6 bg-paper text-ink transition-none">
+              <Zap size={24} />
             </div>
-            <h4 className="text-xl font-bold text-white mb-4">
+            <h4 className="text-2xl font-display font-bold uppercase mb-4 tracking-tighter">
               Zero-Latency Synthesis
             </h4>
-            <p className="text-white/40 text-[13px] leading-relaxed text-center">
-              Our Inference Cascade pre-computes context before you request it,
-              ensuring 10X faster knowledge retrieval with zero cold-starts.
+            <p className="font-mono text-xs leading-relaxed uppercase tracking-widest opacity-80">
+              The cascade pre-computes context before requested—ensuring immediate retrieval with zero cold-starts.
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="p-12 rounded-[3rem] bg-[rgba(28,27,36,0.3)] border border-white/10 hover:border-white/25 transition-all duration-700 overflow-hidden backdrop-blur-3xl flex flex-col items-center"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 shadow-2xl">
-              <Globe size={24} className="text-[#4C6E94]" />
+          <div className="p-10 border-2 border-ink bg-paper flex flex-col items-center text-center hover:bg-ink hover:text-paper group transition-none interactive-snap">
+            <div className="w-16 h-16 border-2 border-ink rounded-none flex items-center justify-center mb-6 bg-paper text-ink transition-none">
+              <Globe size={24} />
             </div>
-            <h4 className="text-xl font-bold text-white mb-4">
-              Hyper-Personalized Filters
+            <h4 className="text-2xl font-display font-bold uppercase mb-4 tracking-tighter">
+              Hyper-Personalized
             </h4>
-            <p className="text-white/40 text-[13px] leading-relaxed text-center">
-              Beyond keywords. Our swarm uses Contextual Bandits to map your
-              evolving technical sub-interests and strip away SEO fluff.
+            <p className="font-mono text-xs leading-relaxed uppercase tracking-widest opacity-80">
+              Beyond keywords. The swarm maps evolving technical boundaries and strips away marketing noise.
             </p>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -34,8 +34,8 @@ function Toast({ message, type = "error", onDismiss }) {
       transition={{ type: "spring", stiffness: 420, damping: 32 }}
       className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-xl shadow-2xl text-sm font-medium backdrop-blur-md border whitespace-nowrap ${
         type === "error"
-          ? "bg-red-950/90 text-red-200 border-red-500/30"
-          : "bg-emerald-950/90 text-emerald-200 border-emerald-500/30"
+          ? "bg-neon-pink/20 text-neon-pink border-neon-pink/30"
+          : "bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30"
       }`}
     >
       {type === "error" ? (
@@ -54,7 +54,7 @@ function Toast({ message, type = "error", onDismiss }) {
         </svg>
       ) : (
         <svg
-          className="w-4 h-4 shrink-0 text-emerald-400"
+          className="w-4 h-4 shrink-0 text-neon-cyan"
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -95,15 +95,15 @@ function BriefTab({ brief, loading, error, onRetry }) {
               if (brief) setOpen((o) => !o);
             }}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950 text-sm font-medium text-white disabled:opacity-50 transition-opacity select-none"
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-space-black text-sm font-bold text-text-primary disabled:opacity-50 transition-opacity select-none"
           >
             <PulseFeedIcon size={11} className="shrink-0" />
             <span>Today's Brief</span>
             {loading && (
-              <span className="text-[10px] text-slate-500">generating…</span>
+              <span className="text-[10px] text-text-secondary">generating…</span>
             )}
             {error && !loading && (
-              <span className="text-[10px] text-rose-400">retry</span>
+              <span className="text-[10px] text-neon-pink">retry</span>
             )}
             {brief && !loading && (
               <motion.svg
@@ -137,13 +137,13 @@ function BriefTab({ brief, loading, error, onRetry }) {
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
             className="overflow-hidden"
           >
-            <div className="mt-3 rounded-xl border border-slate-700/60 overflow-hidden grid grid-cols-1 md:grid-cols-3 bg-slate-900">
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 liquid-glass !rounded-xl !border-deep-purple/40">
               {/* Col 1 — Overview */}
-              <div className="px-5 py-4 md:border-r border-b md:border-b-0 border-slate-800">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-2">
+              <div className="px-5 py-4 md:border-r border-b md:border-b-0 border-deep-purple/30">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-text-secondary mb-2">
                   Overview
                 </p>
-                <p className="text-[12px] text-slate-200 leading-relaxed">
+                <p className="text-xs text-text-primary leading-relaxed">
                   {brief.headline}
                 </p>
                 {(brief.watch ?? []).length > 0 && (
@@ -161,15 +161,15 @@ function BriefTab({ brief, loading, error, onRetry }) {
               </div>
 
               {/* Col 2 — Key Signals */}
-              <div className="px-5 py-4 md:border-r border-b md:border-b-0 border-slate-800">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-amber-500/70 mb-2">
+              <div className="px-5 py-4 md:border-r border-b md:border-b-0 border-deep-purple/30">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-neon-pink/90 mb-2">
                   Key Signals
                 </p>
                 <ul className="space-y-2.5">
                   {(brief.signals ?? []).slice(0, 4).map((s, i) => (
                     <li key={i} className="flex items-start gap-2.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50 shrink-0 mt-1.5" />
-                      <span className="text-[12px] text-slate-400 leading-snug">
+                      <span className="w-1.5 h-1.5 rounded-full bg-neon-pink/70 shrink-0 mt-1.5" />
+                      <span className="text-xs text-text-secondary leading-snug">
                         {s}
                       </span>
                     </li>
@@ -179,7 +179,7 @@ function BriefTab({ brief, loading, error, onRetry }) {
 
               {/* Col 3 — Worth Reading */}
               <div className="px-5 py-4">
-                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-500/70 mb-2">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-neon-cyan mb-2">
                   Worth Reading
                 </p>
                 <ul className="space-y-3">
@@ -191,13 +191,13 @@ function BriefTab({ brief, loading, error, onRetry }) {
                         rel="noopener noreferrer"
                         className="group flex items-start gap-2"
                       >
-                        <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 text-slate-600 group-hover:text-emerald-400 transition-colors" />
+                        <ExternalLink className="w-3 h-3 shrink-0 mt-0.5 text-text-secondary group-hover:text-neon-cyan transition-colors" />
                         <div className="min-w-0">
-                          <p className="text-[12px] text-slate-400 group-hover:text-emerald-300 transition-colors line-clamp-2 leading-snug">
+                          <p className="text-xs text-text-secondary group-hover:text-neon-cyan transition-colors line-clamp-2 leading-snug">
                             {r.title}
                           </p>
                           {r.source && (
-                            <p className="text-[10px] text-slate-600 mt-0.5">
+                            <p className="text-[10px] text-text-secondary/60 mt-0.5">
                               {r.source}
                             </p>
                           )}
@@ -219,18 +219,18 @@ function BriefTab({ brief, loading, error, onRetry }) {
 // Event card for the Events tab (fuller version)
 // ---------------------------------------------------------------------------
 const TYPE_COLORS = {
-  Conference: "bg-blue-500/80",
-  Meetup: "bg-green-500/80",
-  Workshop: "bg-amber-500/80",
-  Webinar: "bg-cyan-500/80",
-  Summit: "bg-rose-500/80",
+  Conference: "bg-deep-purple/80",
+  Meetup: "bg-neon-cyan/80 text-space-black",
+  Workshop: "bg-neon-pink/80",
+  Webinar: "bg-deep-purple/60",
+  Summit: "bg-neon-pink/60",
 };
 
 function EventCard({ name, date, location, type, url, reason }) {
   const safeUrl = url && url !== "#" ? url : null;
-  const typeCls = TYPE_COLORS[type] ?? "bg-slate-500/80";
+  const typeCls = TYPE_COLORS[type] ?? "bg-space-black/80 border border-deep-purple/40";
   return (
-    <div className="rounded-2xl bg-slate-900 border border-slate-700/60 p-4 space-y-3 hover:border-violet-500/30 hover:shadow-lg hover:shadow-violet-950/30 transition-all duration-200 hover:-translate-y-0.5 flex flex-col">
+    <div className="liquid-glass p-4 space-y-3 hover:-translate-y-0.5 flex flex-col">
       {type && (
         <span
           className={`inline-block w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold text-white ${typeCls}`}
@@ -243,14 +243,14 @@ function EventCard({ name, date, location, type, url, reason }) {
           href={safeUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-bold text-slate-100 leading-snug hover:text-violet-300 transition-colors"
+          className="text-sm font-bold text-text-primary leading-snug hover:text-neon-cyan transition-colors"
         >
           {name}
         </a>
       ) : (
-        <p className="text-sm font-bold text-slate-100 leading-snug">{name}</p>
+        <p className="text-sm font-bold text-text-primary leading-snug">{name}</p>
       )}
-      <div className="flex flex-col gap-1.5 text-xs text-slate-500">
+      <div className="flex flex-col gap-1.5 text-xs text-text-secondary">
         {date && (
           <span className="flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -265,7 +265,7 @@ function EventCard({ name, date, location, type, url, reason }) {
         )}
       </div>
       {reason && (
-        <p className="text-xs text-slate-500 leading-relaxed flex-1">
+        <p className="text-xs text-text-secondary leading-relaxed flex-1">
           {reason}
         </p>
       )}
@@ -274,7 +274,7 @@ function EventCard({ name, date, location, type, url, reason }) {
           href={safeUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors mt-auto pt-1"
+          className="flex items-center gap-1.5 text-xs font-medium text-neon-cyan hover:text-text-primary transition-colors mt-auto pt-1"
         >
           <ExternalLink className="w-3.5 h-3.5" />
           View event
@@ -571,7 +571,7 @@ export default function Dashboard() {
             {/* Tabs + actions */}
             <div className="flex items-center gap-2 mb-6">
               {/* Tab group */}
-              <div className="flex gap-1 bg-slate-900/80 border border-slate-800 p-1 rounded-xl backdrop-blur-sm">
+              <div className="flex gap-1 bg-space-black/80 border border-deep-purple/30 p-1 rounded-xl backdrop-blur-sm">
                 {TABS.map((tab) => (
                   <button
                     key={tab}
@@ -579,13 +579,13 @@ export default function Dashboard() {
                     className={`relative px-5 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                       activeTab === tab
                         ? "text-white"
-                        : "text-slate-400 hover:text-slate-200"
+                        : "text-text-secondary hover:text-text-primary"
                     }`}
                   >
                     {activeTab === tab && (
                       <motion.div
                         layoutId="tab-pill"
-                        className="absolute inset-0 bg-violet-600 rounded-lg"
+                        className="absolute inset-0 bg-deep-purple rounded-lg"
                         transition={{
                           type: "spring",
                           stiffness: 400,
@@ -599,8 +599,8 @@ export default function Dashboard() {
                         <span
                           className={`text-xs px-1.5 py-0.5 rounded-full transition-colors ${
                             activeTab === tab
-                              ? "bg-violet-500/40 text-violet-100"
-                              : "bg-slate-800 text-slate-500"
+                              ? "bg-space-black text-text-primary shadow-[0_0_8px_var(--color-neon-cyan)]"
+                              : "bg-space-black/50 text-text-secondary"
                           }`}
                         >
                           {tab === "Feed"
@@ -638,12 +638,12 @@ export default function Dashboard() {
                           value={filterText}
                           onChange={(e) => setFilterText(e.target.value)}
                           placeholder="Filter by keyword…"
-                          className="w-full pl-3 pr-7 py-1.5 text-xs rounded-lg bg-slate-900/80 border border-slate-700 text-slate-300 placeholder-slate-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20"
+                          className="w-full pl-3 pr-7 py-1.5 text-xs rounded-lg bg-space-black/80 border border-deep-purple/40 text-text-primary placeholder-text-secondary/60 focus:outline-none focus:border-neon-cyan/50 focus:ring-1 focus:ring-neon-cyan/20"
                         />
                         {filterText && (
                           <button
                             onClick={() => setFilterText("")}
-                            className="absolute right-2 text-slate-600 hover:text-slate-400 transition-colors"
+                            className="absolute right-2 text-text-secondary hover:text-neon-pink transition-colors"
                           >
                             <svg
                               className="w-3 h-3"
@@ -676,8 +676,8 @@ export default function Dashboard() {
                   title="Filter by keyword"
                   className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
                     filterOpen || filterText
-                      ? "bg-violet-500/15 border-violet-500/40 text-violet-400"
-                      : "bg-slate-900/80 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700"
+                      ? "bg-neon-cyan/15 border-neon-cyan/40 text-neon-cyan"
+                      : "bg-space-black/80 border-deep-purple/30 text-text-secondary hover:text-text-primary hover:border-deep-purple/50"
                   }`}
                 >
                   <svg
@@ -700,7 +700,7 @@ export default function Dashboard() {
                   onClick={() => loadData(true)}
                   disabled={refreshing || loading}
                   title={refreshing ? "Refreshing…" : "Refresh feed"}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg border bg-slate-900/80 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg border bg-space-black/80 border-deep-purple/30 text-text-secondary hover:text-neon-cyan hover:border-neon-cyan/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   <RefreshCw
                     className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`}
@@ -708,7 +708,7 @@ export default function Dashboard() {
                 </button>
 
                 {!loading && totalViews > 0 && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-500 text-xs">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-space-black/60 border border-deep-purple/30 text-neon-cyan text-xs">
                     <Eye className="w-3.5 h-3.5" />
                     {totalViews}
                   </div>

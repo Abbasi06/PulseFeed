@@ -1,5 +1,6 @@
 import { Canvas } from "@react-three/fiber";
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, useInView } from "framer-motion";
+import { useRef } from "react";
 import BackgroundVideo from "./BackgroundVideo";
 import AntigravityField from "./AntigravityField";
 import InfiniteSlider from "./InfiniteSlider";
@@ -18,16 +19,19 @@ const childVariants: Variants = {
 };
 
 export default function ClearInvoiceHero() {
+  const containerRef = useRef(null);
+  const isInView = useInView(containerRef);
+
   return (
-    <div className="relative w-full min-h-screen bg-true-black text-off-white overflow-hidden font-sans">
+    <div ref={containerRef} className="relative w-full min-h-screen bg-true-black text-off-white overflow-hidden font-sans">
       {/* 5px Gradient Top Bar */}
       <div className="absolute top-0 left-0 w-full h-[5px] bg-gradient-to-r from-steel-blue via-aurora-pink to-mint-glow z-50" />
 
       {/* 3D Particle Engine Canvas */}
       <div className="absolute inset-0 z-[-20]">
-        <Canvas camera={{ position: [0, 0, 15], fov: 45 }}>
+        <Canvas frameloop={isInView ? "always" : "never"} camera={{ position: [0, 0, 15], fov: 45 }} dpr={[1, 2]}>
           <ambientLight intensity={0.5} />
-          <AntigravityField />
+          <AntigravityField inView={isInView} />
         </Canvas>
       </div>
 
@@ -37,7 +41,7 @@ export default function ClearInvoiceHero() {
       {/* Liquid Glass Navbar */}
       <nav className="relative z-40 flex items-center justify-between px-8 py-5 mt-1 liquid-glass mx-4 sm:mx-8 md:mx-16 rounded-2xl md:mx-auto max-w-7xl top-6">
         <div className="font-bold text-xl tracking-wide flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-gradient-to-br from-mint-glow to-aurora-pink shadow-[0_0_15px_rgba(183,57,122,0.5)]"></span>
+          <span className="w-8 h-8 rounded-full bg-gradient-to-br from-mint-glow to-aurora-pink"></span>
           PulseBoard
         </div>
         <div className="hidden md:flex gap-8 text-sm font-medium text-off-white/80">
@@ -66,7 +70,7 @@ export default function ClearInvoiceHero() {
         >
           <motion.div
             variants={childVariants}
-            className="mb-6 px-4 py-1.5 rounded-full liquid-glass text-sm font-medium text-mint-glow border border-mint-glow/30 flex items-center gap-2 shadow-[0_0_15px_rgba(209,232,226,0.2)]"
+            className="mb-6 px-4 py-1.5 rounded-full liquid-glass text-sm font-medium text-mint-glow border border-mint-glow/30 flex items-center gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-mint-glow animate-pulse"></span>
             Zero-Gravity Data Lab

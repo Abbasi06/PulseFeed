@@ -25,25 +25,24 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950">
+    <div className="h-screen flex flex-col bg-space-black">
       {/* ── Mobile top bar ── */}
-      <div className="md:hidden fixed top-0 inset-x-0 z-30 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+      <div className="md:hidden fixed top-0 inset-x-0 z-30 bg-space-black/90 backdrop-blur-md border-b border-deep-purple/30 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-            style={{ background: "linear-gradient(135deg, #B7397A, #4C6E94)" }}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 bg-gradient-to-br from-neon-pink to-steel-blue"
           >
             {initials || "?"}
           </div>
-          <span className="text-base font-bold text-white">
-            Pulse<span className="text-violet-400">Feed</span>
+          <span className="text-base font-bold text-text-primary">
+            Pulse<span className="text-deep-purple">Feed</span>
           </span>
         </div>
         <nav className="flex gap-1">
           <NavLink
             to="/settings"
             className={({ isActive }) =>
-              `p-2 rounded-lg transition-colors ${isActive ? "text-violet-400" : "text-slate-400 hover:text-slate-200"}`
+              `p-2 rounded-lg transition-colors ${isActive ? "text-neon-cyan" : "text-text-secondary hover:text-text-primary"}`
             }
           >
             <svg
@@ -68,7 +67,7 @@ export default function DashboardLayout() {
           <NavLink
             to="/generator"
             className={({ isActive }) =>
-              `p-2 rounded-lg transition-colors ${isActive ? "text-violet-400" : "text-slate-400 hover:text-slate-200"}`
+              `p-2 rounded-lg transition-colors ${isActive ? "text-neon-cyan" : "text-text-secondary hover:text-text-primary"}`
             }
           >
             <svg
@@ -85,7 +84,7 @@ export default function DashboardLayout() {
           </NavLink>
           <button
             onClick={handleLogout}
-            className="p-2 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+            className="p-2 rounded-lg text-text-secondary hover:text-neon-pink transition-colors"
           >
             <svg
               className="w-5 h-5"
@@ -119,22 +118,21 @@ export default function DashboardLayout() {
         <motion.div
           whileHover={{ scale: 1.04 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer border border-slate-700/60 shadow-lg shadow-black/40 select-none bg-slate-900"
+          className="flex items-center gap-3 px-4 py-2.5 cursor-pointer select-none liquid-glass shadow-none border-deep-purple/40"
         >
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 bg-gradient-to-br from-neon-pink to-steel-blue"
             style={{
-              background: "linear-gradient(135deg, #B7397A, #4C6E94)",
-              boxShadow: "0 0 12px rgba(183,57,122,0.45)",
+              boxShadow: "0 0 12px var(--color-neon-pink)",
             }}
           >
             {initials || "AI"}
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-bold text-white">
-              Pulse<span className="text-violet-400">Feed</span>
+            <p className="text-sm font-bold text-text-primary">
+              Pulse<span className="text-deep-purple">Feed</span>
             </p>
-            <p className="text-[10px] text-slate-500">AI knowledge feed</p>
+            <p className="text-[10px] text-text-secondary">AI knowledge feed</p>
           </div>
           <motion.svg
             animate={{ rotate: open ? 180 : 0 }}
@@ -161,8 +159,7 @@ export default function DashboardLayout() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 440, damping: 30 }}
-              className="absolute bottom-full left-0 mb-2 w-44 rounded-xl overflow-hidden shadow-2xl shadow-black/60 border border-slate-700/60"
-              style={{ background: "#13141F" }}
+              className="absolute bottom-full left-0 mb-2 w-44 liquid-glass !rounded-2xl border-deep-purple/50 bg-space-black/80"
             >
               <NavLink
                 to="/settings"
@@ -170,8 +167,8 @@ export default function DashboardLayout() {
                 className={({ isActive }) =>
                   `flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium transition-colors ${
                     isActive
-                      ? "text-violet-300 bg-violet-500/10"
-                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                      ? "text-neon-cyan bg-neon-cyan/10"
+                      : "text-text-secondary hover:text-text-primary hover:bg-white/5"
                   }`
                 }
               >
@@ -201,8 +198,8 @@ export default function DashboardLayout() {
                 className={({ isActive }) =>
                   `flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium transition-colors ${
                     isActive
-                      ? "text-violet-300 bg-violet-500/10"
-                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                      ? "text-neon-cyan bg-neon-cyan/10"
+                      : "text-text-secondary hover:text-text-primary hover:bg-white/5"
                   }`
                 }
               >
@@ -219,10 +216,10 @@ export default function DashboardLayout() {
                 </svg>
                 Generator
               </NavLink>
-              <div className="h-px mx-3 bg-slate-700/50" />
+              <div className="h-px mx-3 bg-deep-purple/20" />
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm font-medium text-slate-300 hover:text-rose-300 hover:bg-rose-500/8 transition-colors"
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-sm font-medium text-text-secondary hover:text-neon-pink hover:bg-neon-pink/10 transition-colors"
               >
                 <svg
                   className="w-4 h-4 shrink-0"

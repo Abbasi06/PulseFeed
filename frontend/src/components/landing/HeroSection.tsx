@@ -36,7 +36,7 @@ export default function HeroSection() {
           variants={fadeUp}
           initial="hidden"
           animate="visible"
-          className="flex items-center gap-3 px-2 py-2 pr-6 mb-10 rounded-full bg-[rgba(28,27,36,0.15)] border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(183,57,122,0.08)]"
+          className="flex items-center gap-3 px-2 py-2 pr-6 mb-10 rounded-full bg-[rgba(28,27,36,0.15)] border border-white/10 backdrop-blur-md"
         >
           <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10">
             <span className="text-[11px] font-bold tracking-wider uppercase text-white/80">

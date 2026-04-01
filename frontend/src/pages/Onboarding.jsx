@@ -10,41 +10,41 @@ const MAX_NAME = 100;
 const MAX_OCC = 150;
 
 // ---------------------------------------------------------------------------
-// Step indicator
+// Step indicator (Print Edition)
 // ---------------------------------------------------------------------------
 
 const STEP_LABELS = ["Identity", "Expertise"];
 
 function StepIndicator({ current }) {
   return (
-    <div className="flex items-center gap-0 mb-8">
+    <div className="flex items-center gap-0 mb-10 border-b-2 border-ink pb-6">
       {STEP_LABELS.map((label, i) => {
         const n = i + 1;
         const done = n < current;
         const active = n === current;
         return (
           <div key={label} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                className={`w-10 h-10 border-2 items-center justify-center text-sm font-bold font-mono transition-none interactive-snap ${
                   done
-                    ? "bg-[#B7397A] text-white"
+                    ? "bg-ink border-ink text-paper flex"
                     : active
-                      ? "bg-[#7C3AED] text-white ring-4 ring-[#7C3AED]/20"
-                      : "bg-slate-800 text-slate-500 border border-slate-700"
+                      ? "bg-clay border-clay text-paper flex"
+                      : "bg-paper border-ink text-ink flex"
                 }`}
               >
-                {done ? <Check className="w-4 h-4" /> : n}
+                {done ? <Check className="w-5 h-5 text-paper" strokeWidth={3} /> : n}
               </div>
               <span
-                className={`text-[10px] font-medium tracking-wide ${active ? "text-[#7C3AED]" : done ? "text-[#B7397A]" : "text-slate-600"}`}
+                className={`text-[10px] font-mono tracking-widest uppercase font-bold ${active ? "text-clay" : "text-ink"}`}
               >
                 {label}
               </span>
             </div>
             {i < STEP_LABELS.length - 1 && (
               <div
-                className={`flex-1 h-px mx-2 mb-4 transition-colors ${done ? "bg-[#B7397A]/40" : "bg-slate-800"}`}
+                className="flex-1 h-[2px] mx-4 bg-ink"
               />
             )}
           </div>
@@ -142,55 +142,47 @@ export default function Onboarding() {
   const canSubmit = field && subFields.length >= MIN_SUBFIELDS && !loading;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="relative z-10 w-full max-w-lg">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-paper text-ink selection:bg-clay selection:text-paper font-sans">
+      <div className="relative z-10 w-full max-w-2xl">
         {/* Brand */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Pulse
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D946EF] to-[#8B5CF6]">
-              Feed.ai
-            </span>
+        <div className="text-center mb-8 border-b-2 border-ink pb-6">
+          <h1 className="text-5xl font-display font-bold tracking-tighter uppercase">
+            Pulse <br/> Feed
           </h1>
-          <p className="mt-2 text-slate-500 text-sm">
-            Build your personalized AI knowledge feed in 2 steps.
+          <p className="mt-4 font-mono text-xs uppercase tracking-widest text-ink">
+            [/] Initialize Your Architecture — Step {step} of 2
           </p>
         </div>
 
-        <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl shadow-black/50 ring-1 ring-white/5">
+        <div className="print-panel-heavy p-8 md:p-12 relative bg-paper">
+          {/* Decorative issue number */}
+          <div className="absolute top-0 right-0 border-l border-b border-ink bg-clay text-paper px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-widest">
+            [!] FORM 001
+          </div>
+
           <StepIndicator current={step} />
 
           {/* API error banner */}
           {apiError && (
-            <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 mb-6">
-              <svg
-                className="w-5 h-5 text-red-400 shrink-0 mt-0.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-                />
-              </svg>
-              <p className="text-sm text-red-300">{apiError}</p>
+            <div className="flex items-start gap-3 border-2 border-ink bg-[#FFECEC] px-4 py-3 mb-8">
+              <span className="text-xl shrink-0 mt-0.5" aria-hidden="true">
+                ⚠️
+              </span>
+              <p className="text-sm font-mono font-bold uppercase text-ink">{apiError}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
             {/* ── Step 1: Identity ── */}
             {step === 1 && (
-              <div className="space-y-5">
+              <div className="space-y-8">
                 <div>
-                  <div className="flex justify-between mb-1.5">
-                    <label className="text-sm font-medium text-slate-200">
-                      Name
+                  <div className="flex justify-between mb-2">
+                    <label className="text-xs font-mono font-bold uppercase tracking-widest text-ink">
+                      Subject Alias [Name]
                     </label>
                     <span
-                      className={`text-xs ${name.length > MAX_NAME * 0.9 ? "text-amber-400" : "text-slate-500"}`}
+                      className={`text-[10px] font-mono font-bold ${name.length > MAX_NAME * 0.9 ? "text-red-500" : "text-ink"}`}
                     >
                       {name.length}/{MAX_NAME}
                     </span>
@@ -199,25 +191,25 @@ export default function Onboarding() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
-                    placeholder="Ada Lovelace"
-                    className={`w-full px-3.5 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors ${
-                      errors.name
-                        ? "border-red-500"
-                        : "border-slate-700 focus:border-[#B7397A] focus:ring-1 focus:ring-[#B7397A]/30"
+                    placeholder="E.G. ADA LOVELACE"
+                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-none focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
+                      errors.name ? "border-red-500" : "border-ink"
                     }`}
                   />
                   {errors.name && (
-                    <p className="mt-1.5 text-xs text-red-400">{errors.name}</p>
+                    <p className="mt-2 text-[10px] font-mono font-bold uppercase text-red-500 tracking-widest">
+                      {errors.name}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <div className="flex justify-between mb-1.5">
-                    <label className="text-sm font-medium text-slate-200">
-                      Job Title / Role
+                  <div className="flex justify-between mb-2">
+                    <label className="text-xs font-mono font-bold uppercase tracking-widest text-ink">
+                      Designation [Role]
                     </label>
                     <span
-                      className={`text-xs ${occupation.length > MAX_OCC * 0.9 ? "text-amber-400" : "text-slate-500"}`}
+                      className={`text-[10px] font-mono font-bold ${occupation.length > MAX_OCC * 0.9 ? "text-red-500" : "text-ink"}`}
                     >
                       {occupation.length}/{MAX_OCC}
                     </span>
@@ -228,33 +220,33 @@ export default function Onboarding() {
                     onChange={(e) =>
                       setOccupation(e.target.value.slice(0, MAX_OCC))
                     }
-                    placeholder="e.g. Senior AI Engineer, Security Researcher…"
-                    className={`w-full px-3.5 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors ${
-                      errors.occupation
-                        ? "border-red-500"
-                        : "border-slate-700 focus:border-[#B7397A] focus:ring-1 focus:ring-[#B7397A]/30"
+                    placeholder="E.G. CHIEF SYSTEMS ARCHITECT"
+                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-none focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
+                      errors.occupation ? "border-red-500" : "border-ink"
                     }`}
                   />
                   {errors.occupation && (
-                    <p className="mt-1.5 text-xs text-red-400">
+                    <p className="mt-2 text-[10px] font-mono font-bold uppercase text-red-500 tracking-widest">
                       {errors.occupation}
                     </p>
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="w-full py-3 px-4 btn-primary rounded-lg transition-all mt-2"
-                >
-                  Next: Expertise →
-                </button>
+                <div className="pt-4 border-t-2 border-ink">
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="w-full py-4 btn-print hover:shadow-[4px_4px_0_var(--color-ink)]"
+                  >
+                    PROCEED: EXPERTISE →
+                  </button>
+                </div>
               </div>
             )}
 
             {/* ── Step 2: Expertise ── */}
             {step === 2 && (
-              <div className="space-y-5">
+              <div className="space-y-8">
                 <InterestPicker
                   field={field}
                   subFields={subFields}
@@ -273,49 +265,28 @@ export default function Onboarding() {
                 />
 
                 {(errors.field || errors.subFields) && (
-                  <p className="text-xs text-red-400 text-center">
+                  <p className="text-[10px] font-mono font-bold uppercase text-red-500 tracking-widest text-center">
                     {errors.field || errors.subFields}
                   </p>
                 )}
 
-                <div className="flex gap-3 mt-6">
+                <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t-2 border-ink">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+                    className="px-6 py-4 bg-paper border-2 border-ink text-ink font-mono font-bold text-sm tracking-widest uppercase hover:bg-ink hover:text-paper interactive-snap"
                   >
-                    ← Back
+                    ← BACK
                   </button>
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="flex-1 py-3 px-4 btn-primary disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-4 px-6 btn-print hover:shadow-[4px_4px_0_var(--color-ink)] disabled:shadow-none flex items-center justify-center gap-2"
                   >
                     {loading ? (
-                      <>
-                        <svg
-                          className="animate-spin w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                          />
-                        </svg>
-                        Building your feed…
-                      </>
+                      "INITIALIZING SWARM..."
                     ) : (
-                      "Launch My Feed →"
+                      "COMMENCE FEED GENERATION →"
                     )}
                   </button>
                 </div>

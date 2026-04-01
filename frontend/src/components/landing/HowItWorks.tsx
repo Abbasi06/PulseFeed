@@ -12,179 +12,178 @@ import {
   Filter,
 } from "lucide-react";
 
-// Step 1 UI: Context Sync
+// Step 1 UI: Context Sync (Print style)
 const ContextSyncUI = () => (
-  <div className="relative w-full h-full p-4 flex flex-col gap-3">
-    <div className="flex items-center justify-between border-b border-white/5 pb-2">
-      <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">
-        Context_Sync.v1
+  <div className="relative w-full h-full p-6 flex flex-col gap-4 bg-paper border-b-2 border-ink">
+    <div className="flex items-center justify-between border-b-2 border-ink pb-2">
+      <span className="text-[10px] font-bold text-ink uppercase font-mono tracking-widest">
+        PROC.01 // CONTEXT_SYNC
       </span>
       <div className="flex gap-1">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#B7397A] animate-pulse" />
-        <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+        <div className="w-2 h-2 border border-ink bg-ink animate-pulse" />
+        <div className="w-2 h-2 border border-ink" />
       </div>
     </div>
     <div className="flex flex-wrap gap-2">
       {["vLLM", "RAG", "KEDA", "Nvidia", "PyTorch"].map((t, i) => (
-        <motion.div
+        <div
           key={i}
-          animate={{
-            backgroundColor:
-              i < 3 ? "rgba(183, 57, 122, 0.2)" : "rgba(255, 255, 255, 0.05)",
-            borderColor:
-              i < 3 ? "rgba(183, 57, 122, 0.4)" : "rgba(255, 255, 255, 0.1)",
-          }}
-          className="px-2 py-1 rounded-md border text-[9px] text-white/60 font-mono"
+          className={`px-2 py-1 border text-[10px] font-bold font-mono uppercase ${
+            i < 3 ? "bg-clay text-paper border-clay" : "bg-paper text-ink border-ink"
+          }`}
         >
           {t}
-        </motion.div>
+        </div>
       ))}
     </div>
-    <div className="mt-auto flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
-      <Search size={10} className="text-white/40" />
-      <div className="h-1 bg-white/10 flex-1 rounded-full overflow-hidden">
+    <div className="mt-auto flex items-center gap-3 px-3 py-2 border-2 border-ink bg-paper">
+      <Search size={12} className="text-ink" />
+      <div className="h-2 border border-ink flex-1 p-[1px] bg-paper">
         <motion.div
           animate={{ x: [-50, 100] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="h-full w-1/3 bg-[#B7397A]"
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="h-full w-1/3 bg-ink"
         />
       </div>
     </div>
   </div>
 );
 
-// Step 2 UI: Quality Gate
+// Step 2 UI: Quality Gate (Print style)
 const QualityGateUI = () => (
-  <div className="relative w-full h-full p-4 flex flex-col justify-center items-center">
-    <div className="absolute top-4 left-4 text-[9px] font-mono text-white/30 uppercase">
-      Noise_Reduction_Engine
+  <div className="relative w-full h-full p-6 flex flex-col justify-center items-center bg-paper border-b-2 border-ink">
+    <div className="absolute top-4 left-4 text-[10px] font-bold text-ink uppercase font-mono">
+      PROC.02 // NOISE_FILTER
     </div>
     <div className="relative w-32 h-32 flex items-center justify-center">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        className="absolute inset-0 rounded-full border border-dashed border-white/10"
+        className="absolute inset-0 rounded-full border-2 border-dashed border-ink"
       />
-      <div className="relative z-10 flex flex-col items-center">
-        <Filter size={24} className="text-[#B7397A] mb-2" />
-        <span className="text-xl font-bold text-white">85%</span>
-        <span className="text-[8px] text-white/40 uppercase font-bold">
-          Noise Stripped
+      <div className="absolute inset-2 border border-ink rounded-full" />
+      <div className="relative z-10 flex flex-col items-center p-4 bg-paper border-2 border-ink">
+        <Filter size={20} className="text-ink mb-1" />
+        <span className="text-xl font-display font-bold text-ink leading-none">85%</span>
+        <span className="text-[8px] text-ink uppercase font-mono font-bold mt-1">
+          Signal Purity
         </span>
       </div>
-      {/* Pulsing rings */}
-      <motion.div
-        animate={{ scale: [1, 1.5, 1], opacity: [0.1, 0, 0.1] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="absolute inset-0 rounded-full border border-[#B7397A]/20"
-      />
     </div>
   </div>
 );
 
-// Step 3 UI: Synthesized Intelligence
+// Step 3 UI: Synthesized Intelligence (Print style)
 const SynthesisUI = () => (
-  <div className="relative w-full h-full p-4 flex flex-col gap-3">
-    <div className="flex items-center gap-2 mb-1">
-      <div className="px-2 py-0.5 rounded bg-[#4C6E94]/20 border border-[#4C6E94]/40 text-[8px] text-[#4C6E94] font-bold">
-        SYNTHESIS_REPORT
-      </div>
-      <div className="h-px flex-1 bg-white/5" />
+  <div className="relative w-full h-full p-6 flex flex-col gap-4 bg-paper border-b-2 border-ink">
+    <div className="flex items-center justify-between border-b-2 border-ink pb-2">
+      <span className="text-[10px] font-bold text-ink uppercase font-mono tracking-widest">
+        PROC.03 // SYNTHESIS
+      </span>
+      <span className="px-2 py-0.5 border border-ink bg-ink text-paper text-[8px] font-mono font-bold uppercase">
+        READY
+      </span>
     </div>
-    <div className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-2">
-      <div className="flex justify-between items-start">
-        <h5 className="text-[11px] font-bold text-white leading-tight">
-          Quantization vs LoRA: A Performance Benchmark
+    
+    <div className="p-4 border-2 border-ink bg-paper space-y-4">
+      <div className="flex justify-between items-start gap-4">
+        <h5 className="text-sm font-bold font-display text-ink uppercase leading-tight">
+          Quantization vs LoRA: A Benchmark
         </h5>
-        <CheckCircle2 size={10} className="text-green-500 shrink-0" />
       </div>
-      <div className="space-y-1">
-        <div className="h-1 w-full bg-white/10 rounded-full" />
-        <div className="h-1 w-3/4 bg-white/10 rounded-full" />
-        <div className="h-1 w-1/2 bg-white/5 rounded-full" />
+      <div className="space-y-2">
+        <div className="h-1.5 w-full bg-ink" />
+        <div className="h-1.5 w-3/4 bg-ink" />
+        <div className="h-1.5 w-1/2 bg-ink opacity-40" />
       </div>
     </div>
-    <div className="flex justify-between items-center mt-auto">
+    
+    <div className="flex justify-between items-center mt-auto pt-2">
       <div className="flex -space-x-2">
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="w-5 h-5 rounded-full bg-white/10 border border-black shadow-xl"
+            className="w-6 h-6 rounded-none bg-paper border-2 border-ink"
           />
         ))}
       </div>
-      <button className="px-3 py-1 rounded bg-[#B7397A] text-white text-[9px] font-bold hover:bg-[#B7397A]/80 transition-colors">
-        Read Brief
+      <button className="px-3 py-1.5 border-2 border-ink bg-paper text-ink text-[10px] font-mono font-bold uppercase interactive-snap">
+        [ READ_BRIEF ]
       </button>
     </div>
   </div>
 );
 
-// Step 4 UI: Global Flow
+// Step 4 UI: Global Flow (Print style)
 const GlobalFlowUI = () => (
-  <div className="relative w-full h-full flex flex-col items-center justify-center p-4">
-    <div className="relative flex items-center gap-8">
-      <div className="flex flex-col items-center gap-2">
-        <Smartphone size={32} className="text-white/20" />
-        <div className="w-8 h-12 rounded-md bg-white/5 border border-white/10 p-1">
-          <div className="h-1 w-full bg-[#B7397A]/40 rounded-full" />
+  <div className="relative w-full h-full flex flex-col items-center justify-center p-6 bg-paper border-b-2 border-ink">
+    <div className="absolute top-4 left-4 text-[10px] font-bold text-ink uppercase font-mono">
+      PROC.04 // DISTRIBUTION
+    </div>
+    <div className="relative flex items-center justify-between w-full max-w-[200px] gap-4">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-14 border-2 border-ink bg-paper p-1.5 flex flex-col gap-1">
+          <div className="w-full h-2 bg-ink" />
+          <div className="w-full flex-1 border border-ink" />
         </div>
       </div>
-      <div className="relative">
+      
+      <div className="relative flex-1 flex items-center justify-center">
         <motion.div
-          animate={{ x: [-20, 20] }}
-          transition={{ duration: 3, repeat: Infinity, repeatType: "reverse" }}
-          className="flex items-center"
+           className="w-full h-[2px] bg-ink overflow-hidden absolute"
         >
-          <Zap size={16} className="text-[#B7397A]" />
-          <div className="w-12 h-px bg-gradient-to-r from-[#B7397A] to-transparent" />
+          <motion.div
+            animate={{ x: ["-100%", "100%"] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            className="w-1/2 h-full bg-clay"
+          />
         </motion.div>
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-mono text-white/20">
-          SYNC_PASS
+        <div className="bg-paper px-2 z-10">
+           <Zap size={14} className="text-clay" />
         </div>
       </div>
-      <div className="flex flex-col items-center gap-2">
-        <Laptop size={32} className="text-white/20" />
-        <div className="w-12 h-8 rounded-md bg-white/5 border border-white/10 p-1">
-          <div className="h-1 w-full bg-[#4C6E94]/40 rounded-full" />
+      
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-14 h-10 border-2 border-ink bg-paper p-1.5 flex gap-1">
+          <div className="w-3 h-full bg-ink border border-ink" />
+          <div className="flex-1 border border-ink" />
         </div>
       </div>
+    </div>
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-mono font-bold text-clay tracking-widest uppercase bg-paper px-2">
+      SYNCING_CACHE
     </div>
   </div>
 );
 
 const steps = [
   {
-    number: "01",
+    number: "INIT",
     title: "Initialize Your Swarm",
-    description:
-      "Define your technical context. Our multi-agent swarm maps your sub-interests across 100+ daily data sources.",
+    description: "Define your technical boundaries. Our multi-agent swarm maps your requirements across 100+ daily data sources, building a localized context graph.",
     visual: ContextSyncUI,
-    tag: "Context_Engine",
+    tag: "MODULE.A",
   },
   {
-    number: "02",
+    number: "EXEC",
     title: "Autonomous Filtering",
-    description:
-      "The 'Quality Gate' analyzes content for depth and technical merit—stripping away SEO bait and marketing fluff.",
+    description: "The 'Quality Gate' analyzes content for architectural depth and technical merit—stripping away SEO noise and corporate marketing fluff.",
     visual: QualityGateUI,
-    tag: "Signal_Processor",
+    tag: "MODULE.B",
   },
   {
-    number: "03",
+    number: "COMP",
     title: "Intelligence Synthesis",
-    description:
-      "Complex papers and repos are distilled into hyper-personalized briefs. We synthesize signal, not just links.",
+    description: "Complex papers and engineering blogs are distilled into strict, hyper-personalized briefs. We synthesize the signal; we don't just aggregate links.",
     visual: SynthesisUI,
-    tag: "RAG_Synthesizer",
+    tag: "MODULE.C",
   },
   {
-    number: "04",
+    number: "SYNC",
     title: "Cross-Platform Delivery",
-    description:
-      "Your technical context follows you. Pre-computed and cached for zero-latency access across all your devices.",
+    description: "Your technical context is pre-computed, compiled, and dispatched globally. Zero-latency access across all devices.",
     visual: GlobalFlowUI,
-    tag: "Edge_Sync",
+    tag: "MODULE.D",
   },
 ];
 
@@ -192,80 +191,64 @@ export default function HowItWorks() {
   return (
     <section
       id="process"
-      className="relative w-full py-48 bg-[#010101] font-sans selection:bg-[#B7397A]/30 border-t border-white/5"
+      className="relative w-full py-24 md:py-32 bg-paper text-ink font-sans border-b border-ink"
     >
-      <div className="container mx-auto px-6 max-w-6xl">
+      <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
         {/* Section Head */}
-        <div className="text-center mb-24">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-6"
-          >
-            <Layers size={14} className="text-[#B7397A]" />
-            <span className="text-xs font-semibold tracking-widest uppercase text-white/30 font-bold">
-              Operational Pipeline
-            </span>
-          </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1, duration: 0.8 }}
-            className="text-4xl md:text-5xl lg:text-7xl font-bold text-white tracking-tighter leading-[0.9]"
-          >
-            From Firehose <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#B7397A] via-[#7c3aed] to-[#4C6E94]">
-              to Direct Intelligence.
-            </span>
-          </motion.h2>
+        <div className="mb-20 grid grid-cols-1 md:grid-cols-2 gap-8 items-end border-b-4 border-ink pb-8">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-ink mb-6 bg-paper">
+              <Layers size={14} className="text-ink" />
+              <span className="text-xs font-mono font-bold tracking-widest uppercase text-ink">
+                [/] Operational Pipeline
+              </span>
+            </div>
+            <h2 className="text-5xl md:text-7xl font-bold font-display text-ink tracking-tighter uppercase leading-[0.9]">
+              From Firehose <br />
+              <span className="text-clay italic">
+                To Signal.
+              </span>
+            </h2>
+          </div>
+          <div className="md:text-right font-mono text-sm max-w-md ml-auto leading-relaxed border-l-2 md:border-l-0 md:border-r-2 border-ink pl-4 md:pl-0 md:pr-4">
+            The infrastructure mapping the noise into actionable architectural intelligence. Phase one establishes context; phase four distributes the compiled briefs.
+          </div>
         </div>
 
         {/* 2x2 Numbered Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-ink border-2 border-ink">
           {steps.map((step, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 60, scale: 0.98 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{
-                delay: i * 0.1,
-                duration: 0.8,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-              className="group relative p-10 rounded-[3.5rem] bg-[rgba(28,27,36,0.25)] border border-white/10 hover:border-white/20 transition-all duration-500 overflow-hidden backdrop-blur-3xl flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.4)]"
+              className="bg-paper flex flex-col group transition-none"
             >
-              {/* Inner Glow */}
-              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-
               {/* Visual Area */}
-              <div className="relative w-full h-[220px] mb-8 overflow-hidden rounded-3xl bg-black/40 border border-white/5 group-hover:border-white/10 transition-colors shadow-inner">
+              <div className="relative w-full h-[240px] border-b-2 border-ink bg-paper overflow-hidden">
                 <step.visual />
-
-                {/* Step Number Overlay */}
-                <span className="absolute top-4 right-6 text-[80px] font-bold text-white/5 select-none pointer-events-none tracking-tighter">
-                  {step.number}
-                </span>
+                {/* Step Outline */}
+                <div className="absolute inset-0 pointer-events-none border-[8px] border-paper z-20" />
               </div>
 
               {/* Text Content */}
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[10px] font-mono text-[#B7397A] font-bold tracking-widest">
-                    {step.tag}
-                  </span>
-                  <div className="h-px flex-1 bg-white/10" />
+              <div className="p-8 md:p-12 relative flex-1 flex flex-col justify-between hover:bg-[#EEEEEE]">
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-xs font-mono text-ink font-bold tracking-widest border border-ink py-1 px-2">
+                       [/] {step.tag}
+                    </span>
+                    <span className="text-sm font-mono font-bold tracking-tight text-clay border-b border-clay">
+                       {step.number}
+                    </span>
+                  </div>
+                  <h3 className="text-3xl font-display font-bold text-ink mb-4 tracking-tight uppercase group-hover:text-clay">
+                    {step.title}
+                  </h3>
+                  <p className="text-ink font-mono text-sm leading-relaxed max-w-sm">
+                    {step.description}
+                  </p>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-4 tracking-tight">
-                  {step.title}
-                </h3>
-                <p className="text-white/40 text-[13px] leading-relaxed">
-                  {step.description}
-                </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

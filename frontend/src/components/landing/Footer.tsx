@@ -1,107 +1,87 @@
-import { motion } from "framer-motion";
 import PulseFeedIcon from "../PulseFeedIcon";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#010101] border-t border-white/5 py-12 font-sans relative z-10">
+    <footer className="w-full bg-ink text-paper py-16 font-sans relative z-10">
       <div className="container mx-auto px-6 max-w-7xl">
-        <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8">
-          <div className="flex flex-col items-center md:items-start gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-[#B7397A] to-[#4C6E94] shadow-[0_0_15px_rgba(183,57,122,0.4)]">
-                <PulseFeedIcon size={16} color="white" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">
-                PulseFeed.ai
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 border-b-2 border-paper pb-16">
+          <div className="col-span-1 md:col-span-1 flex flex-col items-center md:items-start gap-4 border-b-2 md:border-b-0 md:border-r-2 border-paper pb-8 md:pb-0 md:pr-8">
+            <div className="flex items-center gap-3 bg-paper p-2 w-full justify-center md:justify-start">
+              <PulseFeedIcon size={24} color="var(--color-ink)" />
+              <span className="text-xl font-display font-bold tracking-tighter text-ink uppercase">
+                PulseFeed
               </span>
             </div>
-            <p className="text-sm text-white/50 max-w-xs text-center md:text-left">
-              The intelligent knowledge feed for modern professionals.
+            <p className="font-mono text-[10px] uppercase font-bold tracking-widest leading-relaxed mt-4">
+              Intelligence Feed // <br/> Vol.001
             </p>
           </div>
 
-          <div className="flex gap-12 text-sm text-center md:text-left">
-            <div className="flex flex-col gap-3">
-              <h5 className="font-semibold text-white tracking-wide mb-1">
-                Product
+          <div className="col-span-1 md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-12 text-[10px] font-mono font-bold uppercase tracking-widest">
+            <div className="flex flex-col gap-4">
+              <h5 className="text-clay border-b border-paper pb-2 mb-2">
+                [/] Infrastructure
               </h5>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                Features
+              <a href="#" className="hover:text-clay transition-colors">
+                Systems
               </a>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
+              <a href="#" className="hover:text-clay transition-colors">
                 Pricing
               </a>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                Changelog
+              <a href="#" className="hover:text-clay transition-colors">
+                Telemetry
               </a>
             </div>
-            <div className="flex flex-col gap-3">
-              <h5 className="font-semibold text-white tracking-wide mb-1">
-                Company
+            
+            <div className="flex flex-col gap-4">
+              <h5 className="text-clay border-b border-paper pb-2 mb-2">
+                [/] Entity
               </h5>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                About
+              <a href="#" className="hover:text-clay transition-colors">
+                Manifesto
               </a>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                Blog
+              <a href="#" className="hover:text-clay transition-colors">
+                Journal
               </a>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                Contact
+              <a href="#" className="hover:text-clay transition-colors">
+                Comms
               </a>
             </div>
-            <div className="flex flex-col gap-3">
-              <h5 className="font-semibold text-white tracking-wide mb-1">
-                Legal
+            
+            <div className="flex flex-col gap-4 col-span-2 md:col-span-1">
+              <h5 className="text-clay border-b border-paper pb-2 mb-2">
+                [/] Compliance
               </h5>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                Privacy
+              <a href="#" className="hover:text-clay transition-colors">
+                Data Policy
               </a>
-              <a
-                href="#"
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                Terms
+              <a href="#" className="hover:text-clay transition-colors">
+                Terms of Service
               </a>
             </div>
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/30">
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] font-mono font-bold uppercase tracking-widest text-paper/60">
           <p>
-            © {new Date().getFullYear()} PulseFeed.ai Inc. All rights reserved.
+            © {new Date().getFullYear()} PULSEFEED.AI INC.
           </p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-white/70 transition-colors">
-              Twitter
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-paper transition-colors">
+              X/Twitter
             </a>
-            <a href="#" className="hover:text-white/70 transition-colors">
-              LinkedIn
-            </a>
-            <a href="#" className="hover:text-white/70 transition-colors">
+            <a href="#" className="hover:text-paper transition-colors">
               GitHub
             </a>
           </div>
+        </div>
+
+        {/* Terminal Shortcut Bar */}
+        <div className="mt-8 pt-6 border-t border-paper/20 flex items-center justify-center gap-8 text-[10px] font-mono font-bold tracking-widest text-paper/40">
+          <span>^H <span className="text-paper/70">HOME</span></span>
+          <span>^P <span className="text-paper/70">PROCESS</span></span>
+          <span>^S <span className="text-paper/70">SWARM</span></span>
+          <span>^T <span className="text-clay">TOP ↑</span></span>
         </div>
       </div>
     </footer>
