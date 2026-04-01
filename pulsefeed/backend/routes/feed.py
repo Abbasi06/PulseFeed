@@ -230,7 +230,8 @@ async def _background_refresh(user_id: int) -> None:
         items = await asyncio.wait_for(personalize_feed(user_id, db), timeout=_GENERATION_TIMEOUT)
         if not items:
             logger.warning(
-                "Background refresh returned 0 items for user %d — keeping existing feed", user_id
+                "Background refresh returned 0 items for user %d — generator pool empty, keeping existing feed",
+                user_id,
             )
             return
         # Only replace once we have confirmed items to store
@@ -264,11 +265,11 @@ async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
         logger.error("Feed generation timed out for user %d", user_id)
         raise HTTPException(status_code=504, detail="Feed generation timed out") from exc
     except Exception as exc:
-        logger.error("generate_feed failed for user %d: %s", user_id, exc, exc_info=True)
+        logger.error("personalize_feed failed for user %d: %s", user_id, exc, exc_info=True)
         raise HTTPException(status_code=502, detail="Feed generation failed") from exc
 
     if not items:
-        logger.warning("Feed generation returned 0 items for user %d — keeping existing", user_id)
+        logger.info("Generator pool empty for user %d — returning existing feed", user_id)
         return (
             db.query(FeedItem)
             .filter(FeedItem.user_id == user_id)
@@ -291,7 +292,7 @@ async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
 
 
 async def _refresh_brief(user_id: int, db: Session) -> FeedBrief:
-    """Generate a brief from existing feed items — no external AI call."""
+    """Generate a feed brief from existing feed items — no external AI call."""
     items = (
         db.query(FeedItem)
         .filter(FeedItem.user_id == user_id)
@@ -299,6 +300,7 @@ async def _refresh_brief(user_id: int, db: Session) -> FeedBrief:
         .limit(5)
         .all()
     )
+
     top_reads = [
         {"title": item.title, "url": item.url, "source": item.source}
         for item in items[:3]

@@ -2,7 +2,7 @@
 Feed v2 Routes — Two-Stage Recommender API
 -------------------------------------------
 Exposes the Hybrid Retriever + RL Validator pipeline as HTTP endpoints.
-The existing /feed routes (DuckDuckGo-based) are untouched.
+The existing /feed routes (PostgreSQL FTS-based) are untouched.
 
 Endpoints
 ---------

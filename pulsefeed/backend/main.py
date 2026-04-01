@@ -5,12 +5,12 @@ User-facing service: auth, profiles, feed, events, briefs.
 Runs on port 8000.
 
 The content pipeline (harvesting, gatekeeper, extractor, trend analysis) lives
-in a SEPARATE microservice: PulseGen (pulsegen/backend, port 8001).
+in a SEPARATE process: PulseGen (pulsegen/backend, port 8001).
 This service reads from the shared PostgreSQL database but never writes to generator_documents.
 
 Startup
 -------
-    cd backend
+    cd pulsefeed/backend
     uv run uvicorn main:app --reload --port 8000
 """
 import logging
@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 import redis.asyncio as aioredis
-import sqlalchemy.exc
+import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -29,8 +29,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
 
-# Load .env from project root regardless of working directory
-load_dotenv(Path(__file__).parent.parent / ".env")
+# Load .env from service directory
+load_dotenv(Path(__file__).parent / ".env")
 
 from database import Base, engine  # noqa: E402
 from routes import events, feed, feed_v2, users  # noqa: E402
@@ -38,46 +38,41 @@ from security import AuditMiddleware, SecurityHeadersMiddleware  # noqa: E402
 
 
 def _run_migrations() -> None:
-    """Add columns introduced after initial schema creation."""
+    """Apply schema additions that are safe to run on every startup (PostgreSQL)."""
     migrations = [
-        "ALTER TABLE feed_items ADD COLUMN image_url TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE feed_items ADD COLUMN published_date TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE feed_items ADD COLUMN liked INTEGER NOT NULL DEFAULT 0",
-        "ALTER TABLE feed_items ADD COLUMN disliked INTEGER NOT NULL DEFAULT 0",
-        "ALTER TABLE feed_items ADD COLUMN saved INTEGER NOT NULL DEFAULT 0",
-        "ALTER TABLE feed_items ADD COLUMN read_count INTEGER NOT NULL DEFAULT 0",
-        "ALTER TABLE events ADD COLUMN image_url TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE events ADD COLUMN liked INTEGER NOT NULL DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN preferred_formats TEXT NOT NULL DEFAULT '[]'",
-        "ALTER TABLE users ADD COLUMN field TEXT NOT NULL DEFAULT ''",
-        "ALTER TABLE users ADD COLUMN sub_fields TEXT NOT NULL DEFAULT '[]'",
-        "ALTER TABLE users ADD COLUMN preferred_sources TEXT NOT NULL DEFAULT '[]'",
-        "ALTER TABLE users ADD COLUMN followed_creators TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS published_date TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS liked BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS disliked BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS saved BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE feed_items ADD COLUMN IF NOT EXISTS read_count INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE events ADD COLUMN IF NOT EXISTS liked BOOLEAN NOT NULL DEFAULT FALSE",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_formats TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS field TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS sub_fields TEXT NOT NULL DEFAULT '[]'",
         (
             "CREATE TABLE IF NOT EXISTS feed_briefs ("
-            "id INTEGER PRIMARY KEY, "
+            "id SERIAL PRIMARY KEY, "
             "user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE, "
             "headline TEXT NOT NULL DEFAULT '', "
             "signals TEXT NOT NULL DEFAULT '[]', "
             "top_reads TEXT NOT NULL DEFAULT '[]', "
             "watch TEXT NOT NULL DEFAULT '[]', "
-            "generated_at DATETIME NOT NULL)"
+            "generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())"
         ),
     ]
     with engine.connect() as conn:
         for sql in migrations:
-            try:
-                conn.execute(__import__("sqlalchemy").text(sql))
-                conn.commit()
-            except sqlalchemy.exc.OperationalError:
-                pass  # column / table already exists
+            conn.execute(sqlalchemy.text(sql))
+            conn.commit()
 
 
 def _batch_repersonalize() -> None:
     """
     Every 5 minutes: re-personalize feeds for users whose cached feed is
-    stale (>30 min old).  Uses FTS5 matching only — no Gemini calls, no
-    external network requests.  Skips users if generator.db has no matches.
+    stale (>30 min old). Uses PostgreSQL FTS matching only — no Gemini calls,
+    no external network requests. Skips users if generator pool has no matches.
     """
     from datetime import datetime, timedelta, timezone
 
@@ -128,8 +123,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     if not os.environ.get("GEMINI_API_KEY"):
         logger.warning(
-            "GEMINI_API_KEY is not set — v2 feed generation unavailable; "
-            "v1 feed uses PostgreSQL FTS via PulseGen generator_documents"
+            "GEMINI_API_KEY is not set — v2 feed generation will be unavailable; "
+            "v1 feed uses PostgreSQL FTS via PulseGen generator_documents table"
         )
 
     # Redis for rate limiting — fail-open if unavailable
@@ -144,9 +139,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await redis_client.ping()
         logger.info("Redis connected at %s — rate limiting active", redis_url)
     except Exception as exc:
-        logger.warning(
-            "Redis unavailable (%s) — rate limiting is disabled", exc
-        )
+        logger.warning("Redis unavailable (%s) — rate limiting is disabled", exc)
         redis_client = None
     app.state.redis = redis_client
 
@@ -172,8 +165,7 @@ app = FastAPI(title="PulseFeed API", lifespan=lifespan)
 _ALLOWED_ORIGINS = [
     # local dev
     *[f"http://localhost:{p}" for p in range(5173, 5183)],
-    # production — set ALLOWED_ORIGIN env var to your Vercel URL, e.g.
-    # https://pulseboard.vercel.app
+    # production — set ALLOWED_ORIGIN env var to your domain
     *([o.strip() for o in os.environ["ALLOWED_ORIGIN"].split(",")]
       if os.environ.get("ALLOWED_ORIGIN") else []),
 ]

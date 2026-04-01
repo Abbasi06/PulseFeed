@@ -94,9 +94,6 @@ async def get_events(
         .order_by(Event.fetched_at.desc())
         .all()
     )
-    if user_id not in _generating:
-        _generating.add(user_id)
-        background_tasks.add_task(_background_refresh_events, user_id)
     response.headers["X-Events-Generating"] = "true"
     return existing
 
@@ -112,9 +109,14 @@ async def refresh_events(
     if db.get(User, user_id) is None:
         raise HTTPException(status_code=404, detail="User not found")
     _check_cooldown(user_id)
-    result = await _refresh_events(user_id, db)
     _last_refresh[user_id] = time.monotonic()
-    return result
+    logger.info("Generator pool supplies events — returning cached for user %d", user_id)
+    return (
+        db.query(Event)
+        .filter(Event.user_id == user_id)
+        .order_by(Event.fetched_at.desc())
+        .all()
+    )
 
 
 @router.patch("/items/{item_id}/like", response_model=EventRead)
@@ -132,22 +134,3 @@ def toggle_like(
     db.commit()
     db.refresh(ev)
     return ev
-
-
-_GENERATION_TIMEOUT = 180  # seconds
-
-
-async def _background_refresh_events(user_id: int) -> None:
-    """Background events refresh — generator pool is external (PulseGen); no-op here."""
-    logger.info("Events background refresh: generator pool is managed by PulseGen for user %d", user_id)
-    _generating.discard(user_id)
-
-
-async def _refresh_events(user_id: int, db: Session) -> list[Event]:
-    logger.info("Generator pool supplies events for user %d — returning cached", user_id)
-    return (
-        db.query(Event)
-        .filter(Event.user_id == user_id)
-        .order_by(Event.fetched_at.desc())
-        .all()
-    )
