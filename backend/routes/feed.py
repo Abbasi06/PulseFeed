@@ -291,21 +291,27 @@ async def _refresh_feed(user_id: int, db: Session) -> list[FeedItem]:
 
 
 async def _refresh_brief(user_id: int, db: Session) -> FeedBrief:
-    from agents.research_agent import generate_brief
-
-    try:
-        data = await generate_brief(user_id, db)
-    except Exception as exc:
-        logger.error("generate_brief failed for user %d: %s", user_id, exc, exc_info=True)
-        raise HTTPException(status_code=502, detail="Brief generation failed") from exc
+    """Generate a brief from existing feed items — no external AI call."""
+    items = (
+        db.query(FeedItem)
+        .filter(FeedItem.user_id == user_id)
+        .order_by(FeedItem.fetched_at.desc())
+        .limit(5)
+        .all()
+    )
+    top_reads = [
+        {"title": item.title, "url": item.url, "source": item.source}
+        for item in items[:3]
+    ]
+    topics = list(dict.fromkeys(item.topic for item in items if item.topic and item.topic != "General"))
 
     db.query(FeedBrief).filter(FeedBrief.user_id == user_id).delete()
     brief = FeedBrief(
         user_id=user_id,
-        headline=str(data.get("headline") or ""),
-        signals=data.get("signals") or [],
-        top_reads=data.get("top_reads") or [],
-        watch=data.get("watch") or [],
+        headline="Today's curated highlights from PulseFeed",
+        signals=topics[:5],
+        top_reads=top_reads,
+        watch=[],
     )
     db.add(brief)
     db.commit()

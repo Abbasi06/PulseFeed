@@ -5,8 +5,8 @@ User-facing service: auth, profiles, feed, events, briefs.
 Runs on port 8000.
 
 The content pipeline (harvesting, gatekeeper, extractor, trend analysis) lives
-in a SEPARATE process: PulseGen (generator_service/main.py, port 8001).
-This app reads from generator.db but never writes to it.
+in a SEPARATE microservice: PulseGen (pulsegen/backend, port 8001).
+This service reads from the shared PostgreSQL database but never writes to generator_documents.
 
 Startup
 -------
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 from database import Base, engine  # noqa: E402
-from routes import events, feed, feed_v2, generator_obs, users  # noqa: E402
+from routes import events, feed, feed_v2, users  # noqa: E402
 from security import AuditMiddleware, SecurityHeadersMiddleware  # noqa: E402
 
 
@@ -128,8 +128,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     if not os.environ.get("GEMINI_API_KEY"):
         logger.warning(
-            "GEMINI_API_KEY is not set — feed generation will fall back to "
-            "generator.db pool only; start PulseGen to populate it"
+            "GEMINI_API_KEY is not set — v2 feed generation unavailable; "
+            "v1 feed uses PostgreSQL FTS via PulseGen generator_documents"
         )
 
     # Redis for rate limiting — fail-open if unavailable
@@ -196,7 +196,6 @@ app.include_router(users.router)
 app.include_router(feed.router)
 app.include_router(events.router)
 app.include_router(feed_v2.router)
-app.include_router(generator_obs.router)
 
 
 @app.get("/health")

@@ -23,9 +23,9 @@ from sqlalchemy.orm import Session
 from auth import get_current_user_id
 from database import get_db
 from models import User
-from generator.retriever_agent import RetrieverAgent
-from generator.validator_node import ValidatorNode
-from generator.schemas import (
+from recommender.retriever_agent import RetrieverAgent
+from recommender.validator_node import ValidatorNode
+from recommender.schemas import (
     FeedCachePayload,
     UserProfile,
 )
@@ -140,9 +140,9 @@ def record_interaction(
         import os
         import sys
 
-        from generator.mcp_client import MCPClient
+        from recommender.mcp_client import MCPClient
 
-        cmd = [sys.executable, "-m", "backend.mcp_servers.pg_search_server"]
+        cmd = [sys.executable, "-m", "mcp_servers.pg_search_server"]
         with MCPClient(cmd, {**os.environ}) as pg:
             pg.call("record_interaction", {
                 "user_id":     user_id,

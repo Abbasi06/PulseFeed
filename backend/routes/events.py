@@ -138,69 +138,16 @@ _GENERATION_TIMEOUT = 180  # seconds
 
 
 async def _background_refresh_events(user_id: int) -> None:
-    """Background events refresh — creates its own DB session."""
-    from agents.research_agent import generate_events
-    from database import engine
-    from sqlalchemy.orm import Session as SASession
-
-    db = SASession(engine)
-    try:
-        evs = await asyncio.wait_for(generate_events(user_id, db), timeout=_GENERATION_TIMEOUT)
-        if not evs:
-            logger.warning(
-                "Background events refresh returned 0 events for user %d — keeping existing", user_id
-            )
-            return
-        # Only replace once we have confirmed events to store
-        db.query(Event).filter(Event.user_id == user_id).delete()
-        _save_events(evs, db)
-        logger.info(
-            "Background events refresh complete for user %d: %d items stored",
-            user_id,
-            len(evs),
-        )
-    except asyncio.TimeoutError:
-        logger.error(
-            "Background events refresh timed out after %ds for user %d",
-            _GENERATION_TIMEOUT,
-            user_id,
-        )
-    except Exception as exc:
-        logger.error("Background events refresh failed for user %d: %s", user_id, exc, exc_info=True)
-    finally:
-        db.close()
-        _generating.discard(user_id)
+    """Background events refresh — generator pool is external (PulseGen); no-op here."""
+    logger.info("Events background refresh: generator pool is managed by PulseGen for user %d", user_id)
+    _generating.discard(user_id)
 
 
 async def _refresh_events(user_id: int, db: Session) -> list[Event]:
-    from agents.research_agent import generate_events
-
-    try:
-        evs = await asyncio.wait_for(generate_events(user_id, db), timeout=_GENERATION_TIMEOUT)
-    except asyncio.TimeoutError as exc:
-        logger.error("Events generation timed out for user %d", user_id)
-        raise HTTPException(status_code=504, detail="Events generation timed out") from exc
-    except Exception as exc:
-        logger.error("generate_events failed for user %d: %s", user_id, exc, exc_info=True)
-        raise HTTPException(status_code=502, detail="Events generation failed") from exc
-
-    if not evs:
-        logger.warning("Events generation returned 0 items for user %d — keeping existing", user_id)
-        return (
-            db.query(Event)
-            .filter(Event.user_id == user_id)
-            .order_by(Event.fetched_at.desc())
-            .all()
-        )
-
-    db.query(Event).filter(Event.user_id == user_id).delete()
-    _save_events(evs, db)
-
-    new_events = (
+    logger.info("Generator pool supplies events for user %d — returning cached", user_id)
+    return (
         db.query(Event)
         .filter(Event.user_id == user_id)
         .order_by(Event.fetched_at.desc())
         .all()
     )
-    logger.info("Events refreshed for user %d: %d items stored", user_id, len(new_events))
-    return new_events
