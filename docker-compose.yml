@@ -1,0 +1,186 @@
+# ============================================================================
+# PulseBoard — Root Compose
+# Services:
+#   postgres          — shared PostgreSQL + pgvector (port 5432)
+#   redis             — shared Celery broker + rate limiter (port 6379)
+#   pulsefeed_backend — user-serving FastAPI (port 8000)
+#   pulsegen_worker   — Celery ingestion worker (no external port)
+#   pulsegen_beat     — Celery beat scheduler (no external port)
+#   pulsegen_admin    — PulseGen admin FastAPI (port 8001)
+#   pulsegen_web      — PulseGen admin React SPA (port 3001)
+#   pulsefeed_frontend — User SPA, profile: frontend (port 5173)
+#   flower            — Celery task monitor, profile: monitoring (port 5555)
+# ============================================================================
+
+x-shared-env: &shared-env
+  DATABASE_URL: postgresql://pulseboard:${POSTGRES_PASSWORD:-testpassword}@postgres:5432/pulseboard
+  STORAGE_DATABASE_URL: postgresql://pulseboard:${POSTGRES_PASSWORD:-testpassword}@postgres:5432/pulseboard
+  REDIS_URL: redis://redis:6379/0
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+  SECRET_KEY: ${SECRET_KEY:-dev-secret-change-before-production}
+
+services:
+  # --------------------------------------------------------------------------
+  # Shared infrastructure
+  # --------------------------------------------------------------------------
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pulseboard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-testpassword}
+      POSTGRES_DB: pulseboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulseboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --------------------------------------------------------------------------
+  # PulseFeed — user-serving backend
+  # --------------------------------------------------------------------------
+
+  pulsefeed_backend:
+    build:
+      context: ./pulsefeed/backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *shared-env
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # PulseGen — ingestion worker
+  # --------------------------------------------------------------------------
+
+  pulsegen_worker:
+    build:
+      context: ./pulsegen/backend
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *shared-env
+      GENERATOR_DB_PATH: /app/generator.db
+    volumes:
+      - generator_db:/app
+    command: celery -A src.celery_app worker --pool=gevent --concurrency=8 --loglevel=info -Q generator
+    deploy:
+      replicas: 2
+
+  pulsegen_beat:
+    build:
+      context: ./pulsegen/backend
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *shared-env
+      GENERATOR_DB_PATH: /app/generator.db
+    volumes:
+      - generator_db:/app
+    command: celery -A src.celery_app beat --loglevel=info
+
+  pulsegen_admin:
+    build:
+      context: ./pulsegen/backend
+      target: admin_api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *shared-env
+      GENERATOR_DB_PATH: /app/generator.db
+    volumes:
+      - generator_db:/app
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pulsegen_web:
+    build:
+      context: ./pulsegen/web
+    restart: unless-stopped
+    depends_on:
+      - pulsegen_admin
+    ports:
+      - "3001:3001"
+
+  # --------------------------------------------------------------------------
+  # PulseFeed — user SPA (profile: frontend — opt-in for dev)
+  # --------------------------------------------------------------------------
+
+  pulsefeed_frontend:
+    build:
+      context: ./pulsefeed/frontend
+    restart: unless-stopped
+    depends_on:
+      - pulsefeed_backend
+    ports:
+      - "5173:80"
+    profiles:
+      - frontend
+
+  # --------------------------------------------------------------------------
+  # Monitoring (profile: monitoring — opt-in)
+  # --------------------------------------------------------------------------
+
+  flower:
+    image: mher/flower:2.0
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+  redis_data:
+  generator_db:

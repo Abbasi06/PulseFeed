@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Global */
+html {
+  @apply h-full;
+}
+
+body {
+  @apply h-full m-0 p-0;
+}
+
+#root {
+  @apply h-full;
+}
