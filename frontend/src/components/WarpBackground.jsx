@@ -48,6 +48,8 @@ export default function WarpBackground({ bright = false }) {
     let time   = 0;
     const mouse       = { x: 0.5, y: 0.5 };
     const smoothMouse = { x: 0.5, y: 0.5 };
+    let scrollProgress = 0; // 0..1 based on page scroll
+    let smoothScroll   = 0;
 
     function resize() {
       W = canvas.width  = window.innerWidth;
@@ -98,10 +100,14 @@ export default function WarpBackground({ bright = false }) {
       const mx = smoothMouse.x * W;
       const my = smoothMouse.y * H;
 
-      // Move nodes + mouse repulsion + wrap
+      // Smooth scroll tracking
+      smoothScroll += (scrollProgress - smoothScroll) * 0.06;
+      const scrollDrift = smoothScroll * 1.2; // scroll-linked drift multiplier
+
+      // Move nodes + mouse repulsion + scroll-linked drift + wrap
       for (const n of nodes) {
-        n.x += n.vx;
-        n.y += n.vy;
+        n.x += n.vx + (scrollDrift * 0.3 * Math.sin(n.phase));
+        n.y += n.vy - (scrollDrift * 0.15);
 
         const dx = n.x - mx;
         const dy = n.y - my;
@@ -203,11 +209,19 @@ export default function WarpBackground({ bright = false }) {
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("touchmove", onTouchMove, { passive: true });
 
+    // Scroll tracking for canvas sync
+    const onScroll = () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      scrollProgress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize",    resize);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("scroll",    onScroll);
     };
   }, []);
 

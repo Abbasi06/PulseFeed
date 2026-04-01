@@ -37,7 +37,7 @@ export default function Hero() {
     <div className="relative w-full font-sans text-ink selection:bg-clay selection:text-paper border-b-2 border-ink">
 
       {/* ── SECTION 1: Terminal Masthead ── */}
-      <div className="relative z-20 w-full min-h-[80vh] flex flex-col items-center justify-center border-b border-ink pt-20">
+      <div className="relative z-20 w-full min-h-[80vh] flex flex-col items-center justify-center border-b border-ink pt-24">
         
         <div className="flex items-center justify-between w-full max-w-6xl px-6 mb-12 font-mono text-xs uppercase tracking-widest border-b border-ink pb-4">
            <span>[/] Vol. 01 — The Knowledge Base</span>
