@@ -88,6 +88,7 @@ export default function Settings() {
   const [field, setField] = useState("");
   const [subFields, setSubFields] = useState([]);
   const [preferredFormats, setPreferredFormats] = useState([]);
+  const [refreshInterval, setRefreshInterval] = useState(6);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -104,6 +105,7 @@ export default function Settings() {
         setField(u.field ?? "");
         setSubFields(u.sub_fields ?? []);
         setPreferredFormats(u.preferred_formats ?? []);
+        setRefreshInterval(u.refresh_interval_hours ?? 6);
       })
       .catch(() => setApiError("Could not load your profile."))
       .finally(() => setFetching(false));
@@ -140,6 +142,7 @@ export default function Settings() {
           field,
           sub_fields: subFields,
           preferred_formats: preferredFormats,
+          refresh_interval_hours: refreshInterval,
         }),
       });
       if (!res.ok) {
@@ -375,6 +378,37 @@ export default function Settings() {
               );
             })}
           </div>
+        </div>
+
+        {/* Feed Refresh Interval */}
+        <div>
+          <label className="block text-sm font-medium text-slate-200 mb-1">
+            Feed Refresh Interval
+          </label>
+          <p className="text-xs text-slate-500 mb-3">
+            How often your feed pulls fresh content from the pipeline.
+          </p>
+          <div className="flex gap-2">
+            {[3, 6].map((hrs) => (
+              <button
+                key={hrs}
+                type="button"
+                onClick={() => setRefreshInterval(hrs)}
+                className={`flex-1 py-2 rounded-lg border text-sm font-semibold transition-all ${
+                  refreshInterval === hrs
+                    ? "border-violet-500 bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/30"
+                    : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-500 hover:text-slate-300"
+                }`}
+              >
+                Every {hrs}h
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-slate-500">
+            {refreshInterval === 3
+              ? "High frequency — best for fast-moving fields"
+              : "Standard — balanced freshness and efficiency"}
+          </p>
         </div>
 
         <div className="flex items-center gap-3 pt-2">

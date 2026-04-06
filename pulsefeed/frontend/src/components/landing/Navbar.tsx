@@ -2,59 +2,65 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import PulseFeedIcon from "../PulseFeedIcon";
 
+// Maps each nav label to the section id it scrolls to
+const NAV_LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "Why Us", href: "#why-us" },
+  { label: "How It Works", href: "#process" },
+  { label: "Architecture", href: "#architecture" },
+] as const;
+
 export default function Navbar() {
   const navigate = useNavigate();
   const { scrollY } = useScroll();
-  
-  // Subtle bottom border appears as you scroll
-  const borderOpacity = useTransform(scrollY, [0, 60], [0, 1]);
+
+  // Border fades in as user scrolls — keeps hero clean at the top
+  const borderColor = useTransform(
+    scrollY,
+    [0, 60],
+    ["rgba(35,31,32,0)", "rgba(35,31,32,0.15)"],
+  );
 
   return (
     <motion.nav
       className="fixed top-0 left-0 right-0 z-50 bg-paper"
-      style={{
-        borderBottom: "1px solid",
-        borderColor: useTransform(borderOpacity, (v) => `rgba(35,31,32,${v * 0.15})`),
-      }}
+      style={{ borderBottom: "1px solid", borderColor }}
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-10 flex items-center justify-between h-14">
-        
-        {/* Left: Logo */}
-        <div
-          className="flex items-center gap-2.5 cursor-pointer select-none"
-          onClick={() => navigate("/")}
-        >
-          <PulseFeedIcon size={18} color="var(--color-ink)" />
-          <span className="text-sm font-display font-bold tracking-tight text-ink uppercase">
-            PulseFeed
-          </span>
-        </div>
+        {/* Left: logo + nav links grouped together */}
+        <div className="flex items-center gap-8">
+          <div
+            className="flex items-center gap-2.5 cursor-pointer select-none shrink-0"
+            onClick={() => navigate("/")}
+          >
+            <PulseFeedIcon size={18} color="var(--color-ink)" />
+            <span className="text-sm font-display font-bold tracking-tight text-ink uppercase">
+              PulseFeed
+            </span>
+          </div>
 
-        {/* Center: Navigation Links */}
-        <div className="hidden md:flex items-center gap-8 text-[13px] font-sans font-medium text-ink/60">
-          <a href="#process" className="hover:text-ink transition-colors duration-200">
-            Product
-          </a>
-          <a href="#services" className="hover:text-ink transition-colors duration-200">
-            Use Cases
-          </a>
-          <a href="#pricing" className="hover:text-ink transition-colors duration-200">
-            Pricing
-          </a>
-          <a href="#work" className="hover:text-ink transition-colors duration-200">
-            Architecture
-          </a>
+          <nav className="hidden md:flex items-center gap-8">
+            {NAV_LINKS.map(({ label, href }) => (
+              <a
+                key={href}
+                href={href}
+                className="text-[13px] font-sans font-medium text-ink/60 hover:text-ink transition-colors duration-200"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
         </div>
 
         {/* Right: CTA */}
         <button
           onClick={() => navigate("/onboarding")}
-          className="px-5 py-2 bg-clay text-paper text-[13px] font-display font-bold uppercase tracking-wider border-0 transition-all duration-300 hover:bg-ink"
+          className="px-5 py-2 bg-clay text-paper text-[13px] font-display font-bold uppercase tracking-wider transition-all duration-300 hover:bg-ink shrink-0"
         >
-          Start Your Swarm
+          Start Pulsing
         </button>
       </div>
     </motion.nav>

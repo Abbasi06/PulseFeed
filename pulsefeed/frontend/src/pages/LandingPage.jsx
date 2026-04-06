@@ -28,7 +28,7 @@ function ScrollReveal({ children, delay = 0 }) {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <motion.div
+    <motion.section
       ref={ref}
       variants={revealVariants}
       initial="hidden"
@@ -38,33 +38,52 @@ function ScrollReveal({ children, delay = 0 }) {
         ease: [0.16, 1, 0.3, 1],
         delay,
       }}
+      className="w-full flex flex-col"
     >
       {children}
-    </motion.div>
+    </motion.section>
   );
 }
 
 export default function LandingPage() {
   return (
-    <main className="bg-transparent min-h-screen w-full font-sans text-ink overflow-x-hidden">
-      <Navbar />
-      <Hero />
-      <ScrollReveal>
-        <Features />
-      </ScrollReveal>
-      <ScrollReveal delay={0.05}>
-        <WhyUs />
-      </ScrollReveal>
-      <ScrollReveal delay={0.05}>
-        <HowItWorks />
-      </ScrollReveal>
-      <ScrollReveal delay={0.05}>
-        <Architecture />
-      </ScrollReveal>
-      <ScrollReveal delay={0.05}>
-        <CTA />
-      </ScrollReveal>
-      <Footer />
-    </main>
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
+      {/* ── Header Region ── */}
+      <header className="w-full shrink-0">
+        <Navbar />
+      </header>
+
+      {/* ── Main Content Region ── */}
+      <main className="flex-1 flex flex-col w-full">
+        <section className="w-full flex flex-col">
+          <Hero />
+        </section>
+
+        <ScrollReveal>
+          <Features />
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.05}>
+          <WhyUs />
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.05}>
+          <HowItWorks />
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.05}>
+          <Architecture />
+        </ScrollReveal>
+
+        <ScrollReveal delay={0.05}>
+          <CTA />
+        </ScrollReveal>
+      </main>
+
+      {/* ── Footer Region ── */}
+      <footer className="w-full shrink-0 mt-auto">
+        <Footer />
+      </footer>
+    </div>
   );
 }

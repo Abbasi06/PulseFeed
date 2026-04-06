@@ -10,7 +10,7 @@ const MAX_NAME = 100;
 const MAX_OCC = 150;
 
 // ---------------------------------------------------------------------------
-// Step indicator (Print Edition)
+// Step indicator
 // ---------------------------------------------------------------------------
 
 const STEP_LABELS = ["Identity", "Expertise"];
@@ -34,18 +34,22 @@ function StepIndicator({ current }) {
                       : "bg-paper border-ink text-ink flex"
                 }`}
               >
-                {done ? <Check className="w-5 h-5 text-paper" strokeWidth={3} /> : n}
+                {done ? (
+                  <Check className="w-5 h-5 text-paper" strokeWidth={3} />
+                ) : (
+                  n
+                )}
               </div>
               <span
-                className={`text-[10px] font-mono tracking-widest uppercase font-bold ${active ? "text-clay" : "text-ink"}`}
+                className={`text-[10px] font-mono tracking-widest uppercase font-bold ${
+                  active ? "text-clay" : "text-ink"
+                }`}
               >
                 {label}
               </span>
             </div>
             {i < STEP_LABELS.length - 1 && (
-              <div
-                className="flex-1 h-[2px] mx-4 bg-ink"
-              />
+              <div className="flex-1 h-[2px] mx-4 bg-ink" />
             )}
           </div>
         );
@@ -67,6 +71,7 @@ export default function Onboarding() {
   const [occupation, setOccupation] = useState("");
   const [field, setField] = useState("");
   const [subFields, setSubFields] = useState([]);
+  const [refreshInterval, setRefreshInterval] = useState(6);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -123,6 +128,7 @@ export default function Onboarding() {
           selected_chips: subFields.slice(0, 5),
           field,
           sub_fields: subFields,
+          refresh_interval_hours: refreshInterval,
         }),
       });
       if (!res.ok) {
@@ -142,21 +148,31 @@ export default function Onboarding() {
   const canSubmit = field && subFields.length >= MIN_SUBFIELDS && !loading;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-paper text-ink selection:bg-clay selection:text-paper font-sans">
-      <div className="relative z-10 w-full max-w-2xl">
-        {/* Brand */}
+    // ── Outer shell ──────────────────────────────────────────────────────────
+    // No background color here — the WarpBackground canvas (mounted in App.jsx)
+    // provides the paper + particle layer beneath this component.
+    // relative z-10 ensures this content stack sits above the fixed canvas (z-0).
+    <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-12 font-sans selection:bg-clay selection:text-paper text-ink">
+      <div className="w-full max-w-2xl">
+        {/* ── Brand header ─────────────────────────────────────────────────────
+            Floats directly on the canvas background (which is paper-colored),
+            so no extra background needed here.                                */}
         <div className="text-center mb-8 border-b-2 border-ink pb-6">
           <h1 className="text-5xl font-display font-bold tracking-tighter uppercase">
-            Pulse <br/> Feed
+            Pulse <br /> Feed
           </h1>
           <p className="mt-4 font-mono text-xs uppercase tracking-widest text-ink">
             [/] Initialize Your Architecture — Step {step} of 2
           </p>
         </div>
 
-        <div className="print-panel-heavy p-8 md:p-12 relative bg-paper">
-          {/* Decorative issue number */}
-          <div className="absolute top-0 right-0 border-l border-b border-ink bg-clay text-paper px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-widest">
+        {/* ── Form card ────────────────────────────────────────────────────────
+            bg-paper/95 + backdrop-blur-sm: frosted-glass treatment —
+            the particle network is faintly visible through the card edges
+            while the form content stays fully legible.                        */}
+        <div className="relative bg-paper/95 backdrop-blur-sm border-2 border-ink p-8 md:p-12">
+          {/* Corner tag */}
+          <div className="absolute top-0 right-0 bg-clay text-paper px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-widest border-l border-b border-ink">
             [!] FORM 001
           </div>
 
@@ -168,7 +184,9 @@ export default function Onboarding() {
               <span className="text-xl shrink-0 mt-0.5" aria-hidden="true">
                 ⚠️
               </span>
-              <p className="text-sm font-mono font-bold uppercase text-ink">{apiError}</p>
+              <p className="text-sm font-mono font-bold uppercase text-ink">
+                {apiError}
+              </p>
             </div>
           )}
 
@@ -176,6 +194,7 @@ export default function Onboarding() {
             {/* ── Step 1: Identity ── */}
             {step === 1 && (
               <div className="space-y-8">
+                {/* Name */}
                 <div>
                   <div className="flex justify-between mb-2">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-ink">
@@ -192,7 +211,7 @@ export default function Onboarding() {
                     value={name}
                     onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
                     placeholder="E.G. ADA LOVELACE"
-                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-all duration-300 focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
+                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
                       errors.name ? "border-red-500" : "border-ink"
                     }`}
                   />
@@ -203,6 +222,7 @@ export default function Onboarding() {
                   )}
                 </div>
 
+                {/* Occupation */}
                 <div>
                   <div className="flex justify-between mb-2">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-ink">
@@ -221,7 +241,7 @@ export default function Onboarding() {
                       setOccupation(e.target.value.slice(0, MAX_OCC))
                     }
                     placeholder="E.G. CHIEF SYSTEMS ARCHITECT"
-                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none transition-all duration-300 focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
+                    className={`w-full px-4 py-3 bg-paper border-2 text-sm font-mono text-ink placeholder-steel outline-none focus:border-clay focus:shadow-[4px_4px_0px_#D97757] ${
                       errors.occupation ? "border-red-500" : "border-ink"
                     }`}
                   />
@@ -230,6 +250,37 @@ export default function Onboarding() {
                       {errors.occupation}
                     </p>
                   )}
+                </div>
+
+                {/* Refresh cadence */}
+                <div>
+                  <label className="text-xs font-mono font-bold uppercase tracking-widest text-ink mb-3 block">
+                    Feed Refresh Cadence
+                  </label>
+                  <p className="text-[10px] font-mono text-steel uppercase tracking-widest mb-3">
+                    How often should your feed pull fresh content?
+                  </p>
+                  <div className="flex gap-3">
+                    {[3, 6].map((hrs) => (
+                      <button
+                        key={hrs}
+                        type="button"
+                        onClick={() => setRefreshInterval(hrs)}
+                        className={`flex-1 py-3 border-2 text-sm font-mono font-bold uppercase tracking-widest transition-all interactive-snap ${
+                          refreshInterval === hrs
+                            ? "bg-ink border-ink text-paper"
+                            : "bg-paper border-ink text-ink hover:bg-ink hover:text-paper"
+                        }`}
+                      >
+                        Every {hrs}h
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] font-mono text-steel uppercase tracking-widest">
+                    {refreshInterval === 3
+                      ? "[3H] HIGH FREQUENCY — ideal for fast-moving fields"
+                      : "[6H] STANDARD — balanced freshness and efficiency"}
+                  </p>
                 </div>
 
                 <div className="pt-4 border-t-2 border-ink">
@@ -283,11 +334,9 @@ export default function Onboarding() {
                     disabled={!canSubmit}
                     className="flex-1 py-4 px-6 btn-print hover:shadow-[4px_4px_0_var(--color-ink)] disabled:shadow-none flex items-center justify-center gap-2"
                   >
-                    {loading ? (
-                      "INITIALIZING SWARM..."
-                    ) : (
-                      "COMMENCE FEED GENERATION →"
-                    )}
+                    {loading
+                      ? "INITIALIZING SWARM..."
+                      : "COMMENCE FEED GENERATION →"}
                   </button>
                 </div>
               </div>

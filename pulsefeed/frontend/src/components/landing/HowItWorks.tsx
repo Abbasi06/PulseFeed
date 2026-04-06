@@ -28,8 +28,11 @@ const ContextSyncUI = () => (
       {["vLLM", "RAG", "KEDA", "Nvidia", "PyTorch"].map((t, i) => (
         <div
           key={i}
-          className={`px-2 py-1 border text-[10px] font-bold font-mono uppercase ${i < 3 ? "bg-clay text-paper border-clay" : "bg-paper text-ink border-ink"
-            }`}
+          className={`px-2 py-1 border text-[10px] font-bold font-mono uppercase ${
+            i < 3
+              ? "bg-clay text-paper border-clay"
+              : "bg-paper text-ink border-ink"
+          }`}
         >
           {t}
         </div>
@@ -63,7 +66,9 @@ const QualityGateUI = () => (
       <div className="absolute inset-2 border border-ink rounded-full" />
       <div className="relative z-10 flex flex-col items-center p-4 bg-paper border-2 border-ink">
         <Filter size={20} className="text-ink mb-1" />
-        <span className="text-xl font-display font-bold text-ink leading-none">85%</span>
+        <span className="text-xl font-display font-bold text-ink leading-none">
+          85%
+        </span>
         <span className="text-[8px] text-ink uppercase font-mono font-bold mt-1">
           Signal Purity
         </span>
@@ -128,9 +133,7 @@ const GlobalFlowUI = () => (
       </div>
 
       <div className="relative flex-1 flex items-center justify-center">
-        <motion.div
-          className="w-full h-[2px] bg-ink overflow-hidden absolute"
-        >
+        <motion.div className="w-full h-[2px] bg-ink overflow-hidden absolute">
           <motion.div
             animate={{ x: ["-100%", "100%"] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
@@ -159,28 +162,32 @@ const steps = [
   {
     number: "INIT",
     title: "Initialize Your Swarm",
-    description: "Define your technical boundaries. Our multi-agent swarm maps your requirements across 100+ daily data sources, building a localized context graph.",
+    description:
+      "Define your technical boundaries. Our multi-agent swarm maps your requirements across 100+ daily data sources, building a localized context graph.",
     visual: ContextSyncUI,
     tag: "MODULE.A",
   },
   {
     number: "EXEC",
     title: "Autonomous Filtering",
-    description: "The 'Quality Gate' analyzes content for architectural depth and technical merit—stripping away SEO noise and corporate marketing fluff.",
+    description:
+      "The 'Quality Gate' analyzes content for architectural depth and technical merit—stripping away SEO noise and corporate marketing fluff.",
     visual: QualityGateUI,
     tag: "MODULE.B",
   },
   {
     number: "COMP",
     title: "Intelligence Synthesis",
-    description: "Complex papers and engineering blogs are distilled into strict, hyper-personalized briefs. We synthesize the signal; we don't just aggregate links.",
+    description:
+      "Complex papers and engineering blogs are distilled into strict, hyper-personalized briefs. We synthesize the signal; we don't just aggregate links.",
     visual: SynthesisUI,
     tag: "MODULE.C",
   },
   {
     number: "SYNC",
     title: "Cross-Platform Delivery",
-    description: "Your technical context is pre-computed, compiled, and dispatched globally. Zero-latency access across all devices.",
+    description:
+      "Your technical context is pre-computed, compiled, and dispatched globally. Zero-latency access across all devices.",
     visual: GlobalFlowUI,
     tag: "MODULE.D",
   },
@@ -190,9 +197,9 @@ export default function HowItWorks() {
   return (
     <section
       id="process"
-      className="relative w-full py-24 md:py-32 bg-paper text-ink font-sans border-b border-ink"
+      className="relative z-10 w-full py-24 md:py-32 bg-paper text-ink font-sans border-b border-ink"
     >
-      <div className="container mx-auto px-6 lg:px-12 max-w-7xl">
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
         {/* Section Head */}
         <div className="mb-20 grid grid-cols-1 md:grid-cols-2 gap-8 items-end border-b-4 border-ink pb-8">
           <div>
@@ -204,13 +211,13 @@ export default function HowItWorks() {
             </div>
             <h2 className="text-5xl md:text-7xl font-bold font-display text-ink tracking-tighter uppercase leading-[0.9]">
               From Firehose <br />
-              <span className="text-clay italic">
-                To Signal.
-              </span>
+              <span className="text-clay italic">To Signal.</span>
             </h2>
           </div>
           <div className="md:text-right font-mono text-sm max-w-md ml-auto leading-relaxed border-l-2 md:border-l-0 md:border-r-2 border-ink pl-4 md:pl-0 md:pr-4">
-            The infrastructure mapping the noise into actionable architectural intelligence. Phase one establishes context; phase four distributes the compiled briefs.
+            The infrastructure mapping the noise into actionable architectural
+            intelligence. Phase one establishes context; phase four distributes
+            the compiled briefs.
           </div>
         </div>
 
