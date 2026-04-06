@@ -4,12 +4,12 @@ Storage MCP Server
 Exposes three tools to the Storage Orchestrator Agent over stdio JSON-RPC 2.0:
 
   save_asset_locally   — writes a base64-encoded image to ./assets/images/
-  generate_embedding   — calls Gemini text-embedding-004 (768 dims)
+  generate_embedding   — calls Ollama nomic-embed-text (768 dims)
   pg_insert_document   — inserts a fully-processed document into PostgreSQL
                          with a pgvector content_embedding column
 
 Environment variables (all read at startup):
-  GEMINI_API_KEY        required for generate_embedding
+  OLLAMA_BASE_URL       Ollama base URL (default: http://ollama:11434/v1)
   STORAGE_DATABASE_URL  PostgreSQL DSN, e.g. postgresql://user:pass@host:5432/db
   ASSETS_DIR            override for the asset root (default: ./assets/images)
 
@@ -48,31 +48,40 @@ TOOLS_MANIFEST: list[dict[str, Any]] = [
     },
     {
         "name": "generate_embedding",
-        "description": "Embed text with Gemini text-embedding-004 (768 dims) and return a float array.",
+        "description": "Embed text with Ollama nomic-embed-text (768 dims) and return a float array.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "text": {"type": "string"},
+                "text":  {"type": "string"},
+                "model": {"type": "string", "description": "Embedding model ID (default: nomic-embed-text)"},
             },
             "required": ["text"],
         },
     },
     {
         "name": "pg_insert_document",
-        "description": "Insert a fully processed document and its pgvector embedding into PostgreSQL.",
+        "description": "Insert a fully processed document into the generator_documents PostgreSQL table.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "original_text":      {"type": "string"},
-                "summary":            {"type": "string"},
-                "keywords":           {"type": "array", "items": {"type": "string"}},
-                "trend_score":        {"type": "number"},
-                "matched_trends":     {"type": "array", "items": {"type": "string"}},
-                "image_prompt":       {"type": "string"},
-                "image_local_path":   {"type": "string"},
-                "content_embedding":  {"type": "array", "items": {"type": "number"}},
+                "source":                 {"type": "string"},
+                "source_id":              {"type": "string"},
+                "url":                    {"type": "string"},
+                "url_hash":               {"type": "string"},
+                "content_hash":           {"type": "string"},
+                "title":                  {"type": "string"},
+                "author":                 {"type": "string"},
+                "published_at":           {"type": "string"},
+                "summary":                {"type": "string"},
+                "bm25_keywords":          {"type": "array", "items": {"type": "string"}},
+                "taxonomy_tags":          {"type": "array", "items": {"type": "string"}},
+                "image_url":              {"type": "string"},
+                "gatekeeper_confidence":  {"type": "number"},
+                "embedding":              {"type": "array", "items": {"type": "number"}},
+                "pipeline_status":        {"type": "string"},
+                "processed_at":           {"type": "string"},
             },
-            "required": ["original_text", "summary", "content_embedding"],
+            "required": ["source", "url", "url_hash", "content_hash", "title", "summary", "embedding"],
         },
     },
 ]
@@ -85,27 +94,39 @@ _ASSETS_DIR = Path(os.environ.get("ASSETS_DIR", "./assets/images"))
 _DATABASE_URL = os.environ.get("STORAGE_DATABASE_URL", "")
 
 _INSERT_SQL = """
-    INSERT INTO documents
-        (original_text, summary, keywords, trend_score,
-         matched_trends, image_prompt, image_local_path, content_embedding)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    INSERT INTO generator_documents
+        (source, source_id, url, url_hash, content_hash, title, author,
+         published_at, summary, bm25_keywords, taxonomy_tags, image_url,
+         gatekeeper_confidence, pipeline_status, processed_at, embedding)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (url_hash) DO NOTHING
     RETURNING id
 """
 
 _TABLE_DDL = """
     CREATE EXTENSION IF NOT EXISTS vector;
-    CREATE TABLE IF NOT EXISTS documents (
-        id                SERIAL PRIMARY KEY,
-        original_text     TEXT        NOT NULL,
-        summary           TEXT        NOT NULL,
-        keywords          TEXT[]      NOT NULL DEFAULT '{}',
-        trend_score       FLOAT       NOT NULL DEFAULT 0.0,
-        matched_trends    TEXT[]      NOT NULL DEFAULT '{}',
-        image_prompt      TEXT        NOT NULL DEFAULT '',
-        image_local_path  TEXT        NOT NULL DEFAULT '',
-        content_embedding vector(768),
-        created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    CREATE TABLE IF NOT EXISTS generator_documents (
+        id                    UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        source                TEXT        NOT NULL,
+        source_id             TEXT,
+        url                   TEXT        NOT NULL,
+        url_hash              TEXT        NOT NULL UNIQUE,
+        content_hash          TEXT        NOT NULL,
+        title                 TEXT        NOT NULL,
+        author                TEXT,
+        published_at          TIMESTAMPTZ,
+        summary               TEXT        NOT NULL DEFAULT '',
+        bm25_keywords         TEXT[]      NOT NULL DEFAULT '{}',
+        taxonomy_tags         TEXT        NOT NULL DEFAULT '[]',
+        image_url             TEXT        NOT NULL DEFAULT '',
+        gatekeeper_confidence FLOAT       NOT NULL DEFAULT 0.0,
+        pipeline_status       TEXT        NOT NULL DEFAULT 'stored',
+        processed_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        embedding             vector(768)
     );
+    CREATE INDEX IF NOT EXISTS idx_gendocs_source ON generator_documents(source);
+    CREATE INDEX IF NOT EXISTS idx_gendocs_processed_at ON generator_documents(processed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_gendocs_url_hash ON generator_documents(url_hash);
 """
 
 
@@ -119,7 +140,7 @@ def _bootstrap() -> None:
         return
     try:
         import psycopg2
-        conn = psycopg2.connect(_DATABASE_URL)
+        conn = psycopg2.connect(_DATABASE_URL, connect_timeout=5)
         conn.autocommit = True
         with conn.cursor() as cur:
             for statement in _TABLE_DDL.strip().split(";"):
@@ -166,26 +187,20 @@ def _tool_generate_embedding(arguments: dict[str, Any]) -> dict[str, Any]:
     if not text.strip():
         return _err("text is empty — cannot generate embedding")
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return _err("GEMINI_API_KEY is not set")
+    model: str = arguments.get("model") or "nomic-embed-text"
+    embed_url = os.environ.get("LLM_EMBED_URL", "http://host.docker.internal:8082/v1")
+    api_key = os.environ.get("LLM_API_KEY", "local")
 
     try:
-        from google import genai
-        from google.genai import types as gtypes
+        from openai import OpenAI
 
-        client = genai.Client(api_key=api_key)
-        response = client.models.embed_content(
-            model="models/text-embedding-004",
-            contents=text,
-            config=gtypes.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
-        )
-        embeddings = response.embeddings or []
-        vector: list[float] = list(embeddings[0].values or [])
-        logger.info("Embedding generated: %d dims", len(vector))
+        client = OpenAI(base_url=embed_url, api_key=api_key)
+        response = client.embeddings.create(model=model, input=text)
+        vector: list[float] = response.data[0].embedding
+        logger.info("Embedding generated: %d dims via %s", len(vector), model)
         return {"embedding": vector}
     except Exception as exc:
-        return _err(f"Gemini embedding failed: {exc}")
+        return _err(f"Ollama embedding failed: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -197,41 +212,61 @@ def _tool_pg_insert_document(arguments: dict[str, Any]) -> dict[str, Any]:
     if not _DATABASE_URL:
         return _err("STORAGE_DATABASE_URL is not configured")
 
-    required = {"original_text", "summary", "content_embedding"}
+    required = {"source", "url", "url_hash", "content_hash", "title", "summary", "embedding"}
     missing = required - arguments.keys()
     if missing:
         return _err(f"Missing required fields: {sorted(missing)}")
 
-    embedding: list[float] = arguments["content_embedding"]
+    embedding: list[float] = arguments["embedding"]
     if not embedding:
-        return _err("content_embedding is empty — refusing to insert")
+        return _err("embedding is empty — refusing to insert")
 
     try:
+        import json as _json
+
+        import numpy as np
         import psycopg2
         from pgvector.psycopg2 import register_vector
-        import numpy as np
 
-        conn = psycopg2.connect(_DATABASE_URL)
+        conn = psycopg2.connect(_DATABASE_URL, connect_timeout=5)
         register_vector(conn)
 
+        published_at = arguments.get("published_at")
+        taxonomy_tags = arguments.get("taxonomy_tags", [])
+        taxonomy_json = _json.dumps(taxonomy_tags) if isinstance(taxonomy_tags, list) else taxonomy_tags
+
         row = (
-            arguments["original_text"],
+            arguments["source"],
+            arguments.get("source_id"),
+            arguments["url"],
+            arguments["url_hash"],
+            arguments["content_hash"],
+            arguments["title"],
+            arguments.get("author"),
+            published_at or None,
             arguments["summary"],
-            arguments.get("keywords", []),
-            float(arguments.get("trend_score", 0.0)),
-            arguments.get("matched_trends", []),
-            arguments.get("image_prompt", ""),
-            arguments.get("image_local_path", ""),
+            arguments.get("bm25_keywords", []),
+            taxonomy_json,
+            arguments.get("image_url") or "",
+            float(arguments.get("gatekeeper_confidence", 0.0)),
+            arguments.get("pipeline_status", "stored"),
+            arguments.get("processed_at"),
             np.array(embedding, dtype=np.float32),
         )
 
         with conn.cursor() as cur:
             cur.execute(_INSERT_SQL, row)
-            document_id: int = cur.fetchone()[0]  # type: ignore[index]
+            result_row = cur.fetchone()
         conn.commit()
         conn.close()
 
-        logger.info("Document inserted: id=%d", document_id)
+        if result_row is None:
+            # ON CONFLICT DO NOTHING — document already existed
+            logger.info("Document skipped (duplicate url_hash): %s", arguments["url_hash"])
+            return {"document_id": arguments["url_hash"], "status": "duplicate"}
+
+        document_id: str = str(result_row[0])
+        logger.info("Document inserted: id=%s", document_id)
         return {"document_id": document_id, "status": "inserted"}
     except Exception as exc:
         return _err(f"PostgreSQL insert failed: {exc}")

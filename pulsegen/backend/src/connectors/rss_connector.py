@@ -13,11 +13,11 @@ import asyncio
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
-import feedparser  # type: ignore[import-untyped]
+import feedparser
 import httpx
-from dateutil import parser as dateutil_parser  # type: ignore[import-untyped]
+from dateutil import parser as dateutil_parser  # type: ignore[import-untyped,unused-ignore]
 
 from src.connectors.base import BaseConnector
 from src.retry import with_backoff
@@ -89,7 +89,8 @@ def _parse_published_at(entry: feedparser.FeedParserDict) -> datetime | None:
     if not raw:
         return None
     try:
-        return dateutil_parser.parse(raw, ignoretz=False)
+        result: datetime = dateutil_parser.parse(raw, ignoretz=False)
+        return result
     except (ValueError, OverflowError, TypeError):
         return None
 
@@ -108,10 +109,10 @@ def _extract_body(entry: feedparser.FeedParserDict) -> str:
 
 
 def _extract_author(entry: feedparser.FeedParserDict, feed: feedparser.FeedParserDict) -> str | None:
-    author = getattr(entry, "author", None)
+    author: str | None = getattr(entry, "author", None)
     if author:
         return author
-    feed_author = getattr(feed.feed, "author", None)
+    feed_author: str | None = getattr(feed.feed, "author", None)
     return feed_author or None
 
 
@@ -187,23 +188,24 @@ class RSSConnector(BaseConnector):
         for batch in results_nested:
             all_docs.extend(batch)
 
-        # Sort: tier-1 first, then by published_at descending (None last)
+        # Sort: tier-1 first, then by published_at descending (newest first).
+        # All timestamps are normalised to UTC-naive before comparison so that
+        # mixed tz-aware / tz-naive values (common across RSS feeds) do not
+        # produce incorrect orderings via .timestamp() local-time assumptions.
+        _epoch = datetime.min.replace(tzinfo=None)
+
         def sort_key(doc: RawDocument) -> tuple[int, datetime]:
             tier: int = doc.extra.get("tier", 2)
-            pub = doc.published_at or datetime.min
-            # Make timezone-naive for comparison safety
+            pub = doc.published_at or _epoch
             if pub.tzinfo is not None:
-                from datetime import timezone
-                pub = pub.astimezone(timezone.utc).replace(tzinfo=None)
+                pub = pub.astimezone(UTC).replace(tzinfo=None)
             return (tier, pub)
 
-        all_docs.sort(key=sort_key, reverse=False)
-        # After sorting, tier=1 rows come first (lower tier value), then desc pub within each tier
-        # Re-sort to get tier ASC then published_at DESC
-        all_docs.sort(key=lambda d: (
-            d.extra.get("tier", 2),
-            -(d.published_at.timestamp() if d.published_at else 0),
-        ))
+        all_docs.sort(key=sort_key, reverse=True)
+        # reverse=True gives published_at DESC within each tier but also puts
+        # tier=2 before tier=1.  Re-stable-sort on tier alone to restore tier
+        # ordering while keeping published_at DESC within each tier bucket.
+        all_docs.sort(key=lambda d: d.extra.get("tier", 2))
 
         logger.info("RSS connector fetched %d total docs across %d feeds", len(all_docs), len(RSS_SOURCES))
         return all_docs[:max_results]

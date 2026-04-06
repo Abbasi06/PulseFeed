@@ -10,7 +10,7 @@ edge-computing / cybersecurity.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -66,7 +66,7 @@ query TrendingRepos($query: String!, $first: Int!) {
 
 
 def _build_graphql_query_str() -> str:
-    week_ago = (datetime.now(tz=timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%d")
+    week_ago = (datetime.now(tz=UTC) - timedelta(days=7)).strftime("%Y-%m-%d")
     topic_part = " ".join(f"topic:{t}" for t in _TOPICS)
     return f"{topic_part} stars:>500 pushed:>{week_ago}"
 
@@ -160,7 +160,7 @@ class GithubConnector(BaseConnector):
         headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(_REST_URL, params=params, headers=headers)
+            response = await client.get(_REST_URL, params=params, headers=headers)  # type: ignore[arg-type]
             response.raise_for_status()
             data = response.json()
 

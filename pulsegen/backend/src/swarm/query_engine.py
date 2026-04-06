@@ -12,7 +12,7 @@ import logging
 import random
 import re
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 
 from src.config import settings
 from src.schemas import TAXONOMY_TAGS, AdaptiveQuerySet, RawDocument
@@ -428,7 +428,7 @@ class CrossSourceAmplifier:
         if not signals:
             return
 
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(UTC).isoformat()
         rows = [
             (term, source_counts.get(term, 1), now)
             for term in signals

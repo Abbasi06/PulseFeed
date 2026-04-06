@@ -16,10 +16,14 @@ from __future__ import annotations
 
 import logging
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.config import settings
-from src.schemas import AdaptiveQuerySet, MomentumSnapshot, RawDocument, SourceQualityRecord
+from src.schemas import (
+    AdaptiveQuerySet,
+    RawDocument,
+    SourceQualityRecord,
+)
 from src.swarm.momentum import MomentumTracker
 from src.swarm.query_engine import CrossSourceAmplifier, DynamicQueryEngine
 
@@ -66,9 +70,13 @@ class SwarmCoordinator:
         c. Load amplified cross-source signals from previous cycles
         d. For each source: compute budget + generate adaptive queries
         """
-        # Step a: record and compute momentum
-        self._momentum.record_cycle(tag_counts_last_cycle)
+        # Step a: compute snapshots against prior history FIRST, then record this
+        # cycle.  record_cycle() writes counts to SQLite; compute_snapshots()
+        # calls get_baseline() which reads from that same table.  If we record
+        # first, the current cycle's counts contaminate the baseline, driving
+        # velocity toward 1.0 and making hot-tag detection insensitive.
         snapshots = self._momentum.compute_snapshots(tag_counts_last_cycle)
+        self._momentum.record_cycle(tag_counts_last_cycle)
         hot_tags = [s.tag for s in snapshots if s.is_hot]
 
         if hot_tags:
@@ -115,18 +123,38 @@ class SwarmCoordinator:
         passed_gate: int,
         stored: int,
     ) -> None:
-        """Update SourceQualityRecord for a source after a harvest attempt."""
-        existing = self._load_quality_records().get(source_id)
-        if existing is None:
-            record = SourceQualityRecord(source_id=source_id)
-        else:
-            record = existing
+        """
+        Atomically increment quality counters for *source_id*.
 
-        record.total_fetched += fetched
-        record.total_passed_gate += passed_gate
-        record.total_stored += stored
-        record.last_updated = datetime.now(tz=timezone.utc)
-        self._persist_quality_record(record)
+        Uses INSERT ... ON CONFLICT DO UPDATE with SQL arithmetic so that
+        concurrent Celery workers (gevent pool, concurrency=8) never clobber
+        each other's increments via a read-modify-write cycle.
+        """
+        try:
+            conn = self._connect()
+            conn.execute(
+                """
+                INSERT INTO source_quality
+                    (source_id, total_fetched, total_passed_gate, total_stored, last_updated)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(source_id) DO UPDATE SET
+                    total_fetched     = total_fetched     + excluded.total_fetched,
+                    total_passed_gate = total_passed_gate + excluded.total_passed_gate,
+                    total_stored      = total_stored      + excluded.total_stored,
+                    last_updated      = excluded.last_updated
+                """,
+                (
+                    source_id,
+                    fetched,
+                    passed_gate,
+                    stored,
+                    datetime.now(tz=UTC).isoformat(),
+                ),
+            )
+            conn.commit()
+            conn.close()
+        except Exception as exc:
+            logger.warning("record_harvest_result failed for %s: %s", source_id, exc)
 
     def post_cycle_amplify(self, harvested_docs: list[RawDocument]) -> list[str]:
         """
@@ -199,31 +227,6 @@ class SwarmCoordinator:
             except Exception as exc:
                 logger.warning("Failed to parse SourceQualityRecord row: %s", exc)
         return records
-
-    def _persist_quality_record(self, record: SourceQualityRecord) -> None:
-        try:
-            conn = self._connect()
-            conn.execute(
-                """INSERT INTO source_quality
-                     (source_id, total_fetched, total_passed_gate, total_stored, last_updated)
-                   VALUES (?, ?, ?, ?, ?)
-                   ON CONFLICT(source_id) DO UPDATE SET
-                     total_fetched    = excluded.total_fetched,
-                     total_passed_gate = excluded.total_passed_gate,
-                     total_stored     = excluded.total_stored,
-                     last_updated     = excluded.last_updated""",
-                (
-                    record.source_id,
-                    record.total_fetched,
-                    record.total_passed_gate,
-                    record.total_stored,
-                    record.last_updated.isoformat(),
-                ),
-            )
-            conn.commit()
-            conn.close()
-        except Exception as exc:
-            logger.warning("Failed to persist SourceQualityRecord: %s", exc)
 
     def _init_db(self) -> None:
         conn = self._connect()

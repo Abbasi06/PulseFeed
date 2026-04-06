@@ -1,5 +1,5 @@
 """
-Stage 4 (LLM): Extractor — single Gemini call that produces a structured summary,
+Stage 4 (LLM): Extractor — single LLM call that produces a structured summary,
 BM25 keywords, taxonomy tags, and image URL from the full document body.
 """
 
@@ -9,8 +9,7 @@ import json
 import logging
 from typing import cast
 
-from google import genai
-from google.genai import types
+from openai import AsyncOpenAI
 
 from src.retry import with_backoff
 from src.schemas import (
@@ -58,16 +57,16 @@ _DEFAULT_TAG: TaxonomyTag = "AI Engineering"
 
 @with_backoff(max_retries=3, base_delay=2.0, exceptions=(Exception,))
 async def run_extractor(
-    client: genai.Client,
+    client: AsyncOpenAI,
     model: str,
     body: str,
 ) -> ExtractedDocument:
     """
-    Send a single Gemini call to extract structured metadata from a document body.
+    Send a single LLM call to extract structured metadata from a document body.
 
     Args:
-        client: Configured google.genai.Client instance.
-        model:  Gemini model ID (e.g. "gemini-2.0-flash").
+        client: Configured openai.AsyncOpenAI instance (pointed at llama.cpp heavy server).
+        model:  Model ID (e.g. "gemma4" — accurate structured JSON extraction).
         body:   Full document body text; only the first 8000 chars are sent.
 
     Returns:
@@ -79,17 +78,17 @@ async def run_extractor(
         Exception on parse failure or API error (after retries exhausted), so
         the Celery task can decide whether to retry.
     """
-    response = await client.aio.models.generate_content(
+    response = await client.chat.completions.create(
         model=model,
-        contents=body[:8000],
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            temperature=0.2,
-        ),
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": body[:8000]},
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.2,
     )
 
-    raw_text: str = response.text or ""
+    raw_text: str = response.choices[0].message.content or ""
 
     # Let JSON / Pydantic errors propagate so @with_backoff can retry.
     raw_response = _ExtractorLLMResponse.model_validate(json.loads(raw_text))

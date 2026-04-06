@@ -20,7 +20,8 @@ Endpoints:
 
 import logging
 import os
-from fastapi import FastAPI
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
@@ -49,15 +50,58 @@ app.add_middleware(
 )
 
 # Import and register routers
-from .routes import stats, sources, pipeline, trends, dead_letter
+from .dependencies import require_admin_key  # noqa: E402
+from .routes import dead_letter, pipeline, sources, stats, trends  # noqa: E402
 
-app.include_router(stats.router, prefix="/admin")
-app.include_router(sources.router, prefix="/admin")
-app.include_router(pipeline.router, prefix="/admin")
-app.include_router(trends.router, prefix="/admin")
-app.include_router(dead_letter.router, prefix="/admin")
+_auth = [Depends(require_admin_key)]
+
+app.include_router(stats.router, prefix="/admin", dependencies=_auth)
+app.include_router(sources.router, prefix="/admin", dependencies=_auth)
+app.include_router(pipeline.router, prefix="/admin", dependencies=_auth)
+app.include_router(trends.router, prefix="/admin", dependencies=_auth)
+app.include_router(dead_letter.router, prefix="/admin", dependencies=_auth)
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "pulsegen-admin"}
+def health() -> dict[str, object]:
+    """
+    Liveness + readiness probe.
+
+    Checks Redis PING and PostgreSQL connectivity.
+    Returns HTTP 200 always so load balancers keep routing; individual
+    service status is surfaced in the JSON body so monitors can alert.
+    """
+    redis_ok = False
+    postgres_ok = False
+
+    # Redis probe
+    try:
+        import redis as redis_lib
+        r = redis_lib.from_url(
+            os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
+            socket_connect_timeout=2,
+        )
+        r.ping()
+        redis_ok = True
+    except Exception as exc:
+        logger.warning("Health: Redis unreachable — %s", exc)
+
+    # PostgreSQL probe
+    try:
+        import psycopg2
+        db_url = os.environ.get("STORAGE_DATABASE_URL", "")
+        if db_url:
+            conn = psycopg2.connect(db_url, connect_timeout=3)
+            conn.close()
+            postgres_ok = True
+        else:
+            logger.warning("Health: STORAGE_DATABASE_URL not set")
+    except Exception as exc:
+        logger.warning("Health: PostgreSQL unreachable — %s", exc)
+
+    return {
+        "status": "ok",
+        "service": "pulsegen-admin",
+        "redis": "ok" if redis_ok else "unreachable",
+        "postgres": "ok" if postgres_ok else "unreachable",
+    }

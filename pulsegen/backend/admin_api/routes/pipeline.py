@@ -3,16 +3,24 @@ GET  /admin/pipeline/status — pipeline phase + queue depth
 POST /admin/pipeline/run-now — manually trigger harvest_cycle
 """
 
-import json
 import logging
-from typing import Any
+import threading
+import time
+from collections import defaultdict
+from typing import cast
 
 import redis
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# ── In-process rate limiter: 3 requests per 60 seconds per IP ────────────────
+_RATE_LIMIT_MAX = 3
+_RATE_LIMIT_WINDOW = 60  # seconds
+_request_timestamps: dict[str, list[float]] = defaultdict(list)
+_rate_lock = threading.Lock()
 
 
 class PipelineStatus(BaseModel):
@@ -44,7 +52,7 @@ def get_pipeline_status() -> PipelineStatus:
         return PipelineStatus(queue_depth=0, last_run=None)
 
     try:
-        queue_depth = r.llen("celery") or 0
+        queue_depth = cast(int, r.llen("celery")) or 0
         # Could store last_run in Redis as well
         return PipelineStatus(queue_depth=queue_depth, last_run=None)
     except Exception as exc:
@@ -52,13 +60,31 @@ def get_pipeline_status() -> PipelineStatus:
         return PipelineStatus(queue_depth=0, last_run=None)
 
 
+def _check_rate_limit(client_ip: str) -> None:
+    """Raise HTTP 429 if this IP has exceeded the run-now rate limit."""
+    now = time.monotonic()
+    with _rate_lock:
+        timestamps = _request_timestamps[client_ip]
+        # Remove timestamps outside the current window
+        _request_timestamps[client_ip] = [t for t in timestamps if now - t < _RATE_LIMIT_WINDOW]
+        if len(_request_timestamps[client_ip]) >= _RATE_LIMIT_MAX:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded: max {_RATE_LIMIT_MAX} requests per {_RATE_LIMIT_WINDOW}s.",
+                headers={"Retry-After": str(_RATE_LIMIT_WINDOW)},
+            )
+        _request_timestamps[client_ip].append(now)
+
+
 @router.post("/pipeline/run-now", response_model=RunNowResponse)
-def run_pipeline_now(background_tasks: BackgroundTasks) -> RunNowResponse:
+def run_pipeline_now(request: Request, background_tasks: BackgroundTasks) -> RunNowResponse:
     """Manually trigger a harvest_cycle task."""
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
+
     from src.celery_app import app as celery_app
 
     try:
-        # Fire the task asynchronously
         celery_app.send_task("src.tasks.harvest_cycle")
         return RunNowResponse(accepted=True, message="harvest_cycle queued")
     except Exception as exc:

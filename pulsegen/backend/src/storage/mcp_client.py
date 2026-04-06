@@ -139,7 +139,7 @@ class MCPClient:
 
     # ── Context manager ──────────────────────────────────────────────────────
 
-    def __enter__(self) -> "MCPClient":
+    def __enter__(self) -> MCPClient:
         self.start()
         return self
 

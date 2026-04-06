@@ -19,29 +19,30 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from datetime import datetime
+from collections.abc import Sequence
+from datetime import UTC, datetime
 from typing import Any
 
+import redis as redis_lib
 from celery import chord, group
+
 from src.celery_app import app
 from src.config import settings
 from src.connectors import CONNECTOR_REGISTRY
 from src.pipeline.bouncer import run_bouncer
-from src.pipeline.dedup import compute_url_hash, is_duplicate
-from src.pipeline.gatekeeper import run_gatekeeper
+from src.pipeline.dedup import is_duplicate
 from src.pipeline.extractor import run_extractor
+from src.pipeline.gatekeeper import run_gatekeeper
 from src.schemas import (
-    DataSource,
     ExtractedDocument,
     RawDocument,
     StoragePayload,
-    StorageConfirmation,
 )
-from src.storage.mcp_client import MCPClient
 from src.storage.pg_router import route_to_postgres
 from src.swarm.coordinator import SwarmCoordinator
 
 logger = logging.getLogger(__name__)
+
 
 # Module-level coordinator (one per worker process — lightweight)
 _coordinator: SwarmCoordinator | None = None
@@ -83,15 +84,15 @@ def harvest_cycle(self: Any) -> dict[str, Any]:
         )
 
     if source_tasks:
-        # Fire-and-forget: results flow into gatekeeper tasks internally
-        group(source_tasks).apply_async()
+        # After all source fetches complete, run cross-source amplification.
+        chord(group(source_tasks))(post_cycle_amplify_task.si())
 
     logger.info(
         "harvest_cycle dispatched: %d sources, hot_topics=%s",
         len(cycle_plan),
         [q.hot_topics for q in [v[1] for v in cycle_plan.values()] if q.hot_topics],
     )
-    return {"sources_dispatched": len(cycle_plan), "cycle_ts": datetime.utcnow().isoformat()}
+    return {"sources_dispatched": len(cycle_plan), "cycle_ts": datetime.now(UTC).isoformat()}
 
 
 @app.task(name="src.tasks.trend_analysis_cycle", bind=True, max_retries=1)
@@ -137,6 +138,66 @@ def prune_momentum_data(self: Any) -> dict[str, Any]:
         return {"error": str(exc)}
 
 
+@app.task(name="src.tasks.post_cycle_amplify_task", bind=True)
+def post_cycle_amplify_task(self: Any, _results: Any = None) -> dict[str, Any]:
+    """
+    Cross-source amplification — runs after all harvest_source_tasks complete.
+
+    Reads documents stored in the last 10 minutes from PostgreSQL, detects
+    entity terms that appeared in 2+ sources, and persists them to the
+    amplified_signals SQLite table for the next cycle's query engine.
+
+    Accepts _results from chord callback signature (ignored).
+    """
+    import psycopg2
+
+    db_url = settings.storage_database_url
+    try:
+        conn = psycopg2.connect(db_url, connect_timeout=5)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT title, source, source_id
+                FROM generator_documents
+                WHERE processed_at > NOW() - INTERVAL '10 minutes'
+                ORDER BY processed_at DESC
+                LIMIT 200
+                """,
+            )
+            rows = cur.fetchall()
+        conn.close()
+    except Exception as exc:
+        logger.warning("post_cycle_amplify: could not read recent docs: %s", exc)
+        return {"amplified": 0, "error": str(exc)}
+
+    if not rows:
+        logger.debug("post_cycle_amplify: no recent docs — skipping")
+        return {"amplified": 0}
+
+    # Build lightweight RawDocument-like objects (title + source for entity extraction)
+    from src.schemas import DataSource
+
+    docs: list[RawDocument] = []
+    for title, source_str, source_id in rows:
+        try:
+            ds = DataSource(source_str)
+        except ValueError:
+            continue
+        docs.append(
+            RawDocument(
+                source=ds,
+                source_id=source_id or source_str,
+                url=f"https://placeholder/{source_id}",
+                title=title or "",
+                body="",  # not needed for entity extraction
+            )
+        )
+
+    signals = _get_coordinator().post_cycle_amplify(docs)
+    logger.info("post_cycle_amplify: %d signals from %d docs", len(signals), len(docs))
+    return {"amplified": len(signals), "docs_analyzed": len(docs)}
+
+
 # ─── Per-Source Harvest ───────────────────────────────────────────────────────
 
 
@@ -180,29 +241,28 @@ def harvest_source_task(
     skipped_bouncer = 0
     skipped_dedup = 0
 
-    with MCPClient(settings.mcp_sql_command) as mcp:
-        for doc in docs:
-            # Stage 1: Heuristic bouncer
-            bouncer_result = run_bouncer(doc)
-            if not bouncer_result.passed:
-                skipped_bouncer += 1
-                logger.debug(
-                    "BOUNCED [%s] %s: %s",
-                    source_id,
-                    bouncer_result.rejection_reason,
-                    doc.title[:60],
-                )
-                continue
+    for doc in docs:
+        # Stage 1: Heuristic bouncer
+        bouncer_result = run_bouncer(doc)
+        if not bouncer_result.passed:
+            skipped_bouncer += 1
+            logger.debug(
+                "BOUNCED [%s] %s: %s",
+                source_id,
+                bouncer_result.rejection_reason,
+                doc.title[:60],
+            )
+            continue
 
-            # Stage 2: URL dedup against PostgreSQL
-            if is_duplicate(doc.url, mcp):
-                skipped_dedup += 1
-                logger.debug("DEDUP [%s]: %s", source_id, doc.url[:80])
-                continue
+        # Stage 2: URL dedup against PostgreSQL
+        if is_duplicate(doc.url):
+            skipped_dedup += 1
+            logger.debug("DEDUP [%s]: %s", source_id, doc.url[:80])
+            continue
 
-            # Fan out to gatekeeper
-            gatekeeper_task.delay(doc.model_dump(mode="json"))
-            passed += 1
+        # Fan out to gatekeeper
+        gatekeeper_task.delay(doc.model_dump(mode="json"))
+        passed += 1
 
     # Report back to coordinator for quality tracking
     _get_coordinator().record_harvest_result(
@@ -233,18 +293,19 @@ def harvest_source_task(
 @app.task(
     name="src.tasks.gatekeeper_task",
     bind=True,
-    max_retries=2,
-    default_retry_delay=30,
+    max_retries=6,
+    default_retry_delay=90,
 )
 def gatekeeper_task(self: Any, raw_doc_dict: dict[str, Any]) -> None:
     """
     LLM Step 1: is_high_signal check.
     Skips if confidence below threshold. Chains to extractor on pass.
     """
-    from google import genai
+    from openai import AsyncOpenAI
 
     doc = RawDocument.model_validate(raw_doc_dict)
-    client = genai.Client(api_key=settings.gemini_api_key)
+    # Light model server — fast binary classification, low RAM
+    client = AsyncOpenAI(base_url=settings.llm_light_url, api_key=settings.llm_api_key)
 
     try:
         gate = asyncio.run(
@@ -259,10 +320,16 @@ def gatekeeper_task(self: Any, raw_doc_dict: dict[str, Any]) -> None:
         )
     except Exception as exc:
         logger.warning("gatekeeper failed for '%s': %s", doc.title[:60], exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc, countdown=self.default_retry_delay)
 
     if gate.passes:
         logger.debug("GATE PASS [%.2f]: %s", gate.confidence, doc.title[:60])
+        _get_coordinator().record_harvest_result(
+            source_id=doc.source.value,
+            fetched=0,
+            passed_gate=1,
+            stored=0,
+        )
         extractor_task.delay(raw_doc_dict, gate.confidence)
     else:
         logger.debug(
@@ -276,8 +343,8 @@ def gatekeeper_task(self: Any, raw_doc_dict: dict[str, Any]) -> None:
 @app.task(
     name="src.tasks.extractor_task",
     bind=True,
-    max_retries=2,
-    default_retry_delay=60,
+    max_retries=6,
+    default_retry_delay=90,
 )
 def extractor_task(
     self: Any,
@@ -288,10 +355,11 @@ def extractor_task(
     LLM Step 2: deep extraction.
     Extracts summary, keywords, taxonomy tags, image URL.
     """
-    from google import genai
+    from openai import AsyncOpenAI
 
     doc = RawDocument.model_validate(raw_doc_dict)
-    client = genai.Client(api_key=settings.gemini_api_key)
+    # Heavy model server — accurate structured extraction, complex JSON schema
+    client = AsyncOpenAI(base_url=settings.llm_heavy_url, api_key=settings.llm_api_key)
 
     try:
         extracted = asyncio.run(
@@ -303,7 +371,7 @@ def extractor_task(
         )
     except Exception as exc:
         logger.warning("extractor failed for '%s': %s", doc.title[:60], exc)
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc, countdown=self.default_retry_delay)
 
     logger.debug("EXTRACTED: %s | tags=%s", doc.title[:60], extracted.taxonomy_tags)
     storage_router_task.delay(
@@ -359,6 +427,12 @@ def storage_router_task(
     if confirmation.success:
         # Record taxonomy tag for momentum tracking
         _record_stored_tags(extracted.taxonomy_tags)
+        _get_coordinator().record_harvest_result(
+            source_id=doc.source.value,
+            fetched=0,
+            passed_gate=0,
+            stored=1,
+        )
         logger.info(
             "STORED [%s] → %s | tags=%s",
             doc.title[:60],
@@ -367,6 +441,10 @@ def storage_router_task(
         )
         return {"status": "stored", "document_id": confirmation.document_id}
     else:
+        # route_to_postgres swallows exceptions — handle retries here.
+        if self.request.retries >= self.max_retries:
+            _dead_letter(payload, confirmation.error or "unknown storage failure")
+            return {"status": "dead_lettered", "url": doc.url}
         raise self.retry(
             exc=RuntimeError(f"Storage failed: {confirmation.error}"),
         )
@@ -377,22 +455,34 @@ def storage_router_task(
 
 def _dead_letter(payload: StoragePayload, error: str) -> None:
     """Push failed payload to Redis dead-letter key for manual inspection."""
-    import redis as redis_lib
-
-    r = redis_lib.from_url(settings.redis_url)
     entry = {
         "url": payload.url,
         "title": payload.title,
         "source": payload.source.value,
         "error": error,
-        "failed_at": datetime.utcnow().isoformat(),
+        "failed_at": datetime.now(UTC).isoformat(),
     }
-    r.lpush("pulsegen:dead_letter:storage", json.dumps(entry))
-    r.ltrim("pulsegen:dead_letter:storage", 0, 499)  # cap at 500
+    try:
+        r = redis_lib.from_url(settings.redis_url)
+        r.lpush("pulsegen:dead_letter:storage", json.dumps(entry))
+        r.ltrim("pulsegen:dead_letter:storage", 0, 499)  # cap at 500
+        queue_size: int = r.llen("pulsegen:dead_letter:storage")  # type: ignore[assignment]
+        if queue_size > 100:
+            logger.critical(
+                "Dead letter queue size=%d — storage failures may be systematic",
+                queue_size,
+            )
+    except Exception as dl_exc:
+        logger.critical(
+            "Dead letter queue UNAVAILABLE (%s) — document LOST: url=%s title=%r",
+            dl_exc,
+            payload.url,
+            payload.title[:60],
+        )
     logger.error("DEAD LETTERED: %s — %s", payload.title[:60], error)
 
 
-def _record_stored_tags(tags: list[str]) -> None:
+def _record_stored_tags(tags: Sequence[str]) -> None:
     """
     Increment per-tag counts in SQLite for momentum tracking.
     Uses a simple `current_cycle_tags` key in SQLite.
@@ -416,7 +506,7 @@ def _record_stored_tags(tags: list[str]) -> None:
                    ON CONFLICT(tag) DO UPDATE SET
                      count = count + 1,
                      updated_at = excluded.updated_at""",
-                (tag, datetime.utcnow().isoformat()),
+                (tag, datetime.now(UTC).isoformat()),
             )
         conn.commit()
         conn.close()

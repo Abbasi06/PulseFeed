@@ -4,10 +4,21 @@ Celery application instance and beat schedule for PulseGen.
 Two processes from one image:
   celery -A src.celery_app worker  ...  (default Dockerfile CMD)
   celery -A src.celery_app beat    ...  (docker-compose override)
+
+Harvest runs twice daily (06:00 and 18:00 UTC) in batch mode.
+llama.cpp servers are only under load during these windows (~minutes),
+keeping RAM free the rest of the day.
 """
 
+import logging
+
 from celery import Celery
+from celery.schedules import crontab
+from celery.signals import worker_ready
+
 from src.config import settings
+
+logger = logging.getLogger(__name__)
 
 app = Celery(
     "pulsegen_worker",
@@ -24,44 +35,64 @@ app.conf.update(
     # ── Timezone ───────────────────────────────────────────────────────────────
     timezone="UTC",
     enable_utc=True,
-    # ── Worker pool: gevent for I/O-bound connector fetches ────────────────────
-    worker_pool="gevent",
+    # ── Worker pool: threads (not gevent) so asyncio.run() works inside tasks ──
+    # gevent monkey-patches ThreadPoolExecutor to use greenlets; asyncio.run()
+    # raises "cannot be called from a running event loop" inside a greenlet.
+    # Threads have no running event loop, so asyncio.run() works correctly.
+    worker_pool="threads",
     worker_concurrency=8,
     # ── Reliability ───────────────────────────────────────────────────────────
     task_acks_late=True,
     task_reject_on_worker_lost=True,
     task_track_started=True,
-    # ── Gemini free-tier rate limiting (1500 RPD ≈ ~1 RPM sustained) ──────────
-    # Allow bursting but throttle per-task-type to avoid 429s across workers.
-    task_annotations={
-        "src.tasks.gatekeeper_task": {"rate_limit": "30/m"},
-        "src.tasks.extractor_task": {"rate_limit": "20/m"},
-    },
     # ── Dead-letter via Redis ─────────────────────────────────────────────────
     task_routes={
         "src.tasks.*": {"queue": "generator"},
     },
     # ── Result expiry ─────────────────────────────────────────────────────────
     result_expires=3600,  # 1 hour
-    # ── Beat schedule ─────────────────────────────────────────────────────────
+    # ── Beat schedule — batch mode (twice daily) ──────────────────────────────
     beat_schedule={
-        # Main harvest cycle — intelligent swarm across all sources
-        "harvest-all-sources-every-5-min": {
+        # Main harvest: 06:00 and 18:00 UTC
+        # llama.cpp servers only needed during these ~10-20 minute windows.
+        "harvest-twice-daily": {
             "task": "src.tasks.harvest_cycle",
-            "schedule": 300.0,  # 5 minutes
+            "schedule": crontab(hour="6,18", minute="0"),
             "options": {"queue": "generator"},
         },
-        # Trend analysis over stored documents
-        "run-trend-analysis-every-15-min": {
+        # Trend analysis: once daily at 07:00 UTC (after morning harvest settles)
+        "trend-analysis-daily": {
             "task": "src.tasks.trend_analysis_cycle",
-            "schedule": 900.0,  # 15 minutes
+            "schedule": crontab(hour="7", minute="0"),
             "options": {"queue": "generator"},
         },
         # Prune old momentum data (keep last 30 days)
         "prune-momentum-daily": {
             "task": "src.tasks.prune_momentum_data",
-            "schedule": 86400.0,  # 24 hours
+            "schedule": crontab(hour="3", minute="0"),
             "options": {"queue": "generator"},
         },
     },
 )
+
+
+@worker_ready.connect
+def _on_worker_ready(sender: object, **kwargs: object) -> None:
+    """
+    Trigger one harvest_cycle immediately when a worker comes online.
+
+    Uses a short-lived Redis lock (TTL = 5 minutes) so only the first worker
+    replica to start fires the initial cycle — not all replicas.
+    """
+    import redis as redis_lib
+
+    try:
+        r = redis_lib.from_url(settings.redis_url, socket_connect_timeout=3)
+        lock_key = "pulsegen:startup_harvest_lock"
+        if r.set(lock_key, "1", nx=True, ex=300):
+            app.send_task("src.tasks.harvest_cycle", queue="generator")
+            logger.info("Worker ready — dispatched startup harvest_cycle")
+        else:
+            logger.debug("Worker ready — startup harvest already dispatched by another worker")
+    except Exception as exc:
+        logger.warning("Worker ready — could not dispatch startup harvest: %s", exc)

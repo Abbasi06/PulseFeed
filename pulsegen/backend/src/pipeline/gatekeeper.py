@@ -1,5 +1,5 @@
 """
-Stage 3 (LLM): Metadata Gatekeeper — single Gemini call that classifies whether a
+Stage 3 (LLM): Metadata Gatekeeper — single LLM call that classifies whether a
 document is high-signal for senior AI/ML engineers.
 """
 
@@ -8,8 +8,7 @@ from __future__ import annotations
 import json
 import logging
 
-from google import genai
-from google.genai import types
+from openai import AsyncOpenAI
 
 from src.retry import with_backoff
 from src.schemas import MetadataGatekeeperResult, _GatekeeperLLMResponse
@@ -17,7 +16,8 @@ from src.schemas import MetadataGatekeeperResult, _GatekeeperLLMResponse
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """
-You are a signal quality filter for a technical knowledge pipeline targeting senior AI/ML engineers and infrastructure specialists.
+You are a signal quality filter for a technical knowledge pipeline
+targeting senior AI/ML engineers and infrastructure specialists.
 
 HIGH SIGNAL — include if it is:
 - Original research (new algorithms, benchmarks, ablation studies)
@@ -43,7 +43,7 @@ Respond with valid JSON only:
 
 @with_backoff(max_retries=3, base_delay=2.0, exceptions=(Exception,))
 async def run_gatekeeper(
-    client: genai.Client,
+    client: AsyncOpenAI,
     model: str,
     doc_title: str,
     doc_author: str | None,
@@ -51,11 +51,11 @@ async def run_gatekeeper(
     doc_body_prefix: str,
 ) -> MetadataGatekeeperResult:
     """
-    Send a single Gemini call to evaluate document signal quality.
+    Send a single LLM call to evaluate document signal quality.
 
     Args:
-        client:          Configured google.genai.Client instance.
-        model:           Gemini model ID (e.g. "gemini-2.0-flash").
+        client:          Configured openai.AsyncOpenAI instance (pointed at llama.cpp light server).
+        model:           Model ID (e.g. "gemma3-1b" — fast binary classification).
         doc_title:       Document title.
         doc_author:      Author string or None.
         doc_source:      Source name / DataSource value.
@@ -77,17 +77,17 @@ async def run_gatekeeper(
         f"Body excerpt:\n{doc_body_prefix[:600]}"
     )
 
-    response = await client.aio.models.generate_content(
+    response = await client.chat.completions.create(
         model=model,
-        contents=user_message,
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            response_mime_type="application/json",
-            temperature=0.1,
-        ),
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_message},
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.1,
     )
 
-    raw_text: str = response.text or ""
+    raw_text: str = response.choices[0].message.content or ""
 
     try:
         parsed = _GatekeeperLLMResponse.model_validate(json.loads(raw_text))

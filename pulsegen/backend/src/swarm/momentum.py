@@ -6,7 +6,7 @@ Detects velocity spikes that indicate emerging hot topics.
 
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 
 from src.config import settings
 from src.schemas import TAXONOMY_TAGS, MomentumSnapshot
@@ -45,7 +45,7 @@ class MomentumTracker:
 
         Returns the cycle_ts string that was written.
         """
-        cycle_ts = datetime.utcnow().isoformat()
+        cycle_ts = datetime.now(UTC).isoformat()
 
         rows: list[tuple[str, str, int]] = [
             (tag, cycle_ts, tag_counts.get(tag, 0))
@@ -161,7 +161,7 @@ def _run_trend_job() -> dict[str, object]:
     Falls back gracefully if the legacy module is not present.
     """
     import uuid
-    from datetime import datetime
+    from datetime import UTC, datetime
 
     try:
         conn = sqlite3.connect(settings.generator_db_path)
@@ -180,11 +180,11 @@ def _run_trend_job() -> dict[str, object]:
 
     corpus = "\n\n".join(row[0] for row in rows if row[0])
     run_id = str(uuid.uuid4())
-    collected_at = datetime.utcnow().isoformat()
+    collected_at = datetime.now(UTC).isoformat()
 
     try:
         # Use existing TrendAnalystAgent if the legacy backend is on PYTHONPATH
-        from generator.trend_analyst import TrendAnalystAgent  # type: ignore[import]
+        from generator.trend_analyst import TrendAnalystAgent  # type: ignore[import,unused-ignore]
 
         agent = TrendAnalystAgent()
         result = agent.analyze(corpus)

@@ -6,7 +6,7 @@ DELETE /admin/dead-letter       — flush entire queue
 
 import json
 import logging
-from typing import Any
+from typing import cast
 
 import redis
 from fastapi import APIRouter, HTTPException
@@ -54,7 +54,7 @@ def get_dead_letter(limit: int = 50) -> DeadLetterResponse:
 
     try:
         # LRANGE returns items in order (newest first, since we LPUSH)
-        raw_items = r.lrange(_DEAD_LETTER_KEY, 0, limit - 1)
+        raw_items = cast(list[str], r.lrange(_DEAD_LETTER_KEY, 0, limit - 1))
         items = []
         for raw in raw_items:
             try:
@@ -71,7 +71,7 @@ def get_dead_letter(limit: int = 50) -> DeadLetterResponse:
             except Exception as e:
                 logger.warning("Failed to parse dead-letter item: %s", e)
 
-        count = r.llen(_DEAD_LETTER_KEY) or 0
+        count = cast(int, r.llen(_DEAD_LETTER_KEY)) or 0
         return DeadLetterResponse(items=items, count=count)
     except Exception as exc:
         logger.error("Failed to fetch dead-letter queue: %s", exc)
@@ -87,7 +87,7 @@ def retry_dead_letter_item(index: int) -> dict[str, str]:
 
     try:
         # Get the item at index
-        raw_item = r.lindex(_DEAD_LETTER_KEY, index)
+        raw_item = cast(str | None, r.lindex(_DEAD_LETTER_KEY, index))
         if not raw_item:
             raise HTTPException(status_code=404, detail="Item not found")
 
@@ -96,19 +96,21 @@ def retry_dead_letter_item(index: int) -> dict[str, str]:
         # Re-queue to celery task queue (simplified — would normally reconstruct the task)
         logger.info("Retrying dead-letter item: %s", entry.get("url"))
         return {"status": "queued", "url": entry.get("url", "")}
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.delete("/dead-letter")
-def clear_dead_letter() -> dict[str, str]:
+def clear_dead_letter() -> dict[str, str | int]:
     """Flush entire dead-letter queue."""
     r = _get_redis()
     if r is None:
         raise HTTPException(status_code=503, detail="Redis unavailable")
 
     try:
-        count = r.llen(_DEAD_LETTER_KEY) or 0
+        count = cast(int, r.llen(_DEAD_LETTER_KEY)) or 0
         r.delete(_DEAD_LETTER_KEY)
         return {"status": "cleared", "count": count}
     except Exception as exc:

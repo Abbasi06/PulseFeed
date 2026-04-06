@@ -14,9 +14,9 @@ import functools
 import logging
 import random
 from collections.abc import Callable
-from typing import TypeVar
+from typing import Any, TypeVar
 
-F = TypeVar("F", bound=Callable)
+F = TypeVar("F", bound=Callable[..., Any])
 logger = logging.getLogger(__name__)
 
 
@@ -31,8 +31,8 @@ def with_backoff(
 
     Delay = min(base_delay * 2^attempt + uniform_jitter(0,1), max_delay)
 
-    The jitter term prevents thundering-herd on shared rate-limited APIs
-    (GitHub, Gemini free-tier) when multiple workers retry simultaneously.
+    The jitter term prevents thundering-herd on shared APIs when multiple
+    workers retry simultaneously.
     """
 
     def decorator(fn: F) -> F:
@@ -41,7 +41,7 @@ def with_backoff(
             for attempt in range(max_retries + 1):
                 try:
                     return await fn(*args, **kwargs)
-                except exceptions as exc:  # type: ignore[misc]
+                except exceptions as exc:
                     if attempt == max_retries:
                         logger.error(
                             "%s exhausted %d retries: %s",

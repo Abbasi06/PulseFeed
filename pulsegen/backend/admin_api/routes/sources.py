@@ -3,11 +3,8 @@ GET /admin/sources — per-connector quality records (pass rates, last harvest).
 Reads from SQLite source_quality table (via GENERATOR_DB_PATH).
 """
 
-import json
 import logging
 import sqlite3
-from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel

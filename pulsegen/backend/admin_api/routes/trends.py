@@ -3,10 +3,8 @@ GET /admin/trends/keywords — recent batch of extracted trend keywords
 GET /admin/trends/runs     — run metadata
 """
 
-import json
 import logging
 import sqlite3
-from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel

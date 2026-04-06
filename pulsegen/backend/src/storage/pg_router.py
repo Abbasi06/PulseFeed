@@ -17,6 +17,17 @@ from src.storage.mcp_client import MCPClient
 logger = logging.getLogger(__name__)
 
 
+def _mcp_env() -> dict[str, str]:
+    """Build env vars for the MCP storage subprocess."""
+    import os
+
+    env = dict(os.environ)
+    env["LLM_EMBED_URL"] = settings.llm_embed_url
+    env["LLM_API_KEY"] = settings.llm_api_key
+    env["STORAGE_DATABASE_URL"] = settings.storage_database_url
+    return env
+
+
 def route_to_postgres(payload: StoragePayload) -> StorageConfirmation:
     """
     Persist a fully-processed document to PostgreSQL via two MCP tool calls.
@@ -43,7 +54,7 @@ def route_to_postgres(payload: StoragePayload) -> StorageConfirmation:
     the subprocess is always cleaned up regardless of outcome.
     """
     try:
-        with MCPClient(settings.mcp_storage_command) as mcp:
+        with MCPClient(settings.mcp_storage_command, env=_mcp_env()) as mcp:
             # ── Step 1: Generate embedding ───────────────────────────────────
             embedding_input = (
                 payload.summary + " " + " ".join(payload.bm25_keywords)

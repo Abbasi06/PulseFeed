@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import hashlib
 import re
-from datetime import datetime
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field, field_validator
@@ -53,7 +53,7 @@ TAXONOMY_TAGS: frozenset[str] = frozenset(
 # ─── Data Sources ─────────────────────────────────────────────────────────────
 
 
-class DataSource(str, Enum):
+class DataSource(StrEnum):
     ARXIV = "arxiv"
     GITHUB = "github"
     HACKERNEWS = "hackernews"
@@ -88,23 +88,30 @@ class RawDocument(BaseModel):
     source_id: str | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
-    @computed_field  # type: ignore[misc]
+    @field_validator("url")
+    @classmethod
+    def url_must_be_http(cls, v: str) -> str:
+        if not v.startswith(("http://", "https://")):
+            raise ValueError(f"url must use http or https scheme, got: {v!r}")
+        return v
+
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def content_hash(self) -> str:
         payload = self.url + self.body[:1000]
         return hashlib.sha256(payload.encode()).hexdigest()
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def url_hash(self) -> str:
         return hashlib.sha256(self.url.encode()).hexdigest()
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def word_count(self) -> int:
         return len(self.body.split())
 
-    @computed_field  # type: ignore[misc]
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def has_spam_title(self) -> bool:
         return bool(_SPAM_RE.search(self.title))
@@ -143,9 +150,12 @@ class _GatekeeperLLMResponse(BaseModel):
 
 
 class ExtractedDocument(BaseModel):
-    summary: str = Field(description="Exactly 3 sentences. Dense, technical, specific.")
+    summary: str = Field(
+        max_length=2000,
+        description="Exactly 3 sentences. Dense, technical, specific.",
+    )
     bm25_keywords: list[str] = Field(
-        min_length=5,
+        min_length=1,
         max_length=10,
         description="Specific named entities: framework names, technique names. Not generic terms.",
     )
@@ -167,6 +177,13 @@ class ExtractedDocument(BaseModel):
     @classmethod
     def clean_keywords(cls, v: list[str]) -> list[str]:
         return [kw.strip() for kw in v if kw.strip()]
+
+    @field_validator("image_url")
+    @classmethod
+    def image_url_must_be_https(cls, v: str | None) -> str | None:
+        if v is not None and not v.startswith(("http://", "https://")):
+            raise ValueError(f"image_url must use http or https scheme, got: {v!r}")
+        return v
 
 
 # Raw JSON envelope returned by Gemini for the extractor call
@@ -197,7 +214,7 @@ class StoragePayload(BaseModel):
     document_id: str | None = None
     embedding_id: str | None = None
     pipeline_status: str = "stored"
-    processed_at: datetime = Field(default_factory=datetime.utcnow)
+    processed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class StorageConfirmation(BaseModel):
@@ -209,7 +226,7 @@ class StorageConfirmation(BaseModel):
 # ─── Trend Extraction ────────────────────────────────────────────────────────
 
 
-class TrendCategory(str, Enum):
+class TrendCategory(StrEnum):
     HARDWARE = "Hardware"
     ARCHITECTURE = "Architecture"
     METHODOLOGY = "Methodology"
@@ -236,7 +253,7 @@ class SourceQualityRecord(BaseModel):
     total_fetched: int = 0
     total_passed_gate: int = 0
     total_stored: int = 0
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    last_updated: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def pass_rate(self) -> float:

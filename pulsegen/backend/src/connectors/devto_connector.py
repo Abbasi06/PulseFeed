@@ -70,7 +70,7 @@ class DevtoConnector(BaseConnector):
         try:
             response = await client.get(_BASE_URL, params=params)
             response.raise_for_status()
-            return response.json()
+            return response.json()  # type: ignore[no-any-return]
         except httpx.HTTPError as exc:
             logger.warning("Dev.to tag=%r fetch failed: %s", tag, exc)
             return []

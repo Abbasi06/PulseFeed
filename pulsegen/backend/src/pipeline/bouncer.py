@@ -12,7 +12,7 @@ from src.schemas import BouncerResult, RawDocument
 
 logger = logging.getLogger(__name__)
 
-MIN_WORDS = 300
+MIN_WORDS = 100
 
 
 def run_bouncer(doc: RawDocument) -> BouncerResult:

@@ -5,7 +5,6 @@ Reads from PostgreSQL generator_documents table.
 
 import json
 import logging
-from datetime import datetime
 from typing import Any
 
 import psycopg2
@@ -77,9 +76,9 @@ def get_stats() -> StatsResponse:
                     tag_counts[tag] = tag_counts.get(tag, 0) + 1
             except Exception:
                 pass
-        by_taxonomy = sorted(
+        by_taxonomy: list[dict[str, Any]] = sorted(
             [{"tag": t, "count": c} for t, c in tag_counts.items()],
-            key=lambda x: x["count"],
+            key=lambda x: int(x.get("count") or 0),
             reverse=True,
         )
 

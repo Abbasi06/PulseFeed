@@ -11,9 +11,9 @@ from __future__ import annotations
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timezone
+from datetime import UTC
 
-import arxiv  # type: ignore[import-untyped]
+import arxiv  # type: ignore[import-untyped,unused-ignore]
 
 from src.connectors.base import BaseConnector
 from src.retry import with_backoff
@@ -99,7 +99,7 @@ class ArxivConnector(BaseConnector):
 
                 published_at = None
                 if paper.published is not None:
-                    published_at = paper.published.replace(tzinfo=timezone.utc)
+                    published_at = paper.published.replace(tzinfo=UTC)
 
                 docs.append(
                     RawDocument(

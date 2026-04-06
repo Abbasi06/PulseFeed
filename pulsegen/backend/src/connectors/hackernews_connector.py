@@ -70,7 +70,7 @@ class HackernewsConnector(BaseConnector):
         try:
             response = await client.get(_SEARCH_URL, params=params)
             response.raise_for_status()
-            return response.json().get("hits", [])
+            return response.json().get("hits", [])  # type: ignore[no-any-return]
         except httpx.HTTPError as exc:
             logger.warning("HN search failed for query=%r: %s", query, exc)
             return []

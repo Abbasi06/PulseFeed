@@ -81,7 +81,7 @@ def _tool_upsert(arguments: dict[str, Any]) -> dict[str, Any]:
     vector = _embed(text, "RETRIEVAL_DOCUMENT")
     _collection.upsert(
         ids=[doc_id],
-        embeddings=[vector],  # type: ignore[arg-type]
+        embeddings=[vector],
         documents=[text],
         metadatas=[metadata],
     )
@@ -104,7 +104,7 @@ def _tool_search(arguments: dict[str, Any]) -> dict[str, Any]:
     raw = _collection.query(**query_kwargs)
     ids: list[str] = raw["ids"][0] if raw["ids"] else []
     distances: list[float] = raw["distances"][0] if raw["distances"] else []
-    metadatas: list[dict[str, Any]] = raw["metadatas"][0] if raw["metadatas"] else []  # type: ignore[assignment]
+    metadatas: list[dict[str, Any]] = raw["metadatas"][0] if raw["metadatas"] else []  # type: ignore[assignment,unused-ignore]
 
     results = [
         {"id": ids[i], "distance": distances[i], "metadata": metadatas[i]}
