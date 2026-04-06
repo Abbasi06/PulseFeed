@@ -46,19 +46,23 @@ const LiveTerminal = () => (
     </div>
     <div className="p-4 space-y-2 text-ink">
       <motion.p animate={{ opacity: [0, 1] }} transition={{ delay: 0.2 }}>
-        <span className="font-bold">[09:44:01] SWARM_INIT</span>: Binding to port 8080...
+        <span className="font-bold">[09:44:01] SWARM_INIT</span>: Binding to
+        port 8080...
       </motion.p>
       <motion.p animate={{ opacity: [0, 1] }} transition={{ delay: 0.8 }}>
-        <span className="font-bold">[09:44:12] INGEST_ARXIV</span>: Extracting [arXiv:2403.00123]
+        <span className="font-bold">[09:44:12] INGEST_ARXIV</span>: Extracting
+        [arXiv:2403.00123]
       </motion.p>
       <motion.p animate={{ opacity: [0, 1] }} transition={{ delay: 1.4 }}>
-        <span className="font-bold text-clay">[09:44:15] SYNTHESIS</span>: Validating high-signal entities.
+        <span className="font-bold text-clay">[09:44:15] SYNTHESIS</span>:
+        Validating high-signal entities.
       </motion.p>
       <motion.p
         animate={{ opacity: [0, 1] }}
         transition={{ repeat: Infinity, repeatDelay: 5 }}
       >
-        <span className="font-bold">[09:44:18] ALIGN</span>: 12 GitHub repos mapped for 'KV-Cache'.
+        <span className="font-bold">[09:44:18] ALIGN</span>: 12 GitHub repos
+        mapped for 'KV-Cache'.
       </motion.p>
     </div>
   </div>
@@ -105,8 +109,11 @@ const OrbitingIcon = ({
 
 export default function WhyUs() {
   return (
-    <section className="relative w-full py-32 bg-paper font-sans selection:bg-clay selection:text-paper border-b-4 border-ink">
-      <div className="container mx-auto px-6 max-w-7xl">
+    <section
+      id="why-us"
+      className="relative z-10 w-full py-32 bg-paper font-sans selection:bg-clay selection:text-paper border-b-4 border-ink"
+    >
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
         {/* Section Head */}
         <div className="text-center mb-20 border-b-2 border-ink pb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-ink mb-6 bg-paper">
@@ -130,7 +137,9 @@ export default function WhyUs() {
               [/] Component // Continuous Sourcing & Vectorization
             </div>
             <p className="font-mono text-sm text-ink max-w-2xl mx-auto leading-relaxed border-l-4 border-ink pl-4 text-left">
-              The engine operates at the intersection of retrieval and reasoning. It extracts pure signal from raw firehoses to build a persistent context graph.
+              The engine operates at the intersection of retrieval and
+              reasoning. It extracts pure signal from raw firehoses to build a
+              persistent context graph.
             </p>
           </div>
 
@@ -200,7 +209,8 @@ export default function WhyUs() {
               Zero-Latency Synthesis
             </h4>
             <p className="font-mono text-xs leading-relaxed uppercase tracking-widest opacity-80">
-              The cascade pre-computes context before requested—ensuring immediate retrieval with zero cold-starts.
+              The cascade pre-computes context before requested—ensuring
+              immediate retrieval with zero cold-starts.
             </p>
           </div>
 
@@ -212,7 +222,8 @@ export default function WhyUs() {
               Hyper-Personalized
             </h4>
             <p className="font-mono text-xs leading-relaxed uppercase tracking-widest opacity-80">
-              Beyond keywords. The swarm maps evolving technical boundaries and strips away marketing noise.
+              Beyond keywords. The swarm maps evolving technical boundaries and
+              strips away marketing noise.
             </p>
           </div>
         </div>

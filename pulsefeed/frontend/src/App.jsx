@@ -79,7 +79,11 @@ const fade = {
 const landingExit = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: 0.4, ease: "easeOut" } },
-  exit: { opacity: 0, x: -60, transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } },
+  exit: {
+    opacity: 0,
+    x: -60,
+    transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] },
+  },
 };
 
 const slideFromRight = {
@@ -151,13 +155,12 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   const location = useLocation();
-  const isLandingOrOnboarding = ["/", "/onboarding"].includes(location.pathname);
-  const isLanding = location.pathname === "/";
+  const isOnboarding = location.pathname === "/onboarding";
 
   return (
     <>
-      {/* Persistent neural background — stays mounted across landing ↔ onboarding */}
-      {isLandingOrOnboarding && <WarpBackground bright={isLanding} />}
+      {/* Particle network — onboarding only; landing uses a clean paper background */}
+      {isOnboarding && <WarpBackground />}
 
       <Suspense fallback={<Pulse />}>
         <AnimatePresence mode="sync" initial={false}>

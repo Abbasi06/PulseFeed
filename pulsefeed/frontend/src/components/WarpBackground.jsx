@@ -2,11 +2,11 @@ import { useEffect, useRef } from "react";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 const NODE_COUNT = 45;
-const CONNECT_RADIUS = 0.26;  // fraction of min(W,H)
-const PULSE_SPEED = 2.8;   // px per frame
-const PULSE_EVERY = 220;   // frames between new pulses
-const REPEL_RADIUS = 130;   // px — mouse pushes nodes away gently
-const FLASH_DURATION = 110;   // frames for activation bloom to decay
+const CONNECT_RADIUS = 0.26; // fraction of min(W,H)
+const PULSE_SPEED = 2.8; // px per frame
+const PULSE_EVERY = 220; // frames between new pulses
+const REPEL_RADIUS = 130; // px — mouse pushes nodes away gently
+const FLASH_DURATION = 110; // frames for activation bloom to decay
 
 // Ink & Clay Aesthetic Colors
 const INK_COLOR = "#231F20";
@@ -35,7 +35,7 @@ function buildNodes(W, H) {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function WarpBackground({ bright = false }) {
+export default function WarpBackground() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -58,7 +58,10 @@ export default function WarpBackground({ bright = false }) {
       pulses = [];
     }
 
-    function onMouseMove(e) { mouse.x = e.clientX / W; mouse.y = e.clientY / H; }
+    function onMouseMove(e) {
+      mouse.x = e.clientX / W;
+      mouse.y = e.clientY / H;
+    }
     function onTouchMove(e) {
       if (!e.touches.length) return;
       mouse.x = e.touches[0].clientX / W;
@@ -84,7 +87,9 @@ export default function WarpBackground({ bright = false }) {
       if (!edges.length) return;
       const e = edges[Math.floor(Math.random() * edges.length)];
       pulses.push({
-        i: e.i, j: e.j, d: e.d,
+        i: e.i,
+        j: e.j,
+        d: e.d,
         progress: 0,
         reverse: Math.random() > 0.5,
       });
@@ -106,14 +111,14 @@ export default function WarpBackground({ bright = false }) {
 
       // Move nodes + mouse repulsion + scroll-linked drift + wrap
       for (const n of nodes) {
-        n.x += n.vx + (scrollDrift * 0.3 * Math.sin(n.phase));
-        n.y += n.vy - (scrollDrift * 0.15);
+        n.x += n.vx + scrollDrift * 0.3 * Math.sin(n.phase);
+        n.y += n.vy - scrollDrift * 0.15;
 
         const dx = n.x - mx;
         const dy = n.y - my;
         const d = Math.sqrt(dx * dx + dy * dy);
         if (d < REPEL_RADIUS && d > 0) {
-          const force = (REPEL_RADIUS - d) / REPEL_RADIUS * 0.4;
+          const force = ((REPEL_RADIUS - d) / REPEL_RADIUS) * 0.4;
           n.x += (dx / d) * force;
           n.y += (dy / d) * force;
         }
@@ -211,7 +216,8 @@ export default function WarpBackground({ bright = false }) {
 
     // Scroll tracking for canvas sync
     const onScroll = () => {
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
       scrollProgress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -237,7 +243,7 @@ export default function WarpBackground({ bright = false }) {
         aria-hidden="true"
         className="fixed inset-0 z-0 pointer-events-none opacity-20 mix-blend-multiply"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
       />
     </>
