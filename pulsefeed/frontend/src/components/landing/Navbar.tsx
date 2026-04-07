@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import PulseFeedIcon from "../PulseFeedIcon";
+import Logo from "../Logo";
 
 // Maps each nav label to the section id it scrolls to
 const NAV_LINKS = [
@@ -33,13 +33,10 @@ export default function Navbar() {
         {/* Left: logo + nav links grouped together */}
         <div className="flex items-center gap-8">
           <div
-            className="flex items-center gap-2.5 cursor-pointer select-none shrink-0"
+            className="cursor-pointer select-none shrink-0"
             onClick={() => navigate("/")}
           >
-            <PulseFeedIcon size={18} color="var(--color-ink)" />
-            <span className="text-sm font-display font-bold tracking-tight text-ink uppercase">
-              PulseFeed
-            </span>
+            <Logo size={30} variant="word" color="dark" />
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
