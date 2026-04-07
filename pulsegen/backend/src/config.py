@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     # ── MCP server commands ───────────────────────────────────────────────────
-    mcp_sql_command: str = "uv run python -m mcp_servers.sql_server"
-    mcp_storage_command: str = "uv run python -m mcp_servers.storage_server"
+    # Use system python directly (Dockerfile installs with --system, no venv).
+    # Avoids uv lock contention when many Celery threads spawn MCP subprocesses.
+    mcp_sql_command: str = "/usr/local/bin/python3 -m mcp_servers.sql_server"
+    mcp_storage_command: str = "/usr/local/bin/python3 -m mcp_servers.storage_server"
 
     # ── Optional sources ─────────────────────────────────────────────────────
     github_token: str | None = None

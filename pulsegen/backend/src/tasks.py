@@ -304,12 +304,14 @@ def gatekeeper_task(self: Any, raw_doc_dict: dict[str, Any]) -> None:
     from openai import AsyncOpenAI
 
     doc = RawDocument.model_validate(raw_doc_dict)
-    # Light model server — fast binary classification, low RAM
-    client = AsyncOpenAI(base_url=settings.llm_light_url, api_key=settings.llm_api_key)
 
-    try:
-        gate = asyncio.run(
-            run_gatekeeper(
+    async def _run() -> Any:
+        # Create the client inside the event loop so its cleanup runs before loop close.
+        client = AsyncOpenAI(
+            base_url=settings.llm_light_url, api_key=settings.llm_api_key
+        )
+        try:
+            return await run_gatekeeper(
                 client=client,
                 model=settings.gatekeeper_model,
                 doc_title=doc.title,
@@ -317,7 +319,11 @@ def gatekeeper_task(self: Any, raw_doc_dict: dict[str, Any]) -> None:
                 doc_source=doc.source.value,
                 doc_body_prefix=doc.body[:600],
             )
-        )
+        finally:
+            await client.close()
+
+    try:
+        gate = asyncio.run(_run())
     except Exception as exc:
         logger.warning("gatekeeper failed for '%s': %s", doc.title[:60], exc)
         raise self.retry(exc=exc, countdown=self.default_retry_delay)
@@ -345,6 +351,7 @@ def gatekeeper_task(self: Any, raw_doc_dict: dict[str, Any]) -> None:
     bind=True,
     max_retries=6,
     default_retry_delay=90,
+    queue="extractor",  # dedicated queue — run with --concurrency=1
 )
 def extractor_task(
     self: Any,
@@ -355,20 +362,31 @@ def extractor_task(
     LLM Step 2: deep extraction.
     Extracts summary, keywords, taxonomy tags, image URL.
     """
-    from openai import AsyncOpenAI
-
     doc = RawDocument.model_validate(raw_doc_dict)
-    # Heavy model server — accurate structured extraction, complex JSON schema
-    client = AsyncOpenAI(base_url=settings.llm_heavy_url, api_key=settings.llm_api_key)
 
-    try:
-        extracted = asyncio.run(
-            run_extractor(
+    async def _run() -> Any:
+        # Create the client inside the event loop so its cleanup runs before loop close.
+        # 120s timeout: heavy model takes 50-80s; this prevents indefinite queue waits
+        # that cause cancel storms on the llama.cpp server.
+        from openai import AsyncOpenAI as _AsyncOpenAI
+        from openai import Timeout as _Timeout
+
+        client = _AsyncOpenAI(
+            base_url=settings.llm_heavy_url,
+            api_key=settings.llm_api_key,
+            timeout=_Timeout(connect=10.0, read=120.0, write=10.0, pool=10.0),
+        )
+        try:
+            return await run_extractor(
                 client=client,
                 model=settings.extractor_model,
                 body=doc.body,
             )
-        )
+        finally:
+            await client.close()
+
+    try:
+        extracted = asyncio.run(_run())
     except Exception as exc:
         logger.warning("extractor failed for '%s': %s", doc.title[:60], exc)
         raise self.retry(exc=exc, countdown=self.default_retry_delay)

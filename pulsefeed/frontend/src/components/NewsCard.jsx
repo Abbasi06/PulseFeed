@@ -17,15 +17,27 @@ function topicClass(topic) {
 function sourceBadge(source) {
   const s = (source || "").toLowerCase();
   if (s.includes("arxiv"))
-    return { label: "ArXiv", cls: "bg-deep-purple/90 text-white border border-deep-purple/50" };
+    return {
+      label: "ArXiv",
+      cls: "bg-deep-purple/90 text-white border border-deep-purple/50",
+    };
   if (s.includes("github"))
-    return { label: "GitHub", cls: "bg-space-black/80 text-text-primary border border-deep-purple/30" };
+    return {
+      label: "GitHub",
+      cls: "bg-space-black/80 text-text-primary border border-deep-purple/30",
+    };
   if (s.includes("youtube"))
-    return { label: "YT", cls: "bg-neon-pink/90 text-white border border-neon-pink/50" };
+    return {
+      label: "YT",
+      cls: "bg-neon-pink/90 text-white border border-neon-pink/50",
+    };
   if (s.includes("medium") || s.includes("dev.to"))
     return { label: source, cls: "bg-neon-cyan/90 text-space-black" };
   if (s.includes("ycombinator") || s.includes("hacker news"))
-    return { label: "HN", cls: "bg-deep-purple/50 text-white border border-deep-purple/40" };
+    return {
+      label: "HN",
+      cls: "bg-deep-purple/50 text-white border border-deep-purple/40",
+    };
   return null;
 }
 
@@ -239,7 +251,9 @@ export default function NewsCard({
               </span>
             )}
             {source && source !== "Unknown" && (
-              <span className="text-xs text-text-secondary/80 truncate">{source}</span>
+              <span className="text-xs text-text-secondary/80 truncate">
+                {source}
+              </span>
             )}
           </div>
           <span className="text-[10px] text-text-secondary/60 uppercase tracking-wide shrink-0">

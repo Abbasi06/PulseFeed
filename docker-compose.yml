@@ -110,7 +110,7 @@ services:
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -134,9 +134,28 @@ services:
       GENERATOR_DB_PATH: /data/generator.db
     volumes:
       - generator_db:/data
-    command: celery -A src.celery_app worker --pool=threads --concurrency=8 --loglevel=info -Q generator
+    # Handles harvest + gatekeeper + storage (not extractor — that has its own worker)
+    command: celery -A src.celery_app worker --pool=threads --concurrency=6 --loglevel=info -Q generator,celery
     deploy:
-      replicas: 2
+      replicas: 1
+
+  pulsegen_extractor:
+    build:
+      context: ./pulsegen/backend
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *shared-env
+      GENERATOR_DB_PATH: /data/generator.db
+    volumes:
+      - generator_db:/data
+    # Single-threaded: heavy model has 1 slot; no thundering herd
+    command: celery -A src.celery_app worker --pool=threads --concurrency=1 --loglevel=info -Q extractor
 
   pulsegen_beat:
     build:
@@ -173,7 +192,7 @@ services:
     ports:
       - "8001:8001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 10s
       timeout: 5s
       retries: 5

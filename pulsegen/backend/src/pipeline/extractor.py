@@ -82,10 +82,11 @@ async def run_extractor(
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": body[:8000]},
+            {"role": "user", "content": body[:4000]},
         ],
         response_format={"type": "json_object"},
         temperature=0.2,
+        max_tokens=512,
     )
 
     raw_text: str = response.choices[0].message.content or ""

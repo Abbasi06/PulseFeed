@@ -56,24 +56,28 @@ const fragmentShader = `
   }
 `;
 
-export default function AntigravityField({ inView = true }: { inView?: boolean }) {
+export default function AntigravityField({
+  inView = true,
+}: {
+  inView?: boolean;
+}) {
   const pointsRef = useRef<THREE.Points>(null);
   const { viewport } = useThree();
 
   const { geometry, material } = useMemo(() => {
-    const posArr   = new Float32Array(PARTICLE_COUNT * 3);
-    const colArr   = new Float32Array(PARTICLE_COUNT * 3);
-    const idxArr   = new Float32Array(PARTICLE_COUNT);
+    const posArr = new Float32Array(PARTICLE_COUNT * 3);
+    const colArr = new Float32Array(PARTICLE_COUNT * 3);
+    const idxArr = new Float32Array(PARTICLE_COUNT);
     const colorMint = new THREE.Color("#D1E8E2");
     const colorPink = new THREE.Color("#B7397A");
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      posArr[i * 3]     = (Math.random() - 0.5) * 40;
+      posArr[i * 3] = (Math.random() - 0.5) * 40;
       posArr[i * 3 + 1] = (Math.random() - 0.5) * 40;
       posArr[i * 3 + 2] = (Math.random() - 0.5) * 20 - 10;
 
       const c = Math.random() > 0.5 ? colorMint : colorPink;
-      colArr[i * 3]     = c.r;
+      colArr[i * 3] = c.r;
       colArr[i * 3 + 1] = c.g;
       colArr[i * 3 + 2] = c.b;
 
@@ -82,21 +86,21 @@ export default function AntigravityField({ inView = true }: { inView?: boolean }
 
     const geo = new THREE.BufferGeometry();
     // basePosition = rest position (static), position = required by Three.js
-    geo.setAttribute("position",     new THREE.BufferAttribute(posArr.slice(), 3));
+    geo.setAttribute("position", new THREE.BufferAttribute(posArr.slice(), 3));
     geo.setAttribute("basePosition", new THREE.BufferAttribute(posArr, 3));
-    geo.setAttribute("aColor",       new THREE.BufferAttribute(colArr, 3));
-    geo.setAttribute("aIndex",       new THREE.BufferAttribute(idxArr, 1));
+    geo.setAttribute("aColor", new THREE.BufferAttribute(colArr, 3));
+    geo.setAttribute("aIndex", new THREE.BufferAttribute(idxArr, 1));
 
     const mat = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
-        uTime:  { value: 0 },
+        uTime: { value: 0 },
         uMouse: { value: new THREE.Vector3(999, 999, 0) },
       },
       transparent: true,
-      depthWrite:  false,
-      blending:    THREE.AdditiveBlending,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
     });
 
     return { geometry: geo, material: mat };
@@ -116,7 +120,7 @@ export default function AntigravityField({ inView = true }: { inView?: boolean }
     const u = (pointsRef.current.material as THREE.ShaderMaterial).uniforms;
     u.uTime.value = state.clock.elapsedTime;
     u.uMouse.value.set(
-      (state.pointer.x * viewport.width)  / 2,
+      (state.pointer.x * viewport.width) / 2,
       (state.pointer.y * viewport.height) / 2,
       0,
     );

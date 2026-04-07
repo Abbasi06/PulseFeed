@@ -37,12 +37,12 @@ def _open_generator_pg() -> psycopg2.extensions.connection | None:
     """Open PostgreSQL connection to shared database. Returns None if unavailable."""
     import os
 
-    url = os.environ.get("STORAGE_DATABASE_URL")
+    url = os.environ.get("STORAGE_DATABASE_URL") or os.environ.get("DATABASE_URL")
     if not url:
         logger.warning("STORAGE_DATABASE_URL not set — generator pool unavailable")
         return None
     try:
-        conn = psycopg2.connect(url)
+        conn = psycopg2.connect(url, connect_timeout=5)
         return conn
     except Exception as exc:
         logger.warning("Could not connect to generator PostgreSQL: %s", exc)
@@ -79,7 +79,7 @@ def _build_fts_query(user: User) -> str:
         if clean:
             query_parts.append(clean)
 
-    return " | ".join(query_parts) if query_parts else ""
+    return " OR ".join(query_parts) if query_parts else ""
 
 
 def _fts_search(
@@ -105,7 +105,7 @@ def _fts_search(
             FROM generator_documents
             WHERE to_tsvector('english', COALESCE(summary, '') || ' ' ||
                               COALESCE(array_to_string(bm25_keywords, ' '), ''))
-                  @@ plainto_tsquery('english', %s)
+                  @@ websearch_to_tsquery('english', %s)
             ORDER BY processed_at DESC
             LIMIT %s
             """,
@@ -216,30 +216,41 @@ async def personalize_feed(user_id: int, db: Session) -> list[dict[str, Any]]:
     """
     Async personalisation entry point. Queries PostgreSQL for matching content.
     Returns empty list if the pool is unavailable or insufficient.
+
+    psycopg2 is synchronous; all DB work is offloaded to a thread-pool executor
+    via asyncio.to_thread so the event loop is never blocked.
     """
+    import asyncio
+
     user = db.get(User, user_id)
     if user is None:
         raise ValueError(f"User {user_id} not found")
 
-    conn = _open_generator_pg()
-    if conn is None:
+    fts_query = _build_fts_query(user)
+
+    def _blocking_search() -> list[dict[str, Any]]:
+        conn = _open_generator_pg()
+        if conn is None:
+            return []
+        try:
+            return _fts_search(conn, fts_query, limit=20)
+        finally:
+            conn.close()
+
+    rows = await asyncio.to_thread(_blocking_search)
+
+    if not rows:
         logger.info("Generator pool unavailable — returning empty feed for user %d", user_id)
         return []
 
-    try:
-        fts_query = _build_fts_query(user)
-        rows = _fts_search(conn, fts_query, limit=20)
+    if len(rows) < MIN_FTS_RESULTS:
+        logger.info(
+            "Only %d FTS results for user %d — generator pool insufficient",
+            len(rows),
+            user_id,
+        )
+        return []
 
-        if len(rows) < MIN_FTS_RESULTS:
-            logger.info(
-                "Only %d FTS results for user %d — generator pool insufficient",
-                len(rows),
-                user_id,
-            )
-            return []
-
-        items = _rows_to_feed_items(rows, user_id)
-        logger.info("personalize_feed user=%d: %d items from generator pool", user_id, len(items))
-        return items
-    finally:
-        conn.close()
+    items = _rows_to_feed_items(rows, user_id)
+    logger.info("personalize_feed user=%d: %d items from generator pool", user_id, len(items))
+    return items

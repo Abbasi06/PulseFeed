@@ -22,14 +22,10 @@ function RoleCard({ role, selected, onSelect }) {
       type="button"
       onClick={() => onSelect(role)}
       className={`flex-1 flex flex-col items-center gap-2 px-3 py-4 rounded-none border-2 transition-none text-center interactive-snap ${
-        selected
-          ? colors.card
-          : "border-ink bg-paper text-ink"
+        selected ? colors.card : "border-ink bg-paper text-ink"
       }`}
     >
-      <Icon
-        className={`w-6 h-6 ${selected ? colors.cardIcon : "text-ink"}`}
-      />
+      <Icon className={`w-6 h-6 ${selected ? colors.cardIcon : "text-ink"}`} />
       <div>
         <p
           className={`text-sm font-display uppercase tracking-tight ${selected ? colors.cardLabel : "font-bold"}`}
@@ -54,9 +50,7 @@ function SubChip({ label, selected, onToggle, colors }) {
       type="button"
       onClick={() => onToggle(label)}
       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-tight border-2 transition-none interactive-snap ${
-        selected
-          ? colors.chip
-          : "border-ink bg-paper text-ink"
+        selected ? colors.chip : "border-ink bg-paper text-ink"
       }`}
     >
       {selected && (

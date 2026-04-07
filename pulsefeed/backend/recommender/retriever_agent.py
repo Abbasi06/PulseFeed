@@ -17,27 +17,21 @@ import os
 import sys
 from typing import Any
 
-from google import genai
-from google.genai import types as gtypes
+from openai import OpenAI
 
 from .mcp_client import MCPClient
 from .schemas import CandidateDocument, UserProfile
 
 logger = logging.getLogger(__name__)
 
-_EMBEDDING_MODEL = "models/gemini-embedding-001"
+_EMBEDDING_MODEL = "nomic-embed-text"
+_EMBED_URL = os.environ.get("LLM_EMBED_URL", "http://host.docker.internal:8082/v1")
+_API_KEY = os.environ.get("LLM_API_KEY", "local")
 
 
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
-
-
-def _gemini_client() -> genai.Client:
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY is not set")
-    return genai.Client(api_key=api_key)
 
 
 def _get_server_cmd(module: str) -> list[str]:
@@ -59,7 +53,7 @@ class RetrieverAgent:
     """Synchronous Stage-1 retriever: profile → embedding → hybrid search → candidates."""
 
     def __init__(self) -> None:
-        self._client = _gemini_client()
+        self._client = OpenAI(base_url=_EMBED_URL, api_key=_API_KEY)
 
     def retrieve(
         self,
@@ -82,19 +76,17 @@ class RetrieverAgent:
     # ------------------------------------------------------------------
 
     def _embed_profile(self, profile: UserProfile) -> list[float]:
-        """Embed the user profile into a 768-dim query vector via Gemini."""
+        """Embed the user profile into a 768-dim query vector via Ollama."""
         profile_text = (
             f"{profile.field}. "
             f"{' '.join(profile.subfields)}. "
             f"{' '.join(profile.recent_search_history[:5])}"
         )
-        response = self._client.models.embed_content(
+        response = self._client.embeddings.create(
             model=_EMBEDDING_MODEL,
-            contents=profile_text,
-            config=gtypes.EmbedContentConfig(task_type="RETRIEVAL_QUERY"),
+            input=profile_text,
         )
-        embeddings = response.embeddings or []
-        values: list[float] = list(embeddings[0].values or [])
+        values: list[float] = response.data[0].embedding
         logger.info(
             "Profile embedded: user_id=%d, dims=%d", profile.user_id, len(values)
         )

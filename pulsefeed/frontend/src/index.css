@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 @import url("https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,800,900&display=swap");
 @import url("https://cdn.jsdelivr.net/npm/geist@1.0.3/dist/fonts/geist-sans/style.css");
 @import "tailwindcss";
 
 @theme {
-  --color-paper: #FDFCF8;
-  --color-ink: #231F20;
-  --color-clay: #D97757;
-  --color-nautical: #26498D;
+  --color-paper: #fdfcf8;
+  --color-ink: #231f20;
+  --color-clay: #d97757;
+  --color-nautical: #26498d;
   --color-steel: #8a8a8a;
 
   --font-display: "Space Mono", "Courier New", monospace;

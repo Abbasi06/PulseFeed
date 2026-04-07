@@ -29,9 +29,7 @@ export default function DashboardLayout() {
       {/* ── Mobile top bar ── */}
       <div className="md:hidden fixed top-0 inset-x-0 z-30 bg-space-black/90 backdrop-blur-md border-b border-deep-purple/30 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 bg-gradient-to-br from-neon-pink to-steel-blue"
-          >
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 bg-gradient-to-br from-neon-pink to-steel-blue">
             {initials || "?"}
           </div>
           <span className="text-base font-bold text-text-primary">

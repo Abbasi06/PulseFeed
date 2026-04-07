@@ -100,7 +100,9 @@ function BriefTab({ brief, loading, error, onRetry }) {
             <PulseFeedIcon size={11} className="shrink-0" />
             <span>Today's Brief</span>
             {loading && (
-              <span className="text-[10px] text-text-secondary">generating…</span>
+              <span className="text-[10px] text-text-secondary">
+                generating…
+              </span>
             )}
             {error && !loading && (
               <span className="text-[10px] text-neon-pink">retry</span>
@@ -228,7 +230,8 @@ const TYPE_COLORS = {
 
 function EventCard({ name, date, location, type, url, reason }) {
   const safeUrl = url && url !== "#" ? url : null;
-  const typeCls = TYPE_COLORS[type] ?? "bg-space-black/80 border border-deep-purple/40";
+  const typeCls =
+    TYPE_COLORS[type] ?? "bg-space-black/80 border border-deep-purple/40";
   return (
     <div className="liquid-glass p-4 space-y-3 hover:-translate-y-0.5 flex flex-col">
       {type && (
@@ -248,7 +251,9 @@ function EventCard({ name, date, location, type, url, reason }) {
           {name}
         </a>
       ) : (
-        <p className="text-sm font-bold text-text-primary leading-snug">{name}</p>
+        <p className="text-sm font-bold text-text-primary leading-snug">
+          {name}
+        </p>
       )}
       <div className="flex flex-col gap-1.5 text-xs text-text-secondary">
         {date && (

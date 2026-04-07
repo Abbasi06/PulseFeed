@@ -24,11 +24,9 @@ export default function Footer() {
 
   return (
     <footer className="relative w-full bg-paper text-ink font-sans overflow-hidden z-10">
-      
       {/* ── TOP LAYER: The Grid ── */}
       <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-10 pt-24 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-0">
-          
           {/* Left: Tagline (spans 5 cols) */}
           <div className="md:col-span-5 flex flex-col justify-between">
             <div>
@@ -72,13 +70,38 @@ export default function Footer() {
         {/* Legal bottom row */}
         <div className="mt-16 pt-6 border-t border-ink/10 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] font-mono font-bold uppercase tracking-widest text-ink/30">
           <div className="flex gap-6">
-            <a href="#" className="hover:text-ink transition-colors duration-200">About</a>
-            <a href="#" className="hover:text-ink transition-colors duration-200">Privacy</a>
-            <a href="#" className="hover:text-ink transition-colors duration-200">Terms</a>
+            <a
+              href="#"
+              className="hover:text-ink transition-colors duration-200"
+            >
+              About
+            </a>
+            <a
+              href="#"
+              className="hover:text-ink transition-colors duration-200"
+            >
+              Privacy
+            </a>
+            <a
+              href="#"
+              className="hover:text-ink transition-colors duration-200"
+            >
+              Terms
+            </a>
           </div>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-ink transition-colors duration-200">X/Twitter</a>
-            <a href="#" className="hover:text-ink transition-colors duration-200">GitHub</a>
+            <a
+              href="#"
+              className="hover:text-ink transition-colors duration-200"
+            >
+              X/Twitter
+            </a>
+            <a
+              href="#"
+              className="hover:text-ink transition-colors duration-200"
+            >
+              GitHub
+            </a>
           </div>
         </div>
       </div>

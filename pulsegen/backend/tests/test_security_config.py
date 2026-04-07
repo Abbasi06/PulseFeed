@@ -163,17 +163,17 @@ class TestEnvVarOverride:
 
 
 class TestCommandDefaults:
-    def test_mcp_sql_command_uses_uv(self) -> None:
+    def test_mcp_sql_command_uses_python(self) -> None:
         from src.config import Settings
 
         cmd = Settings.model_fields["mcp_sql_command"].default
-        assert cmd and "uv" in str(cmd), "MCP SQL command should use uv run"
+        assert cmd and "python" in str(cmd), "MCP SQL command should invoke python"
 
-    def test_mcp_storage_command_uses_uv(self) -> None:
+    def test_mcp_storage_command_uses_python(self) -> None:
         from src.config import Settings
 
         cmd = Settings.model_fields["mcp_storage_command"].default
-        assert cmd and "uv" in str(cmd), "MCP storage command should use uv run"
+        assert cmd and "python" in str(cmd), "MCP storage command should invoke python"
 
     def test_mcp_commands_do_not_use_shell_eval(self) -> None:
         """Shell metacharacters in default MCP commands would allow injection."""

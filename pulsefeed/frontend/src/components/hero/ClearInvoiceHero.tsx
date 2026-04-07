@@ -23,13 +23,20 @@ export default function ClearInvoiceHero() {
   const isInView = useInView(containerRef);
 
   return (
-    <div ref={containerRef} className="relative w-full min-h-screen bg-true-black text-off-white overflow-hidden font-sans">
+    <div
+      ref={containerRef}
+      className="relative w-full min-h-screen bg-true-black text-off-white overflow-hidden font-sans"
+    >
       {/* 5px Gradient Top Bar */}
       <div className="absolute top-0 left-0 w-full h-[5px] bg-gradient-to-r from-steel-blue via-aurora-pink to-mint-glow z-50" />
 
       {/* 3D Particle Engine Canvas */}
       <div className="absolute inset-0 z-[-20]">
-        <Canvas frameloop={isInView ? "always" : "never"} camera={{ position: [0, 0, 15], fov: 45 }} dpr={[1, 2]}>
+        <Canvas
+          frameloop={isInView ? "always" : "never"}
+          camera={{ position: [0, 0, 15], fov: 45 }}
+          dpr={[1, 2]}
+        >
           <ambientLight intensity={0.5} />
           <AntigravityField inView={isInView} />
         </Canvas>

@@ -49,15 +49,38 @@ class DevtoConnector(BaseConnector):
 
         # Sort by reactions descending for highest-signal first
         filtered.sort(key=lambda a: a.get("positive_reactions_count") or 0, reverse=True)
+        top = filtered[:max_results]
+
+        # Fetch full bodies in parallel (list API omits body_markdown)
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            enrich_tasks = [self._fetch_full_body(client, a) for a in top]
+            enriched: list[dict] = list(await asyncio.gather(*enrich_tasks))
 
         docs: list[RawDocument] = []
-        for article in filtered[:max_results]:
+        for article in enriched:
             doc = self._to_raw_document(article)
             if doc is not None:
                 docs.append(doc)
 
         logger.info("Dev.to fetched %d articles", len(docs))
         return docs
+
+    async def _fetch_full_body(
+        self, client: httpx.AsyncClient, article: dict
+    ) -> dict:
+        """Fetch full article from /api/articles/{id} to get body_markdown."""
+        article_id = article.get("id")
+        if not article_id:
+            return article
+        try:
+            response = await client.get(f"{_BASE_URL}/{article_id}")
+            response.raise_for_status()
+            full: dict = response.json()
+            if full.get("body_markdown"):
+                return {**article, "body_markdown": full["body_markdown"]}
+        except httpx.HTTPError as exc:
+            logger.warning("Dev.to full fetch failed id=%s: %s", article_id, exc)
+        return article
 
     async def _fetch_tag(
         self, client: httpx.AsyncClient, tag: str, max_results: int

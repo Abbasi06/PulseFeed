@@ -54,7 +54,7 @@ class RawDocument(BaseModel):
 
 
 class MetadataGatekeeperResult(BaseModel):
-    """Phase 2 LLM output from gemini-2.5-flash-lite."""
+    """Phase 2 LLM output from gemma4 via llama.cpp."""
 
     is_high_signal: bool
     confidence: float = Field(..., ge=0.0, le=1.0)
@@ -76,7 +76,7 @@ TAXONOMY_TAGS: frozenset[str] = frozenset([
 
 
 class ExtractedDocument(BaseModel):
-    """Phase 3 LLM output from gemini-2.5-flash."""
+    """Phase 3 LLM output from gemma4 via llama.cpp."""
 
     summary: str = Field(..., min_length=1, max_length=1000)
     bm25_keywords: list[str] = Field(..., min_length=5, max_length=10)

@@ -27,7 +27,7 @@ def _parse_hf_paper(paper: dict) -> RawDocument | None:
 
     arxiv_id: str = paper_data.get("id") or ""
     title: str = paper_data.get("title") or ""
-    abstract: str = paper_data.get("abstract") or ""
+    abstract: str = paper_data.get("summary") or paper_data.get("abstract") or ""
 
     if not arxiv_id or not title:
         return None

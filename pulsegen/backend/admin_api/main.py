@@ -20,6 +20,8 @@ Endpoints:
 
 import logging
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +32,60 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
 )
 
+_TABLE_DDL = """
+    CREATE EXTENSION IF NOT EXISTS vector;
+    CREATE TABLE IF NOT EXISTS generator_documents (
+        id                    UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+        source                TEXT        NOT NULL,
+        source_id             TEXT,
+        url                   TEXT        NOT NULL,
+        url_hash              TEXT        NOT NULL UNIQUE,
+        content_hash          TEXT        NOT NULL,
+        title                 TEXT        NOT NULL,
+        author                TEXT,
+        published_at          TIMESTAMPTZ,
+        summary               TEXT        NOT NULL DEFAULT '',
+        bm25_keywords         TEXT[]      NOT NULL DEFAULT '{}',
+        taxonomy_tags         TEXT        NOT NULL DEFAULT '[]',
+        image_url             TEXT        NOT NULL DEFAULT '',
+        gatekeeper_confidence FLOAT       NOT NULL DEFAULT 0.0,
+        pipeline_status       TEXT        NOT NULL DEFAULT 'stored',
+        processed_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        embedding             vector(768)
+    );
+    CREATE INDEX IF NOT EXISTS idx_gendocs_source ON generator_documents(source);
+    CREATE INDEX IF NOT EXISTS idx_gendocs_processed_at ON generator_documents(processed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_gendocs_url_hash ON generator_documents(url_hash);
+"""
+
+
+def _bootstrap_db() -> None:
+    """Ensure generator_documents table exists on startup."""
+    db_url = os.environ.get("STORAGE_DATABASE_URL", "")
+    if not db_url:
+        logger.warning("STORAGE_DATABASE_URL not set — skipping DB bootstrap")
+        return
+    try:
+        import psycopg2
+
+        conn = psycopg2.connect(db_url, connect_timeout=5)
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            for statement in _TABLE_DDL.strip().split(";"):
+                stmt = statement.strip()
+                if stmt:
+                    cur.execute(stmt)
+        conn.close()
+        logger.info("generator_documents table ready")
+    except Exception as exc:
+        logger.warning("DB bootstrap warning: %s", exc)
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+    _bootstrap_db()
+    yield
+
 # CORS: restricted to pulsegen_web (3001) and localhost
 _ALLOWED_ORIGINS = [
     "http://localhost:3001",
@@ -39,7 +95,7 @@ _ALLOWED_ORIGINS = [
       if os.environ.get("PULSEGEN_ADMIN_ALLOWED_ORIGIN") else []),
 ]
 
-app = FastAPI(title="PulseGen Admin API")
+app = FastAPI(title="PulseGen Admin API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

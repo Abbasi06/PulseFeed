@@ -19,6 +19,7 @@ def create_user(
         selected_chips=payload.selected_chips,
         field=payload.field,
         sub_fields=payload.sub_fields,
+        refresh_interval_hours=payload.refresh_interval_hours,
     )
     db.add(user)
     db.commit()
@@ -71,6 +72,7 @@ def update_user(
     user.field = payload.field
     user.sub_fields = payload.sub_fields
     user.preferred_formats = payload.preferred_formats
+    user.refresh_interval_hours = payload.refresh_interval_hours
     db.commit()
     db.refresh(user)
     return user

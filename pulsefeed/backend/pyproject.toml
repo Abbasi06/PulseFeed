@@ -14,8 +14,8 @@ dependencies = [
     # Auth
     "passlib[bcrypt]>=1.7.4",
     "python-jose[cryptography]>=3.5.0",
-    # AI (Google Gemini)
-    "google-genai>=1.0",
+    # Ollama via OpenAI-compatible API
+    "openai>=1.0",
     # Utilities
     "httpx>=0.27",
     "pydantic>=2.7",
@@ -28,6 +28,7 @@ dependencies = [
 python_version = "3.13"
 strict = false
 ignore_missing_imports = true
+explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = [

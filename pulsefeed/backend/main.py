@@ -29,8 +29,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger(__name__)
 
-# Load .env from service directory
-load_dotenv(Path(__file__).parent / ".env")
+# Load .env — service dir first, then repo root as fallback (neither overrides already-set vars)
+_service_env = Path(__file__).parent / ".env"
+_root_env = Path(__file__).parents[2] / ".env"
+load_dotenv(_service_env)
+load_dotenv(_root_env)
 
 from database import Base, engine  # noqa: E402
 from routes import events, feed, feed_v2, users  # noqa: E402
@@ -51,6 +54,7 @@ def _run_migrations() -> None:
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_formats TEXT NOT NULL DEFAULT '[]'",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS field TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS sub_fields TEXT NOT NULL DEFAULT '[]'",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS refresh_interval_hours INTEGER NOT NULL DEFAULT 6",
         (
             "CREATE TABLE IF NOT EXISTS feed_briefs ("
             "id SERIAL PRIMARY KEY, "
@@ -61,6 +65,9 @@ def _run_migrations() -> None:
             "watch TEXT NOT NULL DEFAULT '[]', "
             "generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())"
         ),
+        # Performance indexes — safe to re-run (IF NOT EXISTS)
+        "CREATE INDEX IF NOT EXISTS idx_feed_items_user_fetched ON feed_items(user_id, fetched_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_events_user_fetched ON events(user_id, fetched_at DESC)",
     ]
     with engine.connect() as conn:
         for sql in migrations:
@@ -70,9 +77,10 @@ def _run_migrations() -> None:
 
 def _batch_repersonalize() -> None:
     """
-    Every 5 minutes: re-personalize feeds for users whose cached feed is
-    stale (>30 min old). Uses PostgreSQL FTS matching only — no Gemini calls,
-    no external network requests. Skips users if generator pool has no matches.
+    Every 5 minutes: re-personalize feeds for users whose cached feed is stale.
+    Staleness is determined per-user by their refresh_interval_hours setting (3 or 6 hrs).
+    Uses PostgreSQL FTS matching only — no external LLM calls.
+    Skips users if generator pool has no matches.
     """
     from datetime import datetime, timedelta, timezone
 
@@ -82,22 +90,25 @@ def _batch_repersonalize() -> None:
     from models import FeedBrief, FeedItem, User
     from routes.feed import _save_items
 
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+    now = datetime.now(timezone.utc)
     db = Session(engine)
     try:
-        # Users with a stale or absent feed
-        fresh_subq = (
-            db.query(FeedItem.user_id)
-            .filter(FeedItem.fetched_at >= cutoff)  # type: ignore[operator]
-            .distinct()
-            .subquery()
-        )
-        stale_user_ids = [
-            row[0]
-            for row in db.query(User.id)
-            .filter(User.id.notin_(fresh_subq))  # type: ignore[attr-defined, arg-type]
-            .all()
-        ]
+        users: list[User] = db.query(User).all()  # type: ignore[assignment]
+        stale_user_ids: list[int] = []
+
+        for user in users:
+            ttl_hours = int(getattr(user, "refresh_interval_hours", 6))
+            cutoff = now - timedelta(hours=ttl_hours)
+            latest_at = (
+                db.query(FeedItem.fetched_at)
+                .filter(FeedItem.user_id == user.id)
+                .order_by(FeedItem.fetched_at.desc())  # type: ignore[attr-defined]
+                .limit(1)
+                .scalar()
+            )
+            if latest_at is None or latest_at.replace(tzinfo=timezone.utc) < cutoff:
+                stale_user_ids.append(user.id)
+
         if not stale_user_ids:
             return
 
@@ -121,10 +132,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Base.metadata.create_all(bind=engine)
     _run_migrations()
 
-    if not os.environ.get("GEMINI_API_KEY"):
+    if not os.environ.get("LLM_LIGHT_URL"):
         logger.warning(
-            "GEMINI_API_KEY is not set — v2 feed generation will be unavailable; "
-            "v1 feed uses PostgreSQL FTS via PulseGen generator_documents table"
+            "LLM_LIGHT_URL is not set — defaulting to http://host.docker.internal:8080/v1; "
+            "ensure llama.cpp light server (gemma3-1b) is running on port 8080"
         )
 
     # Redis for rate limiting — fail-open if unavailable
@@ -163,7 +174,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(title="PulseFeed API", lifespan=lifespan)
 
 _ALLOWED_ORIGINS = [
-    # local dev
+    # local dev — Vite (5173-5182) + production frontend (3000)
+    "http://localhost:3000",
     *[f"http://localhost:{p}" for p in range(5173, 5183)],
     # production — set ALLOWED_ORIGIN env var to your domain
     *([o.strip() for o in os.environ["ALLOWED_ORIGIN"].split(",")]

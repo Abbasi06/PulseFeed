@@ -52,7 +52,8 @@ class RateLimiter:
             )
             return
 
-        window_bucket = int(time.time() // self.window)
+        now = time.time()
+        window_bucket = int(now // self.window)
         key = f"rl:{self.scope}:{identifier}:{window_bucket}"
 
         try:
@@ -71,7 +72,7 @@ class RateLimiter:
             return
 
         if count > self.limit:
-            retry_after = self.window - (int(time.time()) % self.window)
+            retry_after = max(1, self.window - int(now) % self.window)
             raise HTTPException(
                 status_code=429,
                 detail=(

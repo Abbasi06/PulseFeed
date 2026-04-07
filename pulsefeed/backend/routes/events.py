@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import time
 from datetime import datetime, timedelta, timezone
@@ -16,26 +15,35 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
-CACHE_TTL_HOURS = 6
+DEFAULT_CACHE_TTL_HOURS = 6
 REFRESH_COOLDOWN_SECONDS = 60
 
 _last_refresh: dict[int, float] = {}
 _generating: set[int] = set()
 
 
-def _is_stale(fetched_at: datetime) -> bool:
+def _get_user_ttl(user_id: int, db: Session) -> int:
+    """Return the user's configured refresh interval in hours (defaults to 6)."""
+    user = db.get(User, user_id)
+    if user is None:
+        return DEFAULT_CACHE_TTL_HOURS
+    return int(getattr(user, "refresh_interval_hours", DEFAULT_CACHE_TTL_HOURS))
+
+
+def _is_stale(fetched_at: datetime, ttl_hours: int) -> bool:
     age = datetime.now(timezone.utc) - fetched_at.replace(tzinfo=timezone.utc)
-    return age > timedelta(hours=CACHE_TTL_HOURS)
+    return age > timedelta(hours=ttl_hours)
 
 
 def _is_cache_warm(user_id: int, db: Session) -> bool:
-    """Return True if the newest event is within the cache TTL."""
+    """Return True if the newest event is within the user's cache TTL."""
+    ttl_hours = _get_user_ttl(user_id, db)
     latest_at = (
         db.query(func.max(Event.fetched_at))
         .filter(Event.user_id == user_id)
         .scalar()
     )
-    return latest_at is not None and not _is_stale(latest_at)
+    return latest_at is not None and not _is_stale(latest_at, ttl_hours)
 
 
 def _check_cooldown(user_id: int) -> None:

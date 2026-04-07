@@ -11,6 +11,14 @@ class UserCreate(BaseModel):
     selected_chips: list[str] = Field(..., min_length=1, max_length=5)
     field: str = Field(default="", max_length=100)
     sub_fields: list[str] = Field(default_factory=list, max_length=10)
+    refresh_interval_hours: int = Field(default=6)
+
+    @field_validator("refresh_interval_hours")
+    @classmethod
+    def validate_refresh_interval(cls, v: int) -> int:
+        if v not in (3, 6):
+            raise ValueError("refresh_interval_hours must be 3 or 6")
+        return v
 
     @field_validator("name", "occupation", mode="before")
     @classmethod
@@ -71,6 +79,14 @@ class UserUpdate(BaseModel):
     field: str = Field(default="", max_length=100)
     sub_fields: list[str] = Field(default_factory=list, max_length=10)
     preferred_formats: list[str] = Field(default_factory=list)
+    refresh_interval_hours: int = Field(default=6)
+
+    @field_validator("refresh_interval_hours")
+    @classmethod
+    def validate_refresh_interval(cls, v: int) -> int:
+        if v not in (3, 6):
+            raise ValueError("refresh_interval_hours must be 3 or 6")
+        return v
 
     @field_validator("name", "occupation", mode="before")
     @classmethod
@@ -136,6 +152,7 @@ class UserRead(BaseModel):
     selected_chips: list[str]
     sub_fields: list[str]
     preferred_formats: list[str]
+    refresh_interval_hours: int
 
 
 class FeedRead(BaseModel):

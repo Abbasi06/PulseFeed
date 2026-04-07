@@ -6,7 +6,7 @@ user's feedback history, drops items scoring below 0.4, and returns the top
 20 as a lightweight mobile-ready payload that gets written to Redis cache.
 
 This is the RL personalisation layer. Once sufficient interaction data exists,
-the Gemini scoring call can be replaced with a trained DPO/PPO reward model
+the gemma4 scoring call can be replaced with a trained DPO/PPO reward model
 without changing the surrounding pipeline.
 """
 
@@ -19,8 +19,7 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from google import genai
-from google.genai import types as gtypes
+from openai import OpenAI
 
 from .mcp_client import MCPClient
 from .prompts import build_validator_prompt
@@ -35,20 +34,9 @@ logger = logging.getLogger(__name__)
 
 SCORE_THRESHOLD = 0.4
 TOP_N = 20
-_VALIDATOR_MODEL = "gemini-2.5-flash"
-_JSON_CONFIG = gtypes.GenerateContentConfig(response_mime_type="application/json")
-
-
-# ---------------------------------------------------------------------------
-# Module-level helpers
-# ---------------------------------------------------------------------------
-
-
-def _gemini_client() -> genai.Client:
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY is not set")
-    return genai.Client(api_key=api_key)
+_VALIDATOR_MODEL = os.environ.get("VALIDATOR_MODEL", "gemma3-1b")
+_LIGHT_URL = os.environ.get("LLM_LIGHT_URL", "http://host.docker.internal:8080/v1")
+_API_KEY = os.environ.get("LLM_API_KEY", "local")
 
 
 def _get_server_cmd(module: str) -> list[str]:
@@ -64,7 +52,7 @@ class ValidatorNode:
     """Stage-2 validator: score candidates → filter → rank → cache feed."""
 
     def __init__(self) -> None:
-        self._client = _gemini_client()
+        self._client = OpenAI(base_url=_LIGHT_URL, api_key=_API_KEY)
 
     def validate(
         self,
@@ -137,16 +125,16 @@ class ValidatorNode:
         candidates: list[CandidateDocument],
         feedback: UserFeedbackHistory,
     ) -> list[ValidatedFeedItem]:
-        """Call Gemini to score each candidate; map results to ValidatedFeedItem."""
+        """Call LLM to score each candidate; map results to ValidatedFeedItem."""
         candidates_dicts = [c.model_dump() for c in candidates]
         prompt = build_validator_prompt(candidates_dicts, feedback)
 
-        response = self._client.models.generate_content(
+        response = self._client.chat.completions.create(
             model=_VALIDATOR_MODEL,
-            contents=prompt,
-            config=_JSON_CONFIG,
+            messages=[{"role": "user", "content": prompt}],
+            response_format={"type": "json_object"},
         )
-        score_lookup = _parse_scores(response.text or "")
+        score_lookup = _parse_scores(response.choices[0].message.content or "")
         return [_to_feed_item(c, score_lookup) for c in candidates]
 
 
@@ -156,7 +144,7 @@ class ValidatorNode:
 
 
 def _parse_scores(raw_text: str) -> dict[int, float]:
-    """Parse Gemini's JSON array response into an id→score lookup dict."""
+    """Parse the LLM's JSON array response into an id→score lookup dict."""
     text = raw_text.strip()
     if text.startswith("```"):
         parts = text.split("```")

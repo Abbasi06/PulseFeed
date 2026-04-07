@@ -13,7 +13,7 @@ import * as THREE from "three";
 import { useInView } from "framer-motion";
 
 const BLACK_HOLE_POS = new THREE.Vector3(-11, -7, -6);
-const GRAVITY = 0.00018; 
+const GRAVITY = 0.00018;
 const MOON_BASE = new THREE.Vector3(9, 5.5, -4);
 const SINGULARITY_BASE = new THREE.Vector3(-11, -7, -6);
 
@@ -245,32 +245,24 @@ function DataSingularity() {
       {/* Core Dotted */}
       <mesh>
         <icosahedronGeometry args={[1.4, 0]} />
-        <meshBasicMaterial 
-          color={INK_COLOR} 
-          wireframe={true} 
-          transparent 
-          opacity={0.25} 
+        <meshBasicMaterial
+          color={INK_COLOR}
+          wireframe={true}
+          transparent
+          opacity={0.25}
         />
       </mesh>
 
       {/* Ink Ring 1 */}
       <mesh ref={ring1Ref} rotation={[Math.PI / 4, 0, 0]}>
         <torusGeometry args={[2.2, 0.02, 16, 100]} />
-        <meshBasicMaterial
-          color={INK_COLOR}
-          transparent
-          opacity={0.4}
-        />
+        <meshBasicMaterial color={INK_COLOR} transparent opacity={0.4} />
       </mesh>
 
       {/* Ink Ring 2 */}
       <mesh ref={ring2Ref} rotation={[Math.PI / 3.5, 0.4, 0]}>
         <torusGeometry args={[3.0, 0.01, 16, 100]} />
-        <meshBasicMaterial
-          color={INK_COLOR}
-          transparent
-          opacity={0.2}
-        />
+        <meshBasicMaterial color={INK_COLOR} transparent opacity={0.2} />
       </mesh>
     </group>
   );
@@ -324,16 +316,32 @@ function Navigator() {
       <mesh position={[0, 0.12, -0.4]} material={inkMaterial}>
         <boxGeometry args={[0.38, 0.52, 0.2]} />
       </mesh>
-      <mesh position={[-0.48, 0.18, 0]} rotation={[0, 0, 0.6]} material={inkMaterial}>
+      <mesh
+        position={[-0.48, 0.18, 0]}
+        rotation={[0, 0, 0.6]}
+        material={inkMaterial}
+      >
         <capsuleGeometry args={[0.1, 0.42, 4, 6]} />
       </mesh>
-      <mesh position={[0.48, 0.18, 0]} rotation={[0, 0, -0.6]} material={inkMaterial}>
+      <mesh
+        position={[0.48, 0.18, 0]}
+        rotation={[0, 0, -0.6]}
+        material={inkMaterial}
+      >
         <capsuleGeometry args={[0.1, 0.42, 4, 6]} />
       </mesh>
-      <mesh position={[-0.2, -0.88, 0]} rotation={[0, 0, 0.12]} material={inkMaterial}>
+      <mesh
+        position={[-0.2, -0.88, 0]}
+        rotation={[0, 0, 0.12]}
+        material={inkMaterial}
+      >
         <capsuleGeometry args={[0.12, 0.38, 4, 6]} />
       </mesh>
-      <mesh position={[0.2, -0.88, 0]} rotation={[0, 0, -0.12]} material={inkMaterial}>
+      <mesh
+        position={[0.2, -0.88, 0]}
+        rotation={[0, 0, -0.12]}
+        material={inkMaterial}
+      >
         <capsuleGeometry args={[0.12, 0.38, 4, 6]} />
       </mesh>
     </group>
@@ -370,7 +378,11 @@ export default function AtmosphericBackground() {
   const isInView = useInView(containerRef);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-0 bg-paper" aria-hidden="true">
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-0 bg-paper"
+      aria-hidden="true"
+    >
       <Canvas
         frameloop={isInView ? "always" : "never"}
         camera={{ position: [0, 0, 15], fov: 65 }}

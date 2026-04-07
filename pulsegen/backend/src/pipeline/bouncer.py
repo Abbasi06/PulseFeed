@@ -14,24 +14,30 @@ logger = logging.getLogger(__name__)
 
 MIN_WORDS = 100
 
+# Link aggregators (HN) have short bodies by design — lower the bar for them
+_SOURCE_MIN_WORDS: dict[str, int] = {
+    "hackernews": 30,
+}
+
 
 def run_bouncer(doc: RawDocument) -> BouncerResult:
     """
     Purely programmatic filter. No LLM calls.
 
     Rejection reasons:
-    - "too_short"   — doc.word_count < MIN_WORDS
+    - "too_short"   — doc.word_count < min threshold (source-specific)
     - "spam_title"  — doc.has_spam_title is True
 
     Word count check runs first so callers can log meaningful metrics;
     spam check runs second so both reasons are distinguishable.
     """
-    if doc.word_count < MIN_WORDS:
+    min_words = _SOURCE_MIN_WORDS.get(str(doc.source), MIN_WORDS)
+    if doc.word_count < min_words:
         logger.warning(
             "Bouncer rejected '%s': too_short (%d words, min=%d)",
             doc.title,
             doc.word_count,
-            MIN_WORDS,
+            min_words,
         )
         return BouncerResult(
             passed=False,
