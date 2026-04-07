@@ -8,11 +8,13 @@ const CY = 310;
 
 const RINGS = Array.from({ length: 28 }, (_, i) => {
   const t = i / 27;
+  // Rings near the text (first 8) get a brightness boost
+  const glow = Math.max(0, 1 - i / 8);
   return {
-    r: 175 + t * 370, // 175 → 545
-    baseWidth: i % 4 === 0 ? 1.2 : 0.55,
-    baseOpacity: 0.75 - t * 0.65, // 0.75 → 0.10
-    gapLen: (6 + t * 18).toFixed(1), // 6 → 24
+    r: 260 + t * 300, // 260 → 560 — inner ring now frames the title
+    baseWidth: i % 4 === 0 ? 1.4 : 0.65,
+    baseOpacity: Math.min(0.95, 0.75 - t * 0.65 + glow * 0.35), // inner rings brighter
+    gapLen: (6 + t * 18).toFixed(1),
     rotateDur: 300 + i * 20,
     reverse: i % 2 === 0,
   };
@@ -35,25 +37,49 @@ const WAVE_PERIOD = 6;
 const RING_STAGGER = 0.09;
 const PULSE_DUR = 0.9;
 
+// Orange spark dots — 2–3 per ring at fixed angles, flash clay during ripple
+const SPARKS = RINGS.flatMap((ring, ri) => {
+  const count = 2 + (ri % 2); // 2 or 3 per ring
+  return Array.from({ length: count }, (_, j) => {
+    const angle = (ri * 1.618 + j * ((Math.PI * 2) / count)) % (Math.PI * 2);
+    return {
+      x: CX + Math.cos(angle) * ring.r,
+      y: CY + Math.sin(angle) * ring.r,
+      ri,
+    };
+  });
+});
+
 function buildRingCSS(): string {
   const base = `
     @keyframes rcw  { to { transform: rotate( 360deg); } }
     @keyframes rccw { to { transform: rotate(-360deg); } }
   `;
 
+  const peakPct = (((PULSE_DUR * 0.15) / WAVE_PERIOD) * 100).toFixed(2);
+  const endPct = ((PULSE_DUR / WAVE_PERIOD) * 100).toFixed(2);
+
   const perRing = RINGS.map((ring, i) => {
     const peakW = (ring.baseWidth * 2.5).toFixed(2);
     const peakO = Math.min(ring.baseOpacity + 0.72, 0.95).toFixed(2);
-    const peakPct = (((PULSE_DUR * 0.15) / WAVE_PERIOD) * 100).toFixed(2);
-    const endPct = ((PULSE_DUR / WAVE_PERIOD) * 100).toFixed(2);
 
-    return (
+    // Blue ring pulse
+    const ringKF =
       `@keyframes rp${i}{` +
       `0%{stroke:#26498D;stroke-width:${ring.baseWidth};opacity:${ring.baseOpacity};animation-timing-function:ease-out}` +
       `${peakPct}%{stroke:#26498D;stroke-width:${peakW};opacity:${peakO};animation-timing-function:ease-out}` +
       `${endPct}%,100%{stroke:#26498D;stroke-width:${ring.baseWidth};opacity:${ring.baseOpacity}}` +
-      `}`
-    );
+      `}`;
+
+    // Orange spark flash — invisible normally, pop to clay at ripple peak
+    const sparkKF =
+      `@keyframes sp${i}{` +
+      `0%,${(parseFloat(peakPct) * 0.7).toFixed(2)}%{opacity:0}` +
+      `${peakPct}%{opacity:0.9}` +
+      `${endPct}%,100%{opacity:0}` +
+      `}`;
+
+    return ringKF + sparkKF;
   });
 
   return base + perRing.join("\n");
@@ -128,6 +154,24 @@ function RadarField() {
           </g>
         );
       })}
+
+      {/* Orange spark dots — fixed positions, flash clay at ripple peak */}
+      {SPARKS.map((spark, i) => {
+        const delay = (spark.ri * RING_STAGGER).toFixed(3);
+        return (
+          <circle
+            key={`spark-${i}`}
+            cx={spark.x}
+            cy={spark.y}
+            r={1.4}
+            fill="#D97757"
+            opacity={0}
+            style={{
+              animation: `sp${spark.ri} ${WAVE_PERIOD}s ${delay}s linear infinite`,
+            }}
+          />
+        );
+      })}
     </svg>
   );
 }
@@ -155,16 +199,39 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.4, duration: 0.8 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          className="absolute bottom-8 right-10 flex items-end gap-3"
         >
-          <span className="text-ink font-mono text-[10px] tracking-[0.25em] uppercase">
-            ↓ Scroll
+          {/* Animated vertical line */}
+          <div className="flex flex-col items-center gap-1">
+            <motion.div
+              animate={{ scaleY: [0, 1, 0] }}
+              transition={{
+                duration: 1.6,
+                repeat: Infinity,
+                ease: [0.16, 1, 0.3, 1],
+                repeatDelay: 0.3,
+              }}
+              className="w-px h-12 bg-ink origin-top"
+            />
+            <span
+              className="font-mono text-[10px] leading-none"
+              style={{ color: "#D97757" }}
+            >
+              o
+            </span>
+          </div>
+
+          {/* Vertical label */}
+          <span
+            className="font-mono text-[9px] tracking-[0.3em] uppercase"
+            style={{
+              writingMode: "vertical-rl",
+              transform: "rotate(180deg)",
+              color: "rgba(35,31,32,0.5)",
+            }}
+          >
+            Scr<span style={{ color: "#D97757" }}>o</span>ll
           </span>
-          <motion.div
-            animate={{ scaleY: [1, 0.35, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-10 bg-ink origin-top"
-          />
         </motion.div>
       </div>
 
