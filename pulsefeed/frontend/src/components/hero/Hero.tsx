@@ -112,17 +112,6 @@ function RadarField() {
         <style>{RING_CSS}</style>
       </defs>
 
-      {DOTS.map((d, i) => (
-        <circle
-          key={`dot-${i}`}
-          cx={d.x}
-          cy={d.y}
-          r={d.r}
-          fill="var(--color-nautical)"
-          opacity={d.o}
-        />
-      ))}
-
       {RINGS.map((ring, i) => {
         const delay = (i * RING_STAGGER).toFixed(3);
 
@@ -186,14 +175,31 @@ export default function Hero() {
       <div className="relative z-20 w-full min-h-screen flex items-center justify-center border-b border-ink overflow-hidden">
         <RadarField />
 
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.94 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
-          className="relative z-10 text-[clamp(4rem,12vw,10rem)] font-bold leading-[0.85] tracking-tighter text-center select-none font-display uppercase"
+        {/* Live badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="absolute top-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 px-3 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-widest whitespace-nowrap"
         >
-          Pulse <br /> Feed
-        </motion.h1>
+          <motion.span
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity }}
+            className="w-1.5 h-1.5 rounded-full bg-clay inline-block"
+          />
+          Swarm Active — Ingesting Now
+        </motion.div>
+
+        <div className="relative z-10 flex flex-col items-center gap-5">
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+            className="text-[clamp(5rem,15vw,13rem)] font-bold leading-[0.85] tracking-tighter text-center select-none font-display uppercase"
+          >
+            Pulse <br /> Feed
+          </motion.h1>
+        </div>
 
         <motion.div
           initial={{ opacity: 0 }}

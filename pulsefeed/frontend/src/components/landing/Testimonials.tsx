@@ -3,104 +3,139 @@ import { motion } from "framer-motion";
 const testimonials = [
   {
     quote:
-      "PulseFeed has completely replaced my morning Twitter scroll. It's the highest signal-to-noise ratio I've ever experienced.",
+      "PulseFeed replaced my entire morning research routine. The signal-to-noise ratio is unlike anything else I've used.",
     author: "Sarah Jenkins",
     role: "ML Engineer",
+    tag: "[T.01]",
   },
   {
     quote:
-      "I used to spend 5 hours a week searching for relevant AI papers. Now they just show up in my feed.",
+      "I used to spend five hours a week hunting ArXiv. Now the right papers just show up — summarized and ready.",
     author: "David Chen",
-    role: "Ph.D. Researcher",
+    role: "PhD Researcher",
+    tag: "[T.02]",
   },
   {
     quote:
-      "The personalized synthesis is mind-blowing. It reads like a newsletter written by my smartest colleague.",
+      "It reads like a newsletter written by my smartest colleague. Except it covers everything, every day.",
     author: "Elena Rodriguez",
-    role: "Product Manager",
+    role: "Staff Engineer",
+    tag: "[T.03]",
   },
   {
     quote:
-      "We deployed PulseFeed for our entire engineering team and saw our internal knowledge sharing 10x overnight.",
+      "We rolled it out to the full engineering team. Internal knowledge sharing went through the roof overnight.",
     author: "Marcus Vance",
     role: "CTO",
+    tag: "[T.04]",
   },
   {
     quote:
-      "Finally, a tool that respects my time and intelligence. No clickbait, just pure knowledge.",
+      "Finally a tool that respects my time and intelligence. Zero clickbait. Just architecture and signal.",
     author: "Dr. Amanda White",
     role: "Data Scientist",
+    tag: "[T.05]",
   },
   {
     quote:
-      "It's like having an army of research assistants reading the entire internet for me.",
+      "It's like having an army of research assistants reading the entire technical internet — and distilling it.",
     author: "James Oliver",
     role: "Tech Lead",
+    tag: "[T.06]",
   },
 ];
 
 export default function Testimonials() {
   return (
-    <section className="relative w-full py-24 bg-[#010101] overflow-hidden font-sans border-t border-white/5">
-      {/* Background radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[#7c3aed]/10 blur-[150px] rounded-full pointer-events-none" />
-
-      <div className="container mx-auto px-6 max-w-7xl relative z-10">
-        <div className="text-center mb-20">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-4"
-          >
-            Loved by builders
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-white/50"
-          >
-            Join thousands of professionals staying ahead of the curve.
-          </motion.p>
+    <section className="relative z-10 w-full bg-paper font-sans border-b-4 border-ink">
+      {/* Section header */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-20 border-b-2 border-ink">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 border border-ink mb-6 bg-paper">
+              <span className="text-[11px] font-mono font-bold tracking-widest uppercase text-ink">
+                [/] Field Reports
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold tracking-tighter text-ink uppercase leading-[0.9]">
+              Trusted by <br />
+              <span className="italic text-clay">Engineers.</span>
+            </h2>
+          </div>
+          <p className="font-mono text-xs uppercase tracking-widest text-ink max-w-xs leading-relaxed border-l-2 border-ink pl-4">
+            6 field reports from engineers and researchers who eliminated manual
+            research entirely.
+          </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {testimonials.map((testimonial, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className="p-8 rounded-3xl bg-[rgba(28,27,36,0.2)] border border-white/5 hover:bg-[rgba(28,27,36,0.4)] transition-colors duration-300 backdrop-blur-md"
-            >
-              <div className="flex gap-1 mb-6">
-                {[...Array(5)].map((_, j) => (
-                  <svg
-                    key={j}
-                    className="w-5 h-5 text-[#B7397A]"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+      {/* 3×2 testimonial grid */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
+        <div className="border-x-2 border-b-2 border-ink">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-ink">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={t.tag}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{
+                  duration: 0.7,
+                  delay: (i % 3) * 0.1,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className="bg-paper p-8 lg:p-10 flex flex-col gap-6 group hover:bg-ink transition-none cursor-default"
+              >
+                {/* Tag + large quote mark */}
+                <div className="flex items-start justify-between">
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-clay uppercase">
+                    {t.tag}
+                  </span>
+                  <span
+                    className="text-5xl font-display font-bold leading-none text-ink/10 group-hover:text-paper/10 select-none"
+                    aria-hidden="true"
                   >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-white/80 text-lg leading-relaxed mb-8">
-                "{testimonial.quote}"
-              </p>
-              <div>
-                <h4 className="font-bold text-white tracking-tight">
-                  {testimonial.author}
-                </h4>
-                <p className="text-sm font-medium text-white/40">
-                  {testimonial.role}
+                    "
+                  </span>
+                </div>
+
+                {/* Quote */}
+                <p className="text-[13px] md:text-sm font-sans leading-relaxed text-ink group-hover:text-paper flex-1">
+                  "{t.quote}"
                 </p>
-              </div>
-            </motion.div>
-          ))}
+
+                {/* Author */}
+                <div className="border-t border-ink group-hover:border-paper/20 pt-4">
+                  <div className="font-display font-bold text-sm uppercase tracking-tight text-ink group-hover:text-paper">
+                    {t.author}
+                  </div>
+                  <div className="font-mono text-[10px] uppercase tracking-widest text-ink/50 group-hover:text-paper/50 mt-0.5">
+                    {t.role}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom strip */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 border-t-0">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="w-3 h-3 border border-ink"
+                style={{
+                  background: i < 5 ? "var(--color-clay)" : "transparent",
+                }}
+              />
+            ))}
+          </div>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-ink/50 font-bold">
+            5.0 avg · 200+ field engineers
+          </span>
         </div>
       </div>
     </section>
