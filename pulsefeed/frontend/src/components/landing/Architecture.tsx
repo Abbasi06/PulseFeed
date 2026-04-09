@@ -1,208 +1,261 @@
-import { motion } from "framer-motion";
-import { Database, Cpu, Globe, Layers, Share2 } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { Database, Cpu, Globe, Layers, Share2, ArrowRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import Pulsar from "../ui/Pulsar";
-
-// ── Types ──────────────────────────────────────────────────────────────────
+import { useRef } from "react";
 
 interface NodeData {
   icon: LucideIcon;
   title: string;
   desc: string;
+  tag: string;
+  delay: number;
 }
 
-// ── Data ───────────────────────────────────────────────────────────────────
-
 const NODES: NodeData[] = [
-  { icon: Globe, title: "Sourcing_Agent", desc: "Scraping ArXiv & Repos" },
-  { icon: Database, title: "Vector_DB", desc: "High-Dim Embeddings" },
-  { icon: Cpu, title: "Synthesis_LLM", desc: "Agentic Reasoners" },
-  { icon: Layers, title: "Delivery_Node", desc: "Cached Print Sync" },
+  {
+    icon: Globe,
+    title: "Sourcing_Agent",
+    desc: "Scrapes ArXiv, GitHub repos, and technical blogs in real time.",
+    tag: "LAYER.01",
+    delay: 0,
+  },
+  {
+    icon: Database,
+    title: "Vector_DB",
+    desc: "High-dimensional embeddings for semantic deduplication and ranking.",
+    tag: "LAYER.02",
+    delay: 0.1,
+  },
+  {
+    icon: Cpu,
+    title: "Synthesis_LLM",
+    desc: "Agentic reasoner distilling raw content into 3-sentence briefs.",
+    tag: "LAYER.03",
+    delay: 0.2,
+  },
+  {
+    icon: Layers,
+    title: "Delivery_Node",
+    desc: "Pre-computed context synced across devices with zero cold-starts.",
+    tag: "LAYER.04",
+    delay: 0.3,
+  },
 ];
 
-// ── Node card ──────────────────────────────────────────────────────────────
+// ── Flow step card ─────────────────────────────────────────────────────────
 
-function NodeCard({
+function FlowCard({
   icon: Icon,
   title,
   desc,
-  className = "",
-}: NodeData & { className?: string }) {
+  tag,
+  delay,
+  index,
+}: NodeData & { index: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+
   return (
-    <div
-      className={`p-4 border-2 border-ink bg-paper flex flex-col items-center text-center
-                  transition-all duration-300 group
-                  hover:bg-clay hover:border-clay hover:text-paper ${className}`}
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 32 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      className="relative flex flex-col gap-4 p-8 bg-paper border-2 border-ink group hover:bg-ink transition-none"
     >
-      <div
-        className="w-10 h-10 border border-ink bg-paper flex items-center justify-center mb-3
-                      group-hover:border-paper group-hover:bg-paper/20 transition-all duration-300"
-      >
-        <Icon size={18} className="text-ink group-hover:text-paper" />
+      {/* Tag */}
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-clay">
+          {tag}
+        </span>
+        <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink/30 group-hover:text-paper/30">
+          {String(index + 1).padStart(2, "0")}
+        </span>
       </div>
-      <h4
-        className="text-[10px] font-bold font-mono text-ink mb-1 uppercase tracking-widest
-                     px-2 border-b border-ink pb-1 w-full
-                     group-hover:text-paper group-hover:border-paper"
+
+      {/* Icon */}
+      <div className="w-12 h-12 border-2 border-ink flex items-center justify-center group-hover:border-paper group-hover:bg-paper/10 transition-none">
+        <Icon size={20} className="text-ink group-hover:text-paper" />
+      </div>
+
+      {/* Text */}
+      <div>
+        <h4 className="font-mono font-bold text-sm uppercase tracking-widest text-ink group-hover:text-paper mb-2">
+          {title}
+        </h4>
+        <p className="font-sans text-[13px] text-ink/60 group-hover:text-paper/60 leading-relaxed">
+          {desc}
+        </p>
+      </div>
+
+      {/* Bottom pulse indicator */}
+      <div
+        className="mt-auto pt-4 flex items-center gap-2"
+        style={{ borderTop: "1px solid rgba(35,31,32,0.15)" }}
       >
-        {title}
-      </h4>
-      <p className="text-[9px] font-mono text-ink leading-tight uppercase mt-1 group-hover:text-paper/80">
-        {desc}
-      </p>
+        <motion.div
+          animate={{ opacity: [0.3, 1, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity, delay: index * 0.5 }}
+          className="w-1.5 h-1.5 rounded-full bg-clay"
+        />
+        <span className="text-[9px] font-mono uppercase tracking-widest text-ink/30 group-hover:text-paper/30">
+          Active
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Animated SVG pipeline ──────────────────────────────────────────────────
+
+function PipelineFlow() {
+  return (
+    <div className="relative w-full overflow-hidden py-10 border-y-2 border-ink bg-paper">
+      {/* Pipeline line */}
+      <div className="relative max-w-4xl mx-auto px-8">
+        <div className="flex items-center">
+          {NODES.map((node, i) => {
+            const Icon = node.icon;
+            return (
+              <div
+                key={node.tag}
+                className="flex items-center flex-1 last:flex-none"
+              >
+                {/* Node circle */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{
+                    duration: 0.4,
+                    delay: i * 0.15,
+                    type: "spring",
+                    stiffness: 300,
+                  }}
+                  className="relative shrink-0 w-14 h-14 border-2 border-ink bg-paper flex items-center justify-center z-10"
+                >
+                  <Icon size={18} className="text-ink" />
+                  {/* Pulsing ring */}
+                  <motion.div
+                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                    transition={{
+                      duration: 2.5,
+                      repeat: Infinity,
+                      delay: i * 0.6,
+                    }}
+                    className="absolute inset-0 border border-clay pointer-events-none"
+                  />
+                </motion.div>
+
+                {/* Connector arrow */}
+                {i < NODES.length - 1 && (
+                  <div className="flex-1 flex items-center px-2 overflow-hidden">
+                    <div className="w-full h-px bg-ink/20 relative">
+                      {/* Travelling dot */}
+                      <motion.div
+                        animate={{ x: ["-100%", "200%"] }}
+                        transition={{
+                          duration: 1.8,
+                          repeat: Infinity,
+                          delay: i * 0.4,
+                          ease: "linear",
+                        }}
+                        className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
+                        style={{ background: "var(--color-clay)" }}
+                      />
+                    </div>
+                    <ArrowRight
+                      size={10}
+                      className="text-ink/30 shrink-0 -ml-1"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Labels below */}
+        <div className="flex mt-4">
+          {NODES.map((node, i) => (
+            <div
+              key={node.tag}
+              className="flex-1 last:flex-none flex justify-center"
+              style={{ maxWidth: i < NODES.length - 1 ? undefined : "56px" }}
+            >
+              <span className="text-[9px] font-mono uppercase tracking-widest text-ink/40 text-center">
+                {node.title.replace("_", " ")}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ── Animated SVG connection lines ──────────────────────────────────────────
-// Uses percentage coordinates + vector-effect="non-scaling-stroke" so the
-// stroke width stays 1px regardless of the container's aspect ratio.
-
-function DiagramLines() {
-  const lineProps = {
-    stroke: "var(--color-ink)",
-    strokeWidth: 1,
-    strokeDasharray: "4 8",
-    strokeOpacity: 0.4,
-    // @ts-ignore — valid SVG presentation attribute, not in React types
-    vectorEffect: "non-scaling-stroke",
-  };
-
-  return (
-    <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      // percentage-based coordinates — lines are horizontal/vertical so
-      // preserveAspectRatio="none" stretch doesn't distort their appearance
-      viewBox="0 0 100 100"
-      preserveAspectRatio="none"
-    >
-      {/* Center → Top */}
-      <motion.line
-        x1="50%"
-        y1="50%"
-        x2="50%"
-        y2="12%"
-        {...lineProps}
-        animate={{ strokeDashoffset: [0, -48] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-      />
-      {/* Center → Left */}
-      <motion.line
-        x1="50%"
-        y1="50%"
-        x2="12%"
-        y2="50%"
-        {...lineProps}
-        animate={{ strokeDashoffset: [0, -48] }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "linear",
-          delay: 0.5,
-        }}
-      />
-      {/* Center → Right */}
-      <motion.line
-        x1="50%"
-        y1="50%"
-        x2="88%"
-        y2="50%"
-        {...lineProps}
-        animate={{ strokeDashoffset: [0, -48] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear", delay: 1 }}
-      />
-      {/* Center → Bottom */}
-      <motion.line
-        x1="50%"
-        y1="50%"
-        x2="50%"
-        y2="88%"
-        {...lineProps}
-        animate={{ strokeDashoffset: [0, -48] }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "linear",
-          delay: 1.5,
-        }}
-      />
-    </svg>
-  );
-}
-
-// ── Main component ─────────────────────────────────────────────────────────
+// ── Main section ───────────────────────────────────────────────────────────
 
 export default function Architecture() {
   return (
     <section
       id="architecture"
-      className="relative z-10 w-full py-40 border-b-4 border-ink bg-paper font-sans"
+      className="relative z-10 w-full border-b-4 border-ink bg-paper font-sans"
     >
-      <div className="max-w-6xl mx-auto px-4 md:px-8 relative">
-        {/* Section header */}
-        <div className="text-center mb-20 border-b-2 border-ink pb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 border border-ink mb-6 bg-paper">
-            <Share2 size={14} className="text-ink" />
-            <span className="text-xs font-mono font-bold tracking-widest uppercase text-ink">
-              [/] System Topography
-            </span>
+      {/* Section header */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-20 md:py-24 border-b-2 border-ink">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 border border-ink mb-6 bg-paper">
+              <Share2 size={14} className="text-ink" />
+              <span className="text-xs font-mono font-bold tracking-widest uppercase text-ink">
+                [/] System Topography
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-ink tracking-tighter leading-[0.9] uppercase">
+              A Multi-Agent <br />
+              <span className="italic text-clay">Swarm Architecture.</span>
+            </h2>
           </div>
-          <h2 className="text-5xl md:text-7xl font-bold font-display text-ink tracking-tighter leading-[0.9] uppercase">
-            A Multi-Agent <br />
-            <span className="text-clay italic font-display">
-              Swarm Architecture.
-            </span>
-          </h2>
-          <p className="font-mono text-xs uppercase tracking-widest text-ink mt-8 max-w-xl mx-auto border-t border-ink pt-6">
-            We focus on orchestration. Specialized agents handle retrieval,
-            ranking, and synthesis to compile persistent intelligence for modern
-            developers.
+          <p className="font-mono text-xs uppercase tracking-widest text-ink/50 md:text-right max-w-sm md:ml-auto leading-relaxed border-l-2 md:border-l-0 md:border-r-2 border-ink pl-4 md:pl-0 md:pr-4">
+            Specialized agents handle retrieval, ranking, and synthesis in a
+            continuous pipeline — compiling persistent intelligence while you
+            build.
           </p>
         </div>
+      </div>
 
-        {/* ── MOBILE: 2×2 card grid ──────────────────────────────────────
-            gap-px + bg-ink creates 1px ink borders between cells.          */}
-        <div className="grid grid-cols-2 gap-px bg-ink border-2 border-ink lg:hidden">
-          {NODES.map((node) => (
-            <div
-              key={node.title}
-              className="bg-paper flex items-center justify-center p-8"
-            >
-              <NodeCard {...node} className="w-full max-w-[200px]" />
+      {/* Animated pipeline flow diagram */}
+      <PipelineFlow />
+
+      {/* 4-card grid */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8 py-0">
+        <div className="border-x-2 border-b-2 border-ink">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-ink">
+            {NODES.map((node, i) => (
+              <FlowCard key={node.tag} {...node} index={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom stat strip */}
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
+        <div className="border-x-2 border-b-2 border-ink grid grid-cols-3 divide-x-2 divide-ink">
+          {[
+            { value: "< 200ms", label: "Synthesis latency" },
+            { value: "4 agents", label: "Concurrent pipeline" },
+            { value: "100%", label: "Personalized output" },
+          ].map((s) => (
+            <div key={s.label} className="px-6 py-5 text-center">
+              <div className="text-2xl md:text-3xl font-display font-bold text-clay tracking-tighter">
+                {s.value}
+              </div>
+              <div className="text-[10px] font-mono uppercase tracking-widest text-ink/40 mt-1">
+                {s.label}
+              </div>
             </div>
           ))}
-        </div>
-
-        {/* ── DESKTOP: Radial diagram ─────────────────────────────────────
-            Nodes are pinned to cardinal edges with CSS absolute positioning.
-            SVG overlay draws animated dashed connection lines.              */}
-        <div className="relative hidden lg:flex items-center justify-center w-full h-[560px]">
-          <DiagramLines />
-
-          {/* Center: Pulsar — covers the SVG line intersection */}
-          <div className="relative z-20">
-            <Pulsar size={220} color="ink" />
-          </div>
-
-          {/* Top: Sourcing_Agent */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10">
-            <NodeCard {...NODES[0]} className="w-44" />
-          </div>
-
-          {/* Left: Vector_DB */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
-            <NodeCard {...NODES[1]} className="w-44" />
-          </div>
-
-          {/* Right: Synthesis_LLM */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
-            <NodeCard {...NODES[2]} className="w-44" />
-          </div>
-
-          {/* Bottom: Delivery_Node */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10">
-            <NodeCard {...NODES[3]} className="w-44" />
-          </div>
         </div>
       </div>
     </section>

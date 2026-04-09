@@ -16,67 +16,83 @@ import {
   Palette,
   Rss,
   Shield,
+  LogOut,
+  Save,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import TagInput from "../components/TagInput";
 import { API_URL } from "../config";
 
 const FIELDS = [
-  { id: "AI & Machine Learning", label: "AI & Machine Learning", icon: Brain },
-  { id: "Software Engineering", label: "Software Engineering", icon: Code2 },
+  { id: "AI & Machine Learning", label: "AI & ML", icon: Brain },
+  { id: "Software Engineering", label: "Software Eng.", icon: Code2 },
   { id: "Cybersecurity", label: "Cybersecurity", icon: Shield },
   { id: "Data Science", label: "Data Science", icon: BarChart2 },
   { id: "Cloud & DevOps", label: "Cloud & DevOps", icon: Cloud },
-  { id: "Blockchain & Web3", label: "Blockchain & Web3", icon: Link },
+  { id: "Blockchain & Web3", label: "Blockchain", icon: Link },
   { id: "Product & Design", label: "Product & Design", icon: Palette },
-  { id: "Quantum Computing", label: "Quantum Computing", icon: Atom },
-  { id: "Robotics & Embedded", label: "Robotics & Embedded", icon: Bot },
+  { id: "Quantum Computing", label: "Quantum", icon: Atom },
+  { id: "Robotics & Embedded", label: "Robotics", icon: Bot },
   { id: "Other", label: "Other", icon: HelpCircle },
 ];
 
 const SUB_FIELD_PLACEHOLDER = {
-  "AI & Machine Learning":
-    "e.g. LLMs, Computer Vision, Reinforcement Learning…",
-  "Software Engineering": "e.g. Backend, Frontend, Mobile, APIs…",
-  Cybersecurity: "e.g. Zero Trust, Penetration Testing, OSINT…",
-  "Data Science": "e.g. NLP, Time Series, Data Visualisation…",
+  "AI & Machine Learning": "e.g. LLMs, Computer Vision, RL…",
+  "Software Engineering": "e.g. Backend, Frontend, APIs…",
+  Cybersecurity: "e.g. Zero Trust, Pen Testing, OSINT…",
+  "Data Science": "e.g. NLP, Time Series, Visualisation…",
   "Cloud & DevOps": "e.g. Kubernetes, Terraform, CI/CD…",
-  "Blockchain & Web3": "e.g. DeFi, Smart Contracts, Layer 2…",
-  "Product & Design": "e.g. UX Research, Design Systems, Prototyping…",
-  "Quantum Computing": "e.g. Quantum Algorithms, Error Correction, Qubits…",
-  "Robotics & Embedded": "e.g. ROS, Microcontrollers, Sensor Fusion…",
-  Other: "e.g. specific topics you're interested in…",
+  "Blockchain & Web3": "e.g. DeFi, Smart Contracts, L2…",
+  "Product & Design": "e.g. UX Research, Design Systems…",
+  "Quantum Computing": "e.g. Quantum Algorithms, Qubits…",
+  "Robotics & Embedded": "e.g. ROS, Microcontrollers…",
+  Other: "e.g. specific topics you care about…",
 };
 
 const FORMAT_CARDS = [
   {
     id: "Research Papers",
     label: "Research Papers",
-    description: "ArXiv · DeepMind · OpenAI",
+    desc: "ArXiv · DeepMind · OpenAI",
     icon: FileText,
   },
   {
     id: "Technical Articles",
-    label: "Technical Articles",
-    description: "Medium · Dev.to · Hashnode",
+    label: "Tech Articles",
+    desc: "Medium · Dev.to · Hashnode",
     icon: Newspaper,
   },
   {
     id: "Books & Guides",
     label: "Books & Guides",
-    description: "O'Reilly · Manning · Roadmap.sh",
+    desc: "O'Reilly · Manning · Roadmaps",
     icon: BookOpen,
   },
   {
     id: "Engineering Blogs",
-    label: "Engineering Blogs",
-    description: "Netflix · Uber · Meta Infra",
+    label: "Eng. Blogs",
+    desc: "Netflix · Uber · Meta Infra",
     icon: Rss,
   },
 ];
 
 const MAX_NAME = 100;
 const MAX_OCC = 150;
+
+function SectionHeader({ label }) {
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <span className="text-[10px] font-mono font-bold tracking-[0.2em] uppercase text-text-secondary">
+        {label}
+      </span>
+      <div
+        className="flex-1 h-px"
+        style={{ background: "rgba(90,45,160,0.25)" }}
+      />
+    </div>
+  );
+}
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -152,7 +168,7 @@ export default function Settings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setApiError(err.message || "Something went wrong. Please try again.");
+      setApiError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -166,116 +182,211 @@ export default function Settings() {
   if (fetching) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ background: "var(--color-deep-purple)" }}
+              animate={{ scale: [1, 1.6, 1], opacity: [0.4, 1, 0.4] }}
+              transition={{ repeat: Infinity, duration: 0.9, delay: i * 0.18 }}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
-      <h2 className="text-xl font-bold text-white mb-1">Settings</h2>
-      <p className="text-sm text-slate-400 mb-8">
-        Update your profile to re-tune your feed.
-      </p>
+    <div
+      className="max-w-2xl mx-auto px-5 sm:px-8 py-10 font-sans"
+      style={{ color: "var(--color-text-primary)" }}
+    >
+      {/* Header */}
+      <div
+        className="mb-8 pb-6"
+        style={{ borderBottom: "1px solid rgba(90,45,160,0.25)" }}
+      >
+        <h2 className="text-2xl font-display font-bold tracking-tight uppercase">
+          Profile Settings
+        </h2>
+        <p
+          className="mt-1 text-xs font-mono tracking-widest uppercase"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          [/] Update your context to re-tune the swarm
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+      {/* Banners */}
+      <AnimatePresence>
         {apiError && (
-          <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3">
-            <svg
-              className="w-5 h-5 text-red-400 shrink-0 mt-0.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex items-start gap-3 px-4 py-3 mb-6 rounded-lg"
+            style={{
+              background: "rgba(255,45,122,0.1)",
+              border: "1px solid rgba(255,45,122,0.25)",
+            }}
+          >
+            <span
+              className="text-sm shrink-0 mt-0.5"
+              style={{ color: "var(--color-neon-pink)" }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-              />
-            </svg>
-            <p className="text-sm text-red-300">{apiError}</p>
-          </div>
-        )}
-
-        {saved && (
-          <div className="flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-lg px-4 py-3">
-            <svg
-              className="w-4 h-4 text-violet-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-            <p className="text-sm text-violet-300">
-              Profile saved successfully.
+              ⚠
+            </span>
+            <p className="text-sm" style={{ color: "var(--color-neon-pink)" }}>
+              {apiError}
             </p>
-          </div>
+          </motion.div>
         )}
-
-        {/* Name */}
-        <div>
-          <div className="flex justify-between mb-1.5">
-            <label className="text-sm font-medium text-slate-200">Name</label>
-            <span
-              className={`text-xs ${name.length > MAX_NAME * 0.9 ? "text-amber-400" : "text-slate-500"}`}
+        {saved && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex items-center gap-2 px-4 py-3 mb-6 rounded-lg"
+            style={{
+              background: "rgba(0,212,255,0.08)",
+              border: "1px solid rgba(0,212,255,0.2)",
+            }}
+          >
+            <Check
+              className="w-4 h-4 shrink-0"
+              style={{ color: "var(--color-neon-cyan)" }}
+            />
+            <p
+              className="text-sm font-medium"
+              style={{ color: "var(--color-neon-cyan)" }}
             >
-              {name.length}/{MAX_NAME}
-            </span>
-          </div>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
-            className={`w-full px-3.5 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors ${
-              errors.name
-                ? "border-red-500"
-                : "border-slate-700 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
-            }`}
-          />
-          {errors.name && (
-            <p className="mt-1.5 text-xs text-red-400">{errors.name}</p>
-          )}
-        </div>
+              Profile saved — swarm is re-tuning.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Occupation */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-8">
+        {/* Identity */}
         <div>
-          <div className="flex justify-between mb-1.5">
-            <label className="text-sm font-medium text-slate-200">
-              Job Title / Role
-            </label>
-            <span
-              className={`text-xs ${occupation.length > MAX_OCC * 0.9 ? "text-amber-400" : "text-slate-500"}`}
-            >
-              {occupation.length}/{MAX_OCC}
-            </span>
+          <SectionHeader label="[01] Identity" />
+          <div className="space-y-4">
+            {/* Name */}
+            <div>
+              <div className="flex justify-between mb-2">
+                <label
+                  className="text-xs font-mono font-bold uppercase tracking-widest"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Name
+                </label>
+                <span
+                  className={`text-[10px] font-mono font-bold ${name.length > MAX_NAME * 0.9 ? "" : ""}`}
+                  style={{
+                    color:
+                      name.length > MAX_NAME * 0.9
+                        ? "var(--color-neon-pink)"
+                        : "var(--color-text-secondary)",
+                  }}
+                >
+                  {name.length}/{MAX_NAME}
+                </span>
+              </div>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, MAX_NAME))}
+                placeholder="Ada Lovelace"
+                className="w-full px-4 py-2.5 text-sm font-sans outline-none transition-all"
+                style={{
+                  background: "rgba(13,11,24,0.6)",
+                  border: errors.name
+                    ? "1px solid var(--color-neon-pink)"
+                    : "1px solid rgba(90,45,160,0.3)",
+                  borderRadius: "0.5rem",
+                  color: "var(--color-text-primary)",
+                }}
+                onFocus={(e) =>
+                  (e.currentTarget.style.borderColor = "var(--color-neon-cyan)")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.borderColor = errors.name
+                    ? "var(--color-neon-pink)"
+                    : "rgba(90,45,160,0.3)")
+                }
+              />
+              {errors.name && (
+                <p
+                  className="mt-1.5 text-[11px] font-mono"
+                  style={{ color: "var(--color-neon-pink)" }}
+                >
+                  {errors.name}
+                </p>
+              )}
+            </div>
+
+            {/* Occupation */}
+            <div>
+              <div className="flex justify-between mb-2">
+                <label
+                  className="text-xs font-mono font-bold uppercase tracking-widest"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Role / Title
+                </label>
+                <span
+                  className="text-[10px] font-mono font-bold"
+                  style={{
+                    color:
+                      occupation.length > MAX_OCC * 0.9
+                        ? "var(--color-neon-pink)"
+                        : "var(--color-text-secondary)",
+                  }}
+                >
+                  {occupation.length}/{MAX_OCC}
+                </span>
+              </div>
+              <input
+                type="text"
+                value={occupation}
+                onChange={(e) =>
+                  setOccupation(e.target.value.slice(0, MAX_OCC))
+                }
+                placeholder="Chief Systems Architect"
+                className="w-full px-4 py-2.5 text-sm font-sans outline-none transition-all"
+                style={{
+                  background: "rgba(13,11,24,0.6)",
+                  border: errors.occupation
+                    ? "1px solid var(--color-neon-pink)"
+                    : "1px solid rgba(90,45,160,0.3)",
+                  borderRadius: "0.5rem",
+                  color: "var(--color-text-primary)",
+                }}
+                onFocus={(e) =>
+                  (e.currentTarget.style.borderColor = "var(--color-neon-cyan)")
+                }
+                onBlur={(e) =>
+                  (e.currentTarget.style.borderColor = errors.occupation
+                    ? "var(--color-neon-pink)"
+                    : "rgba(90,45,160,0.3)")
+                }
+              />
+              {errors.occupation && (
+                <p
+                  className="mt-1.5 text-[11px] font-mono"
+                  style={{ color: "var(--color-neon-pink)" }}
+                >
+                  {errors.occupation}
+                </p>
+              )}
+            </div>
           </div>
-          <input
-            type="text"
-            value={occupation}
-            onChange={(e) => setOccupation(e.target.value.slice(0, MAX_OCC))}
-            className={`w-full px-3.5 py-2.5 bg-slate-800 border rounded-lg text-sm text-slate-200 placeholder-slate-500 outline-none transition-colors ${
-              errors.occupation
-                ? "border-red-500"
-                : "border-slate-700 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30"
-            }`}
-          />
-          {errors.occupation && (
-            <p className="mt-1.5 text-xs text-red-400">{errors.occupation}</p>
-          )}
         </div>
 
         {/* Primary Field */}
         <div>
-          <label className="block text-sm font-medium text-slate-200 mb-1.5">
-            Primary Field
-          </label>
+          <SectionHeader label="[02] Primary Domain" />
           <div className="flex flex-wrap gap-2">
             {FIELDS.map((f) => {
               const Icon = f.icon;
@@ -286,30 +397,41 @@ export default function Settings() {
                   type="button"
                   onClick={() => {
                     setField(f.id);
-                    setErrors((prev) => ({ ...prev, field: undefined }));
+                    setErrors((p) => ({ ...p, field: undefined }));
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    selected
-                      ? "border-violet-500 bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/30"
-                      : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-500 hover:text-slate-300"
-                  }`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-all"
+                  style={{
+                    borderRadius: "9999px",
+                    border: selected
+                      ? "1px solid var(--color-neon-cyan)"
+                      : "1px solid rgba(90,45,160,0.3)",
+                    background: selected
+                      ? "rgba(0,212,255,0.1)"
+                      : "rgba(13,11,24,0.5)",
+                    color: selected
+                      ? "var(--color-neon-cyan)"
+                      : "var(--color-text-secondary)",
+                  }}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   {f.label}
                 </button>
               );
             })}
           </div>
           {errors.field && (
-            <p className="mt-2 text-xs text-red-400">{errors.field}</p>
+            <p
+              className="mt-2 text-[11px] font-mono"
+              style={{ color: "var(--color-neon-pink)" }}
+            >
+              {errors.field}
+            </p>
           )}
         </div>
 
         {/* Sub-fields */}
         <div>
-          <label className="block text-sm font-medium text-slate-200 mb-1.5">
-            Areas of Focus
-          </label>
+          <SectionHeader label="[03] Focus Areas" />
           <TagInput
             tags={subFields}
             onChange={setSubFields}
@@ -319,19 +441,18 @@ export default function Settings() {
             }
           />
           {errors.subFields && (
-            <p className="mt-1.5 text-xs text-red-400">{errors.subFields}</p>
+            <p
+              className="mt-2 text-[11px] font-mono"
+              style={{ color: "var(--color-neon-pink)" }}
+            >
+              {errors.subFields}
+            </p>
           )}
         </div>
 
-        {/* Media Formats */}
+        {/* Preferred Formats */}
         <div>
-          <label className="block text-sm font-medium text-slate-200 mb-1">
-            Preferred Formats{" "}
-            <span className="text-slate-500 font-normal">(optional)</span>
-          </label>
-          <p className="text-xs text-slate-500 mb-3">
-            Your feed will prioritise content from these sources.
-          </p>
+          <SectionHeader label="[04] Content Formats (optional)" />
           <div className="grid grid-cols-2 gap-2">
             {FORMAT_CARDS.map((card) => {
               const Icon = card.icon;
@@ -347,31 +468,53 @@ export default function Settings() {
                         : [...prev, card.id],
                     )
                   }
-                  className={`relative flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
-                    selected
-                      ? "border-violet-500 ring-2 ring-violet-500/20 bg-violet-500/5"
-                      : "border-slate-700 bg-slate-800/50 hover:border-slate-600"
-                  }`}
+                  className="relative flex items-center gap-3 p-3 text-left transition-all"
+                  style={{
+                    borderRadius: "0.75rem",
+                    border: selected
+                      ? "1px solid rgba(0,212,255,0.4)"
+                      : "1px solid rgba(90,45,160,0.25)",
+                    background: selected
+                      ? "rgba(0,212,255,0.06)"
+                      : "rgba(13,11,24,0.5)",
+                  }}
                 >
                   {selected && (
-                    <div className="absolute top-2 right-2 w-4 h-4 bg-violet-500 rounded-full flex items-center justify-center">
+                    <div
+                      className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center"
+                      style={{ background: "var(--color-neon-cyan)" }}
+                    >
                       <Check
-                        className="w-2.5 h-2.5 text-white"
+                        className="w-2.5 h-2.5"
+                        style={{ color: "var(--color-space-black)" }}
                         strokeWidth={3}
                       />
                     </div>
                   )}
                   <Icon
-                    className={`w-5 h-5 shrink-0 ${selected ? "text-violet-400" : "text-slate-400"}`}
+                    className="w-4 h-4 shrink-0"
+                    style={{
+                      color: selected
+                        ? "var(--color-neon-cyan)"
+                        : "var(--color-text-secondary)",
+                    }}
                   />
                   <div>
                     <p
-                      className={`text-xs font-semibold ${selected ? "text-violet-300" : "text-slate-300"}`}
+                      className="text-xs font-semibold"
+                      style={{
+                        color: selected
+                          ? "var(--color-neon-cyan)"
+                          : "var(--color-text-primary)",
+                      }}
                     >
                       {card.label}
                     </p>
-                    <p className="text-[10px] text-slate-500">
-                      {card.description}
+                    <p
+                      className="text-[10px] mt-0.5"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      {card.desc}
                     </p>
                   </div>
                 </button>
@@ -380,75 +523,105 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Feed Refresh Interval */}
+        {/* Refresh Interval */}
         <div>
-          <label className="block text-sm font-medium text-slate-200 mb-1">
-            Feed Refresh Interval
-          </label>
-          <p className="text-xs text-slate-500 mb-3">
-            How often your feed pulls fresh content from the pipeline.
-          </p>
+          <SectionHeader label="[05] Refresh Cadence" />
           <div className="flex gap-2">
             {[3, 6].map((hrs) => (
               <button
                 key={hrs}
                 type="button"
                 onClick={() => setRefreshInterval(hrs)}
-                className={`flex-1 py-2 rounded-lg border text-sm font-semibold transition-all ${
-                  refreshInterval === hrs
-                    ? "border-violet-500 bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/30"
-                    : "border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-500 hover:text-slate-300"
-                }`}
+                className="flex-1 py-2.5 text-sm font-mono font-bold uppercase tracking-widest transition-all"
+                style={{
+                  borderRadius: "0.5rem",
+                  border:
+                    refreshInterval === hrs
+                      ? "1px solid var(--color-deep-purple)"
+                      : "1px solid rgba(90,45,160,0.25)",
+                  background:
+                    refreshInterval === hrs
+                      ? "rgba(90,45,160,0.2)"
+                      : "rgba(13,11,24,0.5)",
+                  color:
+                    refreshInterval === hrs
+                      ? "var(--color-text-primary)"
+                      : "var(--color-text-secondary)",
+                }}
               >
                 Every {hrs}h
               </button>
             ))}
           </div>
-          <p className="mt-1.5 text-xs text-slate-500">
+          <p
+            className="mt-2 text-[10px] font-mono uppercase tracking-widest"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             {refreshInterval === 3
-              ? "High frequency — best for fast-moving fields"
+              ? "High frequency — ideal for fast-moving fields"
               : "Standard — balanced freshness and efficiency"}
           </p>
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
+        {/* Actions */}
+        <div
+          className="flex items-center gap-3 pt-4"
+          style={{ borderTop: "1px solid rgba(90,45,160,0.2)" }}
+        >
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:bg-violet-800 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 text-sm font-display font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+            style={{
+              borderRadius: "0.5rem",
+              background: loading
+                ? "rgba(90,45,160,0.3)"
+                : "var(--color-deep-purple)",
+              color: "var(--color-text-primary)",
+              opacity: loading ? 0.6 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
           >
             {loading ? (
               <>
-                <svg
-                  className="animate-spin w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-4 h-4 rounded-full border-2 border-t-transparent"
+                  style={{
+                    borderColor: "rgba(240,238,255,0.4)",
+                    borderTopColor: "transparent",
+                  }}
+                />
                 Saving…
               </>
             ) : (
-              "Save Changes"
+              <>
+                <Save className="w-4 h-4" />
+                Save Changes
+              </>
             )}
           </button>
           <button
             type="button"
             onClick={handleLogout}
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-all"
+            style={{
+              borderRadius: "0.5rem",
+              border: "1px solid rgba(255,45,122,0.25)",
+              background: "rgba(255,45,122,0.06)",
+              color: "var(--color-text-secondary)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-neon-pink)";
+              e.currentTarget.style.borderColor = "rgba(255,45,122,0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-text-secondary)";
+              e.currentTarget.style.borderColor = "rgba(255,45,122,0.25)";
+            }}
           >
+            <LogOut className="w-4 h-4" />
             Sign out
           </button>
         </div>

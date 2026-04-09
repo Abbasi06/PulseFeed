@@ -4,11 +4,22 @@
 @import "tailwindcss";
 
 @theme {
+  /* ── Landing / Onboarding — brutalist light ── */
   --color-paper: #fdfcf8;
   --color-ink: #231f20;
   --color-clay: #d97757;
   --color-nautical: #26498d;
   --color-steel: #8a8a8a;
+
+  /* ── App (Dashboard / Settings) — dark intelligence theme ── */
+  --color-space-black: #07060e;
+  --color-void: #0d0b18;
+  --color-deep-purple: #5a2da0;
+  --color-neon-cyan: #00d4ff;
+  --color-neon-pink: #ff2d7a;
+  --color-steel-blue: #4a7fa5;
+  --color-text-primary: #f0eeff;
+  --color-text-secondary: #7b7d99;
 
   --font-display: "Space Mono", "Courier New", monospace;
   --font-sans: "Geist", system-ui, -apple-system, sans-serif;
@@ -42,6 +53,25 @@ a:not([class]) {
 
 a:not([class]):hover {
   text-decoration: underline;
+}
+
+/* ── App glass utility ── */
+.liquid-glass {
+  background: rgba(13, 11, 24, 0.6);
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid rgba(90, 45, 160, 0.28);
+  border-radius: 1rem;
+}
+
+/* ── Gemini gradient ring ── */
+.gemini-glow {
+  background: linear-gradient(
+    135deg,
+    var(--color-neon-pink),
+    var(--color-deep-purple),
+    var(--color-neon-cyan)
+  );
 }
 
 @layer utilities {
